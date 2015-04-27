@@ -1,0 +1,18 @@
+{
+  "name": "octavian",
+  "version": "1.0.0",
+  "description": "Quick and easy frequency to octave conversion",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/octavian-test.js"
+  },
+  "keywords": [
+    "music",
+    "audio"
+  ],
+  "author": "Steve Kinney",
+  "license": "MPLv2",
+  "devDependencies": {
+    "tap": "^0.7.1"
+  }
+}
