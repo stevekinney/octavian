@@ -15,6 +15,10 @@ describe('parseNote', function () {
     assert.equal(parseNote('A#4').modifier, '#');
   });
 
+  it('should parse an octave as an integer', function () {
+    assert.equal(parseNote('A4').octave, 4);
+  });
+
   it('should set the modifier to null if missing', function () {
     assert.equal(parseNote('A4').modifier, null);
   });
