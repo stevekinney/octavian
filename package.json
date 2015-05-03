@@ -1,10 +1,11 @@
 {
   "name": "octavian",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Quick and easy frequency to octave conversion",
+  "repository": "https://github.com/stevekinney/octavian",
   "main": "index.js",
   "scripts": {
-    "test": "node test/octavian-test.js"
+    "test": "./node_modules/mocha/bin/mocha --compilers js:babel/register"
   },
   "keywords": [
     "music",
@@ -13,6 +14,10 @@
   "author": "Steve Kinney",
   "license": "MPLv2",
   "devDependencies": {
-    "tap": "^0.7.1"
+    "chai": "^2.3.0",
+    "mocha": "^2.2.4"
+  },
+  "dependencies": {
+    "babel": "^5.2.6"
   }
 }
