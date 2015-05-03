@@ -1,7 +1,7 @@
 const chai = require('chai');
 const assert = chai.assert;
 
-const Note = require('../lib/note');
+const Note = require('../lib');
 
 describe('Note', function () {
 
