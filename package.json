@@ -18,6 +18,7 @@
     "mocha": "^2.2.4"
   },
   "dependencies": {
-    "babel": "^5.2.6"
+    "babel": "^5.2.6",
+    "lodash": "^3.8.0"
   }
 }
