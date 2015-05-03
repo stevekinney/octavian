@@ -54,4 +54,14 @@ describe('Note', function () {
     assert.equal(new Note('G#4').alternateName, 'Ab4');
   });
 
+  it('should create a note from a piano key', function () {
+    assert(Note.fromPianoKey);
+    assert.equal(Note.fromPianoKey(49).signature, 'A4');
+  });
+
+  it('should favor sharps when deriving from a piano key', function () {
+    assert.equal(Note.fromPianoKey(50).signature, 'A#4');
+    assert.notEqual(Note.fromPianoKey(50).signature, 'Bb4');
+  });
+
 });
