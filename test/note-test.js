@@ -44,4 +44,13 @@ describe('Note', function () {
     assert.equal(new Note('F#6').frequency, 1479.98);
   });
 
+  it('should not allow to create a note that is out of range', function () {
+    assert.throw(function () {
+      new Note('C0');
+    }, /Out of Range/i);
+    assert.throw(function () {
+      new Note('D9');
+    }, /Out of Range/i);
+  });
+
 });
