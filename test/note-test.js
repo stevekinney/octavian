@@ -45,12 +45,13 @@ describe('Note', function () {
   });
 
   it('should not allow to create a note that is out of range', function () {
-    assert.throw(function () {
-      new Note('C0');
-    }, /Out of Range/i);
-    assert.throw(function () {
-      new Note('D9');
-    }, /Out of Range/i);
+    assert.throw(function () { new Note('C0'); }, /Out of Range/i);
+    assert.throw(function () { new Note('D9'); }, /Out of Range/i);
+  });
+
+  it('should return an alternate name when appropriate', function () {
+    assert.equal(new Note('Ab4').alternateName, 'G#4');
+    assert.equal(new Note('G#4').alternateName, 'Ab4');
   });
 
 });
