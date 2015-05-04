@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Quick and easy frequency to octave conversion",
   "repository": "https://github.com/stevekinney/octavian",
-  "main": "index.js",
+  "main": "./build/index.js",
   "scripts": {
     "prepublish": "npm run build",
     "build": "./node_modules/babel/bin/babel/index.js lib -d build",
