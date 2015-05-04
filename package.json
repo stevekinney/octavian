@@ -5,6 +5,8 @@
   "repository": "https://github.com/stevekinney/octavian",
   "main": "index.js",
   "scripts": {
+    "prepublish": "npm run build",
+    "build": "./node_modules/babel/bin/babel/index.js lib -d build",
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel/register"
   },
   "keywords": [
@@ -18,7 +20,6 @@
     "mocha": "^2.2.4"
   },
   "dependencies": {
-    "babel": "^5.2.6",
-    "lodash": "^3.8.0"
+    "babel": "^5.2.6"
   }
 }
