@@ -1,7 +1,7 @@
 const chai = require('chai');
 const assert = chai.assert;
 
-const normalizeNote = require('../lib/normalize-note');
+const normalizeNote = require('../lib/note/normalize-note');
 
 describe('normalizeNote', function () {
 

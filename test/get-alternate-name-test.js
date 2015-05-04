@@ -1,7 +1,7 @@
 const chai = require('chai');
 const assert = chai.assert;
 
-const getAlternateNames = require('../lib/get-alternate-name');
+const getAlternateNames = require('../lib/note/get-alternate-name');
 
 describe('getAlternateNames', function () {
 
