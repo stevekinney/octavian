@@ -1,7 +1,7 @@
 {
   "name": "octavian",
   "version": "2.0.0",
-  "description": "Quick and easy frequency to octave conversion",
+  "description": "A set of utilities for working with musical notes and frequencies",
   "repository": "https://github.com/stevekinney/octavian",
   "main": "./build/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "audio"
   ],
   "author": "Steve Kinney",
-  "license": "MPLv2",
+  "license": "MIT",
   "devDependencies": {
     "chai": "^2.3.0",
     "mocha": "^2.2.4"
