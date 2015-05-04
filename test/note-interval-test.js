@@ -62,6 +62,10 @@ describe('Note intervals', function () {
     assert.equal(new Note('C4').perfectOctave().signature, 'C5');
   });
 
+  it('should shift down an octave', function () {
+    assert.equal(new Note('C4').downOctave().signature, 'C3');
+  });
+
   it('should shift up a major third with .third', function () {
     assert.equal(new Note('C4').third().signature, 'E4');
   });
