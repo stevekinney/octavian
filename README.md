@@ -14,7 +14,7 @@ Maybe you even throw a `--save` in there if you feel like keeping it around.
 
 ## Usage
 
-So, we've got Octavian install, how do we use it?
+So, we've got Octavian installed, how do we use it?
 
 ```js
 var Octavian = require('octavian');
