@@ -1,7 +1,7 @@
 {
   "name": "octavian",
-  "version": "2.0.5",
-  "description": "A set of utilities for working with musical notes and frequencies",
+  "version": "2.1.0",
+  "description": "A set of utilities for working with musical notes, frequencies, and chords",
   "repository": "https://github.com/stevekinney/octavian",
   "main": "build/index.js",
   "scripts": {
