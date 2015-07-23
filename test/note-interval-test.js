@@ -5,9 +5,24 @@ const Note = require('../lib/note');
 
 describe('Note intervals', function () {
 
-  it('should shift to the correct note', function () {
-    const note = new Note('A4');
-    assert.equal(note.interval(2).signature, 'B4');
+  describe('#interval', function () {
+
+    it('should shift to the correct note', function () {
+      const note = new Note('A4');
+      assert.equal(note.interval(2).signature, 'B4');
+    });
+
+    it('should take a name of an interval', function () {
+      const note = new Note('C4');
+      assert.equal(note.interval('majorThird').signature, 'E4');
+    });
+
+    it('should throw on an invalid interval', function () {
+      const note = new Note('C4');
+      assert.throws(function () {
+        note.interval('notValid')
+      }, /invalid interval/gi)
+    });
   });
 
   it('should shift up a minor second', function () {
