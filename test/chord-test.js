@@ -46,6 +46,11 @@ describe('Chord', function () {
       const chord = new Chord('C4', 'minor');
       assert.deepEqual(chord.signatures, ['C4', 'D#4', 'G4']);
     });
+
+    it('should work with maj alias', function () {
+      const chord = new Chord('C4', 'maj');
+      assert.deepEqual(chord.signatures, ['C4', 'E4', 'G4']);
+    });
   });
 
 });
