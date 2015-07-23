@@ -143,3 +143,19 @@ You're also more than welcome to use the following aliases for any of the above:
 * `dim` is an alias for `diminished`
 * `dim7` is an alias for `diminishedSeventh`
 * `m7b5` is an alias for `halfDiminshed`
+
+#### Adding Notes to a Chord
+
+You can add notes to a chord manually, if that suits you:
+
+```js
+const chord = new Octavian.Chord('C4');
+
+chord.signatures; // returns ['C4']
+
+chord.addInterval('majorThird');
+chord.signatures; // returns ['C4', 'E4']
+
+chord.addInterval(7);
+chord.signatures; // returns ['C4', 'E4', 'G4']
+```

@@ -36,6 +36,20 @@ describe('Chord', function () {
     }, /invalid mode/gi);
   });
 
+  it('should support adding a note by interval steps', function () {
+    const chord = new Chord('C4');
+    chord.addInterval(4);
+    assert.equal(chord.notes.length, 2);
+    assert.equal(chord.signatures[1], 'E4');
+  });
+
+  it('should should support adding an interval by name', function () {
+    const chord = new Chord('C4');
+    chord.addInterval('majorThird');
+    assert.equal(chord.notes.length, 2);
+    assert.equal(chord.signatures[1], 'E4');
+  });
+
   describe('Chord Formations', function () {
     it('should create a major chord', function () {
       const chord = new Chord('C4', 'major');
