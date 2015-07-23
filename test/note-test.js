@@ -2,6 +2,7 @@ const chai = require('chai');
 const assert = chai.assert;
 
 const Note = require('../lib/note/');
+const Chord = require('../lib/chord/');
 
 describe('Note', function () {
 
@@ -62,6 +63,23 @@ describe('Note', function () {
   it('should favor sharps when deriving from a piano key', function () {
     assert.equal(Note.fromPianoKey(50).signature, 'A#4');
     assert.notEqual(Note.fromPianoKey(50).signature, 'Bb4');
+  });
+
+  describe('Note#toChord()', function () {
+
+    it('should turn a Note object into an instance of Chord', function () {
+      const note = new Note('C4');
+      const chord = note.toChord();
+      assert(chord instanceof Chord);
+      assert.equal(chord.root.signature, 'C4');
+    });
+
+    it('should create a chord of the given mode', function () {
+      const note = new Note('C4');
+      const chord = note.toChord('major');
+      assert.deepEqual(chord.signatures, ['C4', 'E4', 'G4']);
+    });
+
   });
 
 });

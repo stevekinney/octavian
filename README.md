@@ -159,3 +159,14 @@ chord.signatures; // returns ['C4', 'E4']
 chord.addInterval(7);
 chord.signatures; // returns ['C4', 'E4', 'G4']
 ```
+
+#### Turning a Note into a Chord
+
+You can turn any note into the basis for a chord:
+
+```js
+const note = new Octavian.Note('C4');
+note.toChord(); // returns a new chord with only C4 in it.
+note.toChord('major'); // returns a new chord with C4, E4, and G4 in it
+```
+
