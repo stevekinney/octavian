@@ -6,8 +6,8 @@
   "main": "build/index.js",
   "scripts": {
     "prepublish": "npm run build",
-    "build": "./node_modules/babel/bin/babel/index.js lib -d build",
-    "test": "./node_modules/mocha/bin/mocha --compilers js:babel/register"
+    "build": "babel lib -d build",
+    "test": "_mocha --compilers js:babel/register"
   },
   "keywords": [
     "music",
