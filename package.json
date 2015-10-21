@@ -1,12 +1,12 @@
 {
   "name": "octavian",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A set of utilities for working with musical notes, frequencies, and chords",
   "repository": "https://github.com/stevekinney/octavian",
   "main": "build/index.js",
   "scripts": {
     "prepublish": "npm run build",
-    "build": "mkdir build && ./node_modules/babel/bin/babel/index.js lib -d build && rm -rf build",
+    "build": "./node_modules/babel/bin/babel/index.js lib -d build",
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel/register"
   },
   "keywords": [
