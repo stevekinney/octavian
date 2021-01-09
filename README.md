@@ -170,3 +170,28 @@ note.toChord(); // returns a new chord with only C4 in it.
 note.toChord('major'); // returns a new chord with C4, E4, and G4 in it
 ```
 
+### Inverting a Chord
+
+You can invert a chord. For a Triad, two inversions exist these can be created
+by calling `inversion(1)` or `inversion(2)`.
+
+```js
+const cMajorChord = new Octavian.Chord('C4', 'major');
+cMajorChord.signatures;  // returns [ 'C4', 'E4', 'G4' ]
+
+cMajorChord.inversion(2);
+cMajorChord.signatures;  // returns [ 'C5', 'E5', 'G4' ]
+```
+
+It's also possible to have Octavian generate a random inversion:
+
+```js
+const cMajorChord = new Octavian.Chord('C4', 'major');
+cMajorChord.randomInversion();
+cMajorChord.signatures;  // returns any one of the following:
+                         // [ 'C4', 'E3', 'G3' ]
+                         // [ 'C4', 'E4', 'G3' ]
+                         // [ 'C4', 'E4', 'G4' ]
+                         // [ 'C5', 'E4', 'G4' ]
+                         // [ 'C5', 'E5', 'G4' ]
+```
