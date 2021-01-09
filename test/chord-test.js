@@ -50,6 +50,66 @@ describe('Chord', function () {
     assert.equal(chord.signatures[1], 'E4');
   });
 
+  describe('chord inversions', function(){
+    it('should create the 1st inversion of a triad', function(){
+      const chord = new Chord('C4', 'major');
+      chord.inversion(1);
+      assert.deepEqual(chord.signatures, ['C5', 'E4', 'G4']);
+    });
+
+    it('should create the 2nd inversion of a triad', function(){
+      const chord = new Chord('C4', 'major');
+      chord.inversion(2);
+      assert.deepEqual(chord.signatures, ['C5', 'E5', 'G4']);
+    });
+
+    it('should not transpose the 3rd step of a triad', function(){
+      const chord = new Chord('C4', 'major');
+      chord.inversion(3);
+      assert.deepEqual(chord.signatures, ['C5', 'E5', 'G4']);
+    });
+
+    it('should transpose the top note for a provided negative value', function(){
+      const chord = new Chord('C4', 'major');
+      chord.inversion(-1);
+      assert.deepEqual(chord.signatures, ['C4', 'E4', 'G3']);
+    });
+
+    it('should transpose the top two notes for a provided negative value', function(){
+      const chord = new Chord('C4', 'major');
+      chord.inversion(-2);
+      assert.deepEqual(chord.signatures, ['C4', 'E3', 'G3']);
+    });
+
+    it('should not transpose the 3rd step of a triad for a negative value', function(){
+      const chord = new Chord('C4', 'major');
+      chord.inversion(-3);
+      assert.deepEqual(chord.signatures, ['C4', 'E3', 'G3']);
+    });
+
+    it('should generate a random inversion', function() {
+      const actualValues = [];
+      const expectedValues = [
+        ['C4', 'E3', 'G3'],
+        ['C4', 'E4', 'G3'],
+        ['C4', 'E4', 'G4'],
+        ['C5', 'E4', 'G4'],
+        ['C5', 'E5', 'G4']
+      ];
+
+      // test random value 100 times and assume result will be representative
+      for(let i = 0; i < 100; ++i){
+        actualValues.push(
+          (new Chord('C4', 'major')).randomInversion().signatures
+        );
+      }
+
+      assert.isTrue(actualValues.every(actual => expectedValues.some(expected =>
+        JSON.stringify(expected) === JSON.stringify(actual)
+      )));
+    });
+  });
+
   describe('Chord Formations', function () {
     it('should create a major chord', function () {
       const chord = new Chord('C4', 'major');
