@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Application",
+      "type": "bun",
+      "request": "launch",
+      "program": "run",
+      "args": ["start"],
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Debug Tests",
+      "type": "bun",
+      "request": "launch",
+      "program": "test"
+    },
+    {
+      "name": "Debug Current File",
+      "type": "bun",
+      "request": "launch",
+      "program": "${file}",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}

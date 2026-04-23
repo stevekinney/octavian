@@ -1,0 +1,48 @@
+# Build artifacts
+dist/
+build/
+coverage/
+.next/
+out/
+
+# Package management
+node_modules/
+.npm/
+.yarn/
+.pnp.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+bun.lock
+
+# Cache and temp files
+.cache/
+.parcel-cache/
+.bun/
+tmp/
+.temp/
+
+# Environment and config
+.env
+.env.*
+!.env.example
+.vercel
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Miscellaneous
+.DS_Store
+*.pem
+Thumbs.db
+.idea/
+*.log
+.turbo
+.lefthook/
+*.d.ts.map
+*.tsbuildinfo
+.dccache

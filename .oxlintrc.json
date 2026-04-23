@@ -1,0 +1,67 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicolo-ribaudo/oxc/json-schema/.oxlintrc.json/npm/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "promise", "unicorn", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "no-with": "error",
+    "no-labels": "error",
+    "max-lines": ["error", { "max": 500, "skipBlankLines": true, "skipComments": true }],
+    "complexity": ["error", { "max": 10 }],
+    "no-console": "off",
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      }
+    ],
+
+    "promise/no-return-wrap": "error",
+    "promise/param-names": "error",
+    "promise/catch-or-return": "error",
+    "promise/no-nesting": "warn",
+    "promise/no-promise-in-callback": "warn",
+    "promise/no-callback-in-promise": "warn",
+    "promise/no-new-statics": "error",
+    "promise/no-return-in-finally": "warn",
+    "promise/valid-params": "warn",
+
+    "unicorn/no-null": "off",
+    "unicorn/no-await-expression-member": "error",
+
+    "import/first": "error",
+    "import/no-duplicates": "error",
+    "import/no-cycle": "warn",
+
+    "typescript/no-unused-vars": "off",
+    "typescript/no-floating-promises": "error",
+    "typescript/await-thenable": "error"
+  },
+  "ignorePatterns": ["dist/**", "build/**", "coverage/**", ".bun/**", "node_modules/**", "*.lock"],
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.spec.ts", "**/test/**/*.ts", "**/__tests__/**/*.ts"],
+      "rules": {
+        "typescript/no-explicit-any": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-floating-promises": "off",
+        "typescript/no-non-null-assertion": "off",
+        "typescript/unbound-method": "off",
+        "typescript/require-await": "off",
+        "typescript/no-magic-numbers": "off",
+        "typescript/no-empty-function": "off",
+        "typescript/no-unused-expressions": "off",
+        "typescript/no-unused-vars": "off",
+        "no-unused-vars": "off"
+      }
+    }
+  ]
+}

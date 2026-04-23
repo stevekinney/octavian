@@ -1,0 +1,26 @@
+pre-commit:
+  piped: true
+  jobs:
+    - name: format-staged
+      run: bun run prettier --write {staged_files}
+      glob: "**/*.{ts,tsx,js,jsx,json,md,css}"
+      stage_fixed: true
+    - name: lint-fix
+      run: bun run oxlint --fix {staged_files}
+      glob: "**/*.{ts,tsx,js,jsx}"
+      stage_fixed: true
+    - name: package-lock-check
+      run: bun scripts/hooks/package-lock-check.ts
+      glob: "{package.json,bun.lock}"
+
+pre-push:
+  jobs:
+    - run: bun run validate
+
+post-checkout:
+  jobs:
+    - run: bun scripts/hooks/post-checkout.ts {1} {2} {3}
+
+post-merge:
+  jobs:
+    - run: bun scripts/hooks/post-merge.ts

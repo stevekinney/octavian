@@ -1,0 +1,63 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "bun run build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Test",
+      "type": "shell",
+      "command": "bun test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test (Watch)",
+      "type": "shell",
+      "command": "bun test --watch",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint",
+      "type": "shell",
+      "command": "bun run lint",
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint (Fix)",
+      "type": "shell",
+      "command": "bun run lint:fix",
+      "problemMatcher": []
+    },
+    {
+      "label": "Type Check",
+      "type": "shell",
+      "command": "bun run typecheck",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Format",
+      "type": "shell",
+      "command": "bun run format",
+      "problemMatcher": []
+    },
+    {
+      "label": "Validate (Lint + Types + Test)",
+      "type": "shell",
+      "command": "bun run validate",
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    }
+  ]
+}

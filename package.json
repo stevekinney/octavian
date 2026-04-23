@@ -1,0 +1,67 @@
+{
+  "name": "octavian",
+  "version": "0.0.1",
+  "description": "",
+  "license": "MIT",
+  "author": "Steve Kinney <hello@stevekinney.net>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./dist/bun/index.js",
+      "import": "./dist/node/index.js",
+      "default": "./dist/node/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/node/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "check": "bun run format:check && bun run lint && bun run typecheck",
+    "clean": "rm -rf dist coverage tsconfig.tsbuildinfo",
+    "dev": "bun --watch run src/index.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "lint": "oxlint --type-aware --tsconfig ./tsconfig.json",
+    "lint:fix": "oxlint --fix --type-aware --tsconfig ./tsconfig.json",
+    "package:check": "publint && attw --pack --ignore-rules cjs-resolves-to-esm",
+    "prepack": "bun run build",
+    "prepare": "lefthook install",
+    "prepublishOnly": "bun run validate",
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "tsc": "tsc",
+    "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc --noEmit --project tsconfig.test.json",
+    "validate": "bun run format:check && bun run lint && bun run typecheck && bun run typecheck:test && bun run test && bun run build && bun run package:check",
+    "verify:release-version": "bun run scripts/verify-release-version.ts"
+  },
+  "dependencies": {
+    "change-case": "^5.4.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.17.3",
+    "@types/bun": "^1.3.13",
+    "chalk": "^5.6.2",
+    "lefthook": "^2.1.6",
+    "oxlint": "^1.61.0",
+    "oxlint-tsgolint": "^0.17.4",
+    "prettier": "^3.8.3",
+    "publint": "^0.3.12",
+    "sort-package-json": "^3.6.1",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "bun": ">=1.3.0",
+    "node": ">=22"
+  }
+}

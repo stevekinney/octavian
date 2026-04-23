@@ -1,0 +1,66 @@
+{
+  "compilerOptions": {
+    // Environment and ECMAScript features
+    "lib": ["ESNext"],
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleDetection": "auto",
+    "allowJs": false,
+    "checkJs": false,
+
+    // Module resolution
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Type checking - Strict mode
+    "strict": true,
+
+    // Type checking - Additional checks
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "allowUnreachableCode": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": true,
+
+    // Error reporting
+    "pretty": true,
+    "noErrorTruncation": true,
+
+    // Optimization
+    "skipLibCheck": true,
+
+    // Performance improvements
+    "incremental": true,
+    "tsBuildInfoFile": "node_modules/.cache/tsconfig.tsbuildinfo",
+    "assumeChangesOnlyAffectDirectDependencies": true,
+    "diagnostics": true,
+
+    // Path resolution
+    "rootDir": ".",
+
+    // DX improvements
+    "preserveWatchOutput": true,
+
+    // Type definitions
+    "types": ["bun"]
+  },
+  "include": ["src", "scripts"],
+  "exclude": [
+    "node_modules",
+    "coverage",
+    "**/dist/**",
+    "**/build/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

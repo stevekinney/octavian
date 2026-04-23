@@ -1,0 +1,59 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure npm for trusted publishing
+        shell: bash
+        run: |
+          echo "NPM_CONFIG_USERCONFIG=$HOME/.npmrc" >> "$GITHUB_ENV"
+          cat > "$HOME/.npmrc" <<'EOF'
+          registry=https://registry.npmjs.org/
+          always-auth=false
+          EOF
+
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify tag matches package.json version
+        run: bun run scripts/verify-release-version.ts
+
+      - name: Build package
+        run: bun run build
+
+      - name: Check package exports and types
+        run: bun run package:check
+
+      - name: Publish to npm
+        env:
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: npm publish

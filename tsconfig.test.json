@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Relax strict checks for tests
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUncheckedIndexedAccess": false,
+
+    // Allow implicit any in tests for unhappy path testing
+    "noImplicitAny": false,
+
+    // Separate build cache for tests
+    "tsBuildInfoFile": "node_modules/.cache/tsconfig.test.tsbuildinfo"
+  },
+  "include": ["src/**/*.test.ts", "src/**/*.spec.ts", "test/**/*.ts", "**/__tests__/**/*.ts"]
+}
