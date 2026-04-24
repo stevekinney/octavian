@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this
+repository.
 
 ## Essential Commands
 
@@ -47,17 +48,23 @@ bun run package:check    # Run publint + @arethetypeswrong/cli on packed tarball
 
 ### Core Design Principles
 
-1. **Environment-First Configuration**: All configuration starts with environment variables validated through Zod schemas in `src/environment.ts`. The `environment` object is the single source of truth.
+1. **Environment-First Configuration**: All configuration starts with environment variables
+   validated through Zod schemas in `src/environment.ts`. The `environment` object is the single
+   source of truth.
 
-2. **Lean Surface Area**: This template intentionally avoids framework-specific scaffolding (custom error classes, logger wrappers, etc.). Add only what you need for your project.
+2. **Lean Surface Area**: This template intentionally avoids framework-specific scaffolding (custom
+   error classes, logger wrappers, etc.). Add only what you need for your project.
 
-3. **Runtime-Neutral Published Code**: `src/` must not use Bun-only runtime APIs (`Bun.file`, `Bun.env`, `Bun.serve`, etc.). Those APIs are fine in `scripts/` and test files, but must not appear in published library output.
+3. **Runtime-Neutral Published Code**: `src/` must not use Bun-only runtime APIs (`Bun.file`,
+   `Bun.env`, `Bun.serve`, etc.). Those APIs are fine in `scripts/` and test files, but must not
+   appear in published library output.
 
 ### Key Notes
 
 - **ESM + TypeScript**: Source files are TypeScript modules; build output targets both Node and Bun.
 - **Import paths**: Use standard TS/ESM imports; no `@/*` path alias (it leaks into `.d.ts` files).
-- **Library output**: Dual-emit — `dist/node/` for Node consumers, `dist/bun/` for Bun consumers. The `exports` map routes consumers automatically.
+- **Library output**: Dual-emit — `dist/node/` for Node consumers, `dist/bun/` for Bun consumers.
+  The `exports` map routes consumers automatically.
 
 ### Library Packaging
 
@@ -81,37 +88,48 @@ The `exports` map in `package.json`:
 }
 ```
 
-Package validation runs as part of `validate`: `publint` checks the exports map structure and `@arethetypeswrong/cli` checks type resolution across resolution modes.
+Package validation runs as part of `validate`: `publint` checks the exports map structure and
+`@arethetypeswrong/cli` checks type resolution across resolution modes.
 
 ### Git Hooks Architecture
 
-Hooks are configured in `lefthook.yml` and implemented as Bun TypeScript files under `scripts/hooks/`:
+Hooks are configured in `lefthook.yml` and implemented as Bun TypeScript files under
+`scripts/hooks/`:
 
-- **pre-commit** (`lefthook.yml` inline, piped/sequential): formats staged files with Prettier, runs oxlint --fix on staged files, checks `bun.lock` is staged when `package.json` changes. Fast by design.
+- **pre-commit** (`lefthook.yml` inline, piped/sequential): formats staged files with Prettier, runs
+  oxlint --fix on staged files, checks `bun.lock` is staged when `package.json` changes. Fast by
+  design.
 - **pre-push** (`lefthook.yml`): runs full `bun run validate`.
-- **post-checkout** (`scripts/hooks/post-checkout.ts`): installs deps when `package.json`+`bun.lock` change; surfaces config changes.
-- **post-merge** (`scripts/hooks/post-merge.ts`): installs/cleans when dependencies or config changed; shows merge stats.
+- **post-checkout** (`scripts/hooks/post-checkout.ts`): installs deps when `package.json`+`bun.lock`
+  change; surfaces config changes.
+- **post-merge** (`scripts/hooks/post-merge.ts`): installs/cleans when dependencies or config
+  changed; shows merge stats.
 
 They use `chalk` for color, `change-case` for headings, and Bun's `$` and `Bun.write` for shell/IO.
 
 ### Types
 
-There is no shared `src/types.ts` in this template. Add shared or domain-specific types near their modules as needed.
+There is no shared `src/types.ts` in this template. Add shared or domain-specific types near their
+modules as needed.
 
 ## Development Patterns
 
 ### Adding New Features
 
-1. **Environment variables**: Add to `.env.example` first, then update the schema in `src/environment.ts`.
+1. **Environment variables**: Add to `.env.example` first, then update the schema in
+   `src/environment.ts`.
 2. **Types**: Domain-specific types live near their modules.
 
 ### Testing Approach
 
 - Tests use Bun's built-in test runner with `describe`, `it`, `expect`.
 - Test files are colocated with sources using the `.test.ts` suffix.
-- `test/setup.ts` is preloaded by `bunfig.toml` — it resets mocks and system time in `afterEach`. All tests get this automatically.
-- Oxlint rules are relaxed for test files. You can use `any`, non-null assertions, and other patterns normally flagged.
-- A separate `tsconfig.test.json` provides relaxed TypeScript settings for tests (checked by `bun run typecheck:test`).
+- `test/setup.ts` is preloaded by `bunfig.toml` — it resets mocks and system time in `afterEach`.
+  All tests get this automatically.
+- Oxlint rules are relaxed for test files. You can use `any`, non-null assertions, and other
+  patterns normally flagged.
+- A separate `tsconfig.test.json` provides relaxed TypeScript settings for tests (checked by
+  `bun run typecheck:test`).
 - Coverage threshold is 100% for `src/`. Run `bun test --coverage` to see the report.
 
 ### Import Organization
@@ -130,11 +148,13 @@ No path alias (`@/*`) — use relative imports everywhere.
 - Always use `bun` commands, not `npm` or `yarn`.
 - The lockfile in this repo is `bun.lock`.
 - Bun provides native TypeScript execution without precompilation.
-- For one-off package execution, use `bun x` for packages already in `devDependencies` rather than `bunx`, which can pull remote versions.
+- For one-off package execution, use `bun x` for packages already in `devDependencies` rather than
+  `bunx`, which can pull remote versions.
 
 ### Prefer Bun Built-ins Over Node
 
-When possible, use Bun's native APIs in `scripts/` and tests. Do not use them in `src/` — published code must be Node-compatible.
+When possible, use Bun's native APIs in `scripts/` and tests. Do not use them in `src/` — published
+code must be Node-compatible.
 
 | Task          | Use (Bun)                                | Avoid (Node)                     |
 | ------------- | ---------------------------------------- | -------------------------------- |
@@ -147,17 +167,24 @@ When possible, use Bun's native APIs in `scripts/` and tests. Do not use them in
 | Environment   | `Bun.env.VAR`                            | `process.env.VAR`                |
 | Glob          | `Bun.Glob`                               | `glob` package                   |
 
-When a Bun equivalent doesn't exist or Node's API is more appropriate, use the `node:` prefix for clarity (e.g., `import { join } from 'node:path'`).
+When a Bun equivalent doesn't exist or Node's API is more appropriate, use the `node:` prefix for
+clarity (e.g., `import { join } from 'node:path'`).
 
 ### Configuration Notes
 
-- **bunfig.toml**: Configures the `.md` text loader, forces Bun runtime for scripts, and sets up `bun test` with preload, coverage, and 100% thresholds.
+- **bunfig.toml**: Configures the `.md` text loader, forces Bun runtime for scripts, and sets up
+  `bun test` with preload, coverage, and 100% thresholds.
 - **TypeScript**: Uses Bun types; Node type libs are not included by default.
-- **Oxlint**: Rust-based linter with built-in TypeScript, promise, unicorn, and import plugins. Type-aware rules enabled via `--type-aware --tsconfig ./tsconfig.json`. Test files have relaxed rules.
-- **Testing**: Run tests in parallel via `bun test --parallel` (the `"test"` script includes this flag).
+- **Oxlint**: Rust-based linter with built-in TypeScript, promise, unicorn, and import plugins.
+  Type-aware rules enabled via `--type-aware --tsconfig ./tsconfig.json`. Test files have relaxed
+  rules.
+- **Testing**: Run tests in parallel via `bun test --parallel` (the `"test"` script includes this
+  flag).
 
 ## Error Taxonomy
 
-- `TypeError` — shape/type validation failures (unsupported note names, unrecognized chord suffixes, mismatched serialized data)
+- `TypeError` — shape/type validation failures (unsupported note names, unrecognized chord suffixes,
+  mismatched serialized data)
 - `RangeError` — numeric bounds violations (MIDI out of 0..127, octave out of -1..9, frequency ≤ 0)
-- Plain `Error` — not used (programmer configuration errors were removed in the factory-cycle cleanup)
+- Plain `Error` — not used (programmer configuration errors were removed in the factory-cycle
+  cleanup)
