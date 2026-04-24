@@ -163,7 +163,9 @@ export function midiToNoteNameWithOctave(midi: MidiKey): {
 } {
   const numericMidi = Number(midi);
   const octave = createOctave(Math.floor(numericMidi / 12) - 1);
-  const note = SHARP_PREFERRED_NOTE_NAMES[createChromaticIndex(numericMidi % 12)];
+  // SHARP_PREFERRED_NOTE_NAMES has exactly 12 entries and ChromaticIndex is always 0..11.
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const note = SHARP_PREFERRED_NOTE_NAMES[createChromaticIndex(numericMidi % 12)]!;
 
   return { note, octave };
 }

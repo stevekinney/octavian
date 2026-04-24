@@ -154,4 +154,10 @@ When a Bun equivalent doesn't exist or Node's API is more appropriate, use the `
 - **bunfig.toml**: Configures the `.md` text loader, forces Bun runtime for scripts, and sets up `bun test` with preload, coverage, and 100% thresholds.
 - **TypeScript**: Uses Bun types; Node type libs are not included by default.
 - **Oxlint**: Rust-based linter with built-in TypeScript, promise, unicorn, and import plugins. Type-aware rules enabled via `--type-aware --tsconfig ./tsconfig.json`. Test files have relaxed rules.
-- **Testing**: Run tests in parallel via `bun test --parallel`.
+- **Testing**: Run tests in parallel via `bun test --parallel` (the `"test"` script includes this flag).
+
+## Error Taxonomy
+
+- `TypeError` — shape/type validation failures (unsupported note names, unrecognized chord suffixes, mismatched serialized data)
+- `RangeError` — numeric bounds violations (MIDI out of 0..127, octave out of -1..9, frequency ≤ 0)
+- Plain `Error` — not used (programmer configuration errors were removed in the factory-cycle cleanup)

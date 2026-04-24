@@ -16,7 +16,14 @@ export type {
   Semitones,
 } from './branded-types.js';
 
-export { CHORDS, CHORD_SYMBOLS, chordQualityForSuffix, resolveChordSuffix } from './chords.js';
+export {
+  CHORDS,
+  CHORD_SYMBOLS,
+  chordQualityForSuffix,
+  createChordName,
+  createSlashChordName,
+  resolveChordSuffix,
+} from './chords.js';
 export type {
   ChordDegree,
   ChordDisplayName,

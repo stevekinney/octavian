@@ -23,19 +23,26 @@ describe('Chord', () => {
     expect(chord.size).toBe(4);
 
     expect(Chord.create('C4', 'maj7').equals(chord)).toBe(true);
-    expect(Chord.create('D4', chord.toJSON()).equals(chord)).toBe(true);
+    expect(Chord.fromJSON(chord.toJSON()).equals(chord)).toBe(true);
     expect(() =>
       Chord.fromJSON({
         ...chord.toJSON(),
         notes: chord.toJSON().notes.slice(0, 3),
       }),
     ).toThrow(TypeError);
+    expect(() =>
+      Chord.fromJSON({
+        ...chord.toJSON(),
+        notes: chord.toJSON().notes.slice(0, 3),
+      }),
+    ).toThrow(/do not match/i);
   });
 
   it('indexes notes and chord members', () => {
     const chord = new Chord('C4', 'maj7');
     expect(chord.at(1).toString()).toBe('E4');
     expect(() => chord.at(99)).toThrow(RangeError);
+    expect(() => chord.at(99)).toThrow(/out of range/i);
     expect(chord.degree(5)?.toString()).toBe('G4');
     expect(chord.degree(2)).toBeNull();
     expect(chord.interval('majorThird')?.toString()).toBe('E4');
@@ -56,14 +63,18 @@ describe('Chord', () => {
     expect(firstInversion.name).toBe('Cmaj7/E');
     expect(chord.inversion(2).bass.toString()).toBe('G4');
     expect(() => chord.invert(-1)).toThrow(RangeError);
+    expect(() => chord.invert(-1)).toThrow(/non-negative inversion/i);
     expect(() => chord.inversion(6)).toThrow(RangeError);
+    expect(() => chord.inversion(6)).toThrow(/cannot set inversion/i);
     expect(() => new Chord('C4', 'major', 3)).toThrow(RangeError);
+    expect(() => new Chord('C4', 'major', 3)).toThrow(/cannot invert/i);
   });
 
   it('supports slash chords and catalog-backed interval edits', () => {
     const chord = new Chord('C4', 'maj7');
     expect(chord.slash('E4').equals(chord.inversion(1))).toBe(true);
     expect(() => chord.slash('F4')).toThrow(RangeError);
+    expect(() => chord.slash('F4')).toThrow(/slash chords are restricted/i);
 
     expect(chord.omit('majorSeventh').suffix).toBe('major');
     expect(new Chord('C4', 'major').add('majorSeventh').suffix).toBe('majorSeventh');
@@ -71,6 +82,9 @@ describe('Chord', () => {
       'augmented',
     );
     expect(() => new Chord('C4', 'major').add('minorSecond')).toThrow(RangeError);
+    expect(() => new Chord('C4', 'major').add('minorSecond')).toThrow(
+      /does not match an exported chord/i,
+    );
   });
 
   it('validates and derives voicings', () => {
@@ -96,11 +110,17 @@ describe('Chord', () => {
       'B4',
     ]);
     expect(() => chord.voicing([new Note('C', 4)])).toThrow(RangeError);
+    expect(() => chord.voicing([new Note('C', 4)])).toThrow(/expected \d+ notes/i);
     expect(() =>
       chord.voicing([new Note('C', 4), new Note('E', 4), new Note('G', 4), new Note('A', 4)]),
     ).toThrow(RangeError);
+    expect(() =>
+      chord.voicing([new Note('C', 4), new Note('E', 4), new Note('G', 4), new Note('A', 4)]),
+    ).toThrow(/pitch classes/i);
     expect(() => chord.lowerFromTop(0)).toThrow(RangeError);
+    expect(() => chord.lowerFromTop(0)).toThrow(/range 1\.\.\d+/i);
     expect(() => chord.lowerFromTop(1, 0)).toThrow(RangeError);
+    expect(() => chord.lowerFromTop(1, 0)).toThrow(/positive octave/i);
   });
 
   it('compares chords and checks membership', () => {
@@ -130,5 +150,25 @@ describe('Chord', () => {
       inversion: 0,
     });
     expect([...chord].map((note) => note.toString())).toEqual(['C4', 'E4', 'G4', 'B4']);
+  });
+
+  // ---------------------------------------------------------------------------
+  // M8 — Chord editor no-op branch tests
+  // ---------------------------------------------------------------------------
+
+  it('returns the same instance when omit, add, or alter are no-ops', () => {
+    const cMajor = new Chord('C4', 'major');
+
+    // omit: interval not present in chord → no-op → same reference
+    const afterOmitAbsent = cMajor.omit('minorSecond');
+    expect(afterOmitAbsent).toBe(cMajor);
+
+    // add: interval already present → no-op → same reference
+    const afterAddPresent = cMajor.add('majorThird');
+    expect(afterAddPresent).toBe(cMajor);
+
+    // alter: from and to resolve to the same interval → no-op → same reference
+    const afterAlterSame = cMajor.alter('perfectFifth', 'perfectFifth');
+    expect(afterAlterSame).toBe(cMajor);
   });
 });

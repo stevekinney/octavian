@@ -31,7 +31,46 @@ export type ScaleInformation = {
   readonly aliases?: readonly string[];
 };
 
-const CANONICAL_SCALES = {
+/**
+ * The canonical scale names used for computed scale output.
+ */
+export type CanonicalScaleType =
+  | 'major'
+  | 'naturalMinor'
+  | 'harmonicMinor'
+  | 'melodicMinor'
+  | 'dorian'
+  | 'phrygian'
+  | 'lydian'
+  | 'mixolydian'
+  | 'locrian'
+  | 'majorPentatonic'
+  | 'minorPentatonic'
+  | 'blues'
+  | 'chromatic'
+  | 'wholeTone'
+  | 'diminished'
+  | 'halfWholeDiminished';
+
+/**
+ * The accepted scale alias names.
+ */
+type ScaleAliasKey =
+  | 'ionian'
+  | 'minor'
+  | 'aeolian'
+  | 'pentatonicMajor'
+  | 'pentatonicMinor'
+  | 'minorBlues'
+  | 'octatonic'
+  | 'wholeHalfDiminished';
+
+/**
+ * Every accepted scale name, including aliases.
+ */
+export type ScaleType = CanonicalScaleType | ScaleAliasKey;
+
+const CANONICAL_SCALES: Record<CanonicalScaleType, Omit<ScaleInformation, 'degrees'>> = {
   major: {
     intervals: [
       'perfectUnison',
@@ -197,33 +236,12 @@ const CANONICAL_SCALES = {
       'minorSeventh',
     ],
   },
-} as const satisfies Record<string, Omit<ScaleInformation, 'degrees'>>;
-
-const SCALE_ALIASES = {
-  ionian: 'major',
-  minor: 'naturalMinor',
-  aeolian: 'naturalMinor',
-  pentatonicMajor: 'majorPentatonic',
-  pentatonicMinor: 'minorPentatonic',
-  minorBlues: 'blues',
-  octatonic: 'diminished',
-  wholeHalfDiminished: 'diminished',
-} as const satisfies Record<string, keyof typeof CANONICAL_SCALES>;
-
-/**
- * The canonical scale names used for computed scale output.
- */
-export type CanonicalScaleType = keyof typeof CANONICAL_SCALES;
-
-/**
- * Every accepted scale name, including aliases.
- */
-export type ScaleType = CanonicalScaleType | keyof typeof SCALE_ALIASES;
+} satisfies Record<CanonicalScaleType, Omit<ScaleInformation, 'degrees'>>;
 
 /**
  * Named scale definitions, including accepted aliases.
  */
-export const SCALES = Object.freeze({
+export const SCALES: Readonly<Record<ScaleType, ScaleInformation>> = Object.freeze({
   major: {
     ...CANONICAL_SCALES.major,
     degrees: [1, 2, 3, 4, 5, 6, 7],
@@ -344,9 +362,9 @@ export const SCALES = Object.freeze({
     degrees: [1, 2, 3, 4, 5, 6, 7, 8],
     aliases: ['diminished'],
   },
-}) satisfies Readonly<Record<ScaleType, ScaleInformation>>;
+});
 
-const MODE_TO_SCALE_TYPE = {
+const MODE_TO_SCALE_TYPE: Record<ModeName, CanonicalScaleType> = {
   ionian: 'major',
   dorian: 'dorian',
   phrygian: 'phrygian',
@@ -354,7 +372,7 @@ const MODE_TO_SCALE_TYPE = {
   mixolydian: 'mixolydian',
   aeolian: 'naturalMinor',
   locrian: 'locrian',
-} as const satisfies Record<ModeName, CanonicalScaleType>;
+} satisfies Record<ModeName, CanonicalScaleType>;
 
 /**
  * Resolves a scale name or alias to its canonical scale name.

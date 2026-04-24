@@ -15,7 +15,7 @@ const OCTAVE_SET = new Set<number>(OCTAVES);
 /**
  * A supported octave value for scientific pitch notation.
  */
-export type Octave = (typeof OCTAVES)[number];
+export type Octave = Brand<number, 'Octave'>;
 
 /**
  * The twelve pitch classes in an equal-tempered octave.

@@ -1,4 +1,4 @@
-import type { NoteName } from './note-spellings.js';
+import type { Brand } from './branded-types.js';
 import type { Interval } from './intervals.js';
 
 /**
@@ -48,7 +48,141 @@ export type ChordInformation = {
   readonly intervals: readonly Interval[];
 };
 
-const CANONICAL_CHORDS = {
+/**
+ * The canonical chord suffix names used for computed chord output.
+ */
+export type CanonicalChordSuffix =
+  | 'major'
+  | 'minor'
+  | 'diminished'
+  | 'augmented'
+  | 'suspendedSecond'
+  | 'suspendedFourth'
+  | 'majorSixth'
+  | 'minorSixth'
+  | 'dominantSeventh'
+  | 'majorSeventh'
+  | 'minorSeventh'
+  | 'minorMajorSeventh'
+  | 'diminishedSeventh'
+  | 'halfDiminishedSeventh'
+  | 'augmentedSeventh'
+  | 'augmentedMajorSeventh'
+  | 'dominantNinth'
+  | 'majorNinth'
+  | 'minorNinth'
+  | 'dominantEleventh'
+  | 'majorEleventh'
+  | 'minorEleventh'
+  | 'dominantThirteenth'
+  | 'majorThirteenth'
+  | 'minorThirteenth'
+  | 'addNine'
+  | 'minorAddNine'
+  | 'sixthAddNine';
+
+/**
+ * The accepted chord alias suffix names.
+ */
+type ChordAliasKey =
+  | 'majorTriad'
+  | 'minorTriad'
+  | 'diminishedTriad'
+  | 'augmentedTriad'
+  | 'sus2'
+  | 'sus4'
+  | 'six'
+  | 'minorSix'
+  | 'seven'
+  | 'maj7'
+  | 'min7'
+  | 'minorMaj7'
+  | 'minorSevenFlatFive'
+  | 'sevenSharpFive'
+  | 'majorSevenSharpFive'
+  | 'nine'
+  | 'maj9'
+  | 'min9'
+  | 'eleven'
+  | 'maj11'
+  | 'min11'
+  | 'thirteen'
+  | 'maj13'
+  | 'min13'
+  | 'majorAddNine'
+  | 'sixNine';
+
+/**
+ * Every accepted chord suffix, including aliases.
+ */
+export type ChordSuffix = CanonicalChordSuffix | ChordAliasKey;
+
+/** A validated chord name string, e.g. "Cmaj7" or "C". */
+export type ChordName = Brand<string, 'ChordName'>;
+
+/** A validated slash-chord name string, e.g. "Cmaj7/E". */
+export type SlashChordName = Brand<string, 'SlashChordName'>;
+
+/**
+ * The display name for a chord.
+ */
+export type ChordDisplayName = ChordName | SlashChordName;
+
+/**
+ * Creates a validated chord name brand.
+ *
+ * @param value The chord name string.
+ * @returns The branded chord name.
+ */
+export function createChordName(value: string): ChordName {
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+  return value as ChordName;
+}
+
+/**
+ * Creates a validated slash chord name brand.
+ *
+ * @param value The slash chord name string.
+ * @returns The branded slash chord name.
+ */
+export function createSlashChordName(value: string): SlashChordName {
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+  return value as SlashChordName;
+}
+
+/**
+ * A high-level chord quality classification.
+ */
+export type ChordQuality =
+  | 'major'
+  | 'minor'
+  | 'diminished'
+  | 'augmented'
+  | 'dominant'
+  | 'suspended'
+  | 'altered';
+
+/**
+ * The supported chord degrees that can be queried directly.
+ */
+export type ChordDegree = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 11 | 13;
+
+/**
+ * Supported inversion counts for the chord catalog in this package.
+ */
+export type InversionCount = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
+ * Supported tertian chord structures derived from scales.
+ */
+export type ChordType = 'triad' | 'seventh' | 'ninth' | 'eleventh' | 'thirteenth';
+
+/**
+ * Supported chord voicing strategies.
+ */
+export type VoicingStrategy = 'close' | 'open' | 'lowerSecondFromTop' | 'lowerThirdFromTop';
+
+const CANONICAL_CHORDS: Record<CanonicalChordSuffix, ChordInformation> = {
   major: {
     symbol: '',
     intervals: ['perfectUnison', 'majorThird', 'perfectFifth'],
@@ -206,9 +340,9 @@ const CANONICAL_CHORDS = {
     symbol: '6/9',
     intervals: ['perfectUnison', 'majorThird', 'perfectFifth', 'majorSixth', 'majorNinth'],
   },
-} as const satisfies Record<string, ChordInformation>;
+} satisfies Record<CanonicalChordSuffix, ChordInformation>;
 
-const CHORD_ALIASES = {
+const CHORD_ALIASES: Record<ChordAliasKey, CanonicalChordSuffix> = {
   majorTriad: 'major',
   minorTriad: 'minor',
   diminishedTriad: 'diminished',
@@ -235,69 +369,12 @@ const CHORD_ALIASES = {
   min13: 'minorThirteenth',
   majorAddNine: 'addNine',
   sixNine: 'sixthAddNine',
-} as const satisfies Record<string, keyof typeof CANONICAL_CHORDS>;
-
-/**
- * The canonical chord suffixes used for computed chord output.
- */
-export type CanonicalChordSuffix = keyof typeof CANONICAL_CHORDS;
-
-/**
- * Every accepted chord suffix, including aliases.
- */
-export type ChordSuffix = CanonicalChordSuffix | keyof typeof CHORD_ALIASES;
-
-/**
- * A spelled chord name without a slash bass note.
- */
-export type ChordName = `${NoteName}${ChordSymbol}`;
-
-/**
- * A slash chord display name.
- */
-export type SlashChordName = `${ChordName}/${NoteName}`;
-
-/**
- * The display name for a chord.
- */
-export type ChordDisplayName = ChordName | SlashChordName;
-
-/**
- * A high-level chord quality classification.
- */
-export type ChordQuality =
-  | 'major'
-  | 'minor'
-  | 'diminished'
-  | 'augmented'
-  | 'dominant'
-  | 'suspended'
-  | 'altered';
-
-/**
- * The supported chord degrees that can be queried directly.
- */
-export type ChordDegree = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 11 | 13;
-
-/**
- * Supported inversion counts for the chord catalog in this package.
- */
-export type InversionCount = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-
-/**
- * Supported tertian chord structures derived from scales.
- */
-export type ChordType = 'triad' | 'seventh' | 'ninth' | 'eleventh' | 'thirteenth';
-
-/**
- * Supported chord voicing strategies.
- */
-export type VoicingStrategy = 'close' | 'open' | 'lowerSecondFromTop' | 'lowerThirdFromTop';
+} satisfies Record<ChordAliasKey, CanonicalChordSuffix>;
 
 /**
  * Structured chord definitions, including accepted aliases.
  */
-export const CHORDS = Object.freeze({
+export const CHORDS: Readonly<Record<ChordSuffix, ChordInformation>> = Object.freeze({
   ...CANONICAL_CHORDS,
   majorTriad: CANONICAL_CHORDS.major,
   minorTriad: CANONICAL_CHORDS.minor,
@@ -325,7 +402,7 @@ export const CHORDS = Object.freeze({
   min13: CANONICAL_CHORDS.minorThirteenth,
   majorAddNine: CANONICAL_CHORDS.addNine,
   sixNine: CANONICAL_CHORDS.sixthAddNine,
-}) satisfies Readonly<Record<ChordSuffix, ChordInformation>>;
+});
 
 const CHORD_SYMBOL_TO_SUFFIX = new Map<ChordSymbol, CanonicalChordSuffix>(
   Object.entries(CANONICAL_CHORDS).map(([suffix, information]) => [
@@ -343,7 +420,7 @@ const CHORD_INTERVAL_LOOKUP = new Map<string, CanonicalChordSuffix>(
   ]),
 );
 
-const CHORD_QUALITY_BY_SUFFIX = {
+const CHORD_QUALITY_BY_SUFFIX: Record<CanonicalChordSuffix, ChordQuality> = {
   major: 'major',
   majorSixth: 'major',
   majorSeventh: 'major',
@@ -372,7 +449,7 @@ const CHORD_QUALITY_BY_SUFFIX = {
   dominantNinth: 'dominant',
   dominantEleventh: 'dominant',
   dominantThirteenth: 'dominant',
-} as const satisfies Record<CanonicalChordSuffix, ChordQuality>;
+} satisfies Record<CanonicalChordSuffix, ChordQuality>;
 
 /**
  * Resolves a chord suffix or symbol to its canonical chord suffix.
@@ -389,7 +466,7 @@ export function resolveChordSuffix(input: ChordSuffix | ChordSymbol): CanonicalC
 
   if (input in CHORD_ALIASES) {
     // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-    return CHORD_ALIASES[input as keyof typeof CHORD_ALIASES];
+    return CHORD_ALIASES[input as ChordAliasKey];
   }
 
   // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion

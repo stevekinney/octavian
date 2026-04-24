@@ -13,7 +13,79 @@ export type IntervalInformation = {
   readonly quality: IntervalQuality;
 };
 
-const CANONICAL_INTERVALS = {
+/**
+ * The canonical interval names used for computed output.
+ */
+export type CanonicalInterval =
+  | 'perfectUnison'
+  | 'diminishedSecond'
+  | 'minorSecond'
+  | 'augmentedUnison'
+  | 'majorSecond'
+  | 'diminishedThird'
+  | 'minorThird'
+  | 'augmentedSecond'
+  | 'majorThird'
+  | 'diminishedFourth'
+  | 'perfectFourth'
+  | 'augmentedThird'
+  | 'augmentedFourth'
+  | 'diminishedFifth'
+  | 'perfectFifth'
+  | 'diminishedSixth'
+  | 'minorSixth'
+  | 'augmentedFifth'
+  | 'majorSixth'
+  | 'diminishedSeventh'
+  | 'minorSeventh'
+  | 'augmentedSixth'
+  | 'majorSeventh'
+  | 'diminishedOctave'
+  | 'perfectOctave'
+  | 'minorNinth'
+  | 'augmentedOctave'
+  | 'majorNinth'
+  | 'diminishedTenth'
+  | 'minorTenth'
+  | 'augmentedNinth'
+  | 'majorTenth'
+  | 'diminishedEleventh'
+  | 'perfectEleventh'
+  | 'augmentedTenth'
+  | 'augmentedEleventh'
+  | 'diminishedTwelfth'
+  | 'perfectTwelfth'
+  | 'minorThirteenth'
+  | 'augmentedTwelfth'
+  | 'majorThirteenth'
+  | 'diminishedFourteenth';
+
+/**
+ * The accepted interval alias names.
+ */
+type IntervalAliasKey =
+  | 'unison'
+  | 'halfStep'
+  | 'semitone'
+  | 'wholeStep'
+  | 'wholeTone'
+  | 'tone'
+  | 'tritone'
+  | 'octave'
+  | 'flatNine'
+  | 'ninth'
+  | 'eleventh'
+  | 'sharpEleven'
+  | 'twelfth'
+  | 'flatThirteen'
+  | 'thirteenth';
+
+/**
+ * Every accepted interval name, including aliases.
+ */
+export type Interval = CanonicalInterval | IntervalAliasKey;
+
+const CANONICAL_INTERVALS: Record<CanonicalInterval, IntervalInformation> = {
   perfectUnison: { semitones: 0, symbol: 'P1', degree: 1, quality: 'perfect' },
   diminishedSecond: { semitones: 0, symbol: 'd2', degree: 2, quality: 'diminished' },
   minorSecond: { semitones: 1, symbol: 'm2', degree: 2, quality: 'minor' },
@@ -56,27 +128,9 @@ const CANONICAL_INTERVALS = {
   augmentedTwelfth: { semitones: 20, symbol: 'A12', degree: 12, quality: 'augmented' },
   majorThirteenth: { semitones: 21, symbol: 'M13', degree: 13, quality: 'major' },
   diminishedFourteenth: { semitones: 21, symbol: 'd14', degree: 14, quality: 'diminished' },
-} as const satisfies Record<string, IntervalInformation>;
+} satisfies Record<CanonicalInterval, IntervalInformation>;
 
-const INTERVAL_ALIASES = {
-  unison: 'perfectUnison',
-  halfStep: 'minorSecond',
-  semitone: 'minorSecond',
-  wholeStep: 'majorSecond',
-  wholeTone: 'majorSecond',
-  tone: 'majorSecond',
-  tritone: 'augmentedFourth',
-  octave: 'perfectOctave',
-  flatNine: 'minorNinth',
-  ninth: 'majorNinth',
-  eleventh: 'perfectEleventh',
-  sharpEleven: 'augmentedEleventh',
-  twelfth: 'perfectTwelfth',
-  flatThirteen: 'minorThirteenth',
-  thirteenth: 'majorThirteenth',
-} as const satisfies Record<string, keyof typeof CANONICAL_INTERVALS>;
-
-const INTERVAL_ALIAS_DEFINITIONS = {
+const INTERVAL_ALIAS_DEFINITIONS: Record<IntervalAliasKey, IntervalInformation> = {
   unison: CANONICAL_INTERVALS.perfectUnison,
   halfStep: CANONICAL_INTERVALS.minorSecond,
   semitone: CANONICAL_INTERVALS.minorSecond,
@@ -92,25 +146,15 @@ const INTERVAL_ALIAS_DEFINITIONS = {
   twelfth: CANONICAL_INTERVALS.perfectTwelfth,
   flatThirteen: CANONICAL_INTERVALS.minorThirteenth,
   thirteenth: CANONICAL_INTERVALS.majorThirteenth,
-} as const satisfies Record<keyof typeof INTERVAL_ALIASES, IntervalInformation>;
-
-/**
- * The canonical interval names used for computed output.
- */
-export type CanonicalInterval = keyof typeof CANONICAL_INTERVALS;
-
-/**
- * Every accepted interval name, including aliases.
- */
-export type Interval = CanonicalInterval | keyof typeof INTERVAL_ALIASES;
+} satisfies Record<IntervalAliasKey, IntervalInformation>;
 
 /**
  * Structured interval definitions, including accepted aliases.
  */
-export const INTERVALS = Object.freeze({
+export const INTERVALS: Readonly<Record<Interval, IntervalInformation>> = Object.freeze({
   ...CANONICAL_INTERVALS,
   ...INTERVAL_ALIAS_DEFINITIONS,
-}) satisfies Readonly<Record<Interval, IntervalInformation>>;
+});
 
 const CANONICAL_INTERVAL_LOOKUP = new Map<string, CanonicalInterval>(
   Object.entries(CANONICAL_INTERVALS).map(([interval, information]) => [

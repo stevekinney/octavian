@@ -20,6 +20,7 @@ import {
   findCanonicalIntervalBySemitonesAndDegree,
   resolveInterval,
 } from './intervals.ts';
+import type { AccidentalPreference, KeySignature } from './key-signatures.ts';
 import {
   frequencyToNearestMidi,
   isChordSuffix,
@@ -56,10 +57,15 @@ describe('foundation helpers', () => {
     expect(createFrequency(440)).toBe(440);
     expect(createSemitones(-7)).toBe(-7);
     expect(() => createOctave(10)).toThrow(RangeError);
+    expect(() => createOctave(10)).toThrow(/range -1\.\.9/i);
     expect(() => createChromaticIndex(12)).toThrow(RangeError);
+    expect(() => createChromaticIndex(12)).toThrow(/range 0\.\.11/i);
     expect(() => createMidiKey(128)).toThrow(RangeError);
+    expect(() => createMidiKey(128)).toThrow(/range 0\.\.127/i);
     expect(() => createFrequency(0)).toThrow(RangeError);
+    expect(() => createFrequency(0)).toThrow(/positive finite/i);
     expect(() => createSemitones(1.5)).toThrow(RangeError);
+    expect(() => createSemitones(1.5)).toThrow(/integer semitone/i);
   });
 
   it('supports note spelling helpers and guards', () => {
@@ -71,11 +77,14 @@ describe('foundation helpers', () => {
     expect(parseNoteName('Ebb')).toEqual({ note: 'Ebb', natural: 'E', accidental: 'bb' });
     expect(parseNoteNameWithOctave('F#3')).toEqual({ note: 'F#', octave: 3 });
     expect(() => parseNoteName('H')).toThrow(TypeError);
+    expect(() => parseNoteName('H')).toThrow(/unsupported note name/i);
     expect(() => parseNoteNameWithOctave('H4')).toThrow(TypeError);
+    expect(() => parseNoteNameWithOctave('H4')).toThrow(/unsupported note string/i);
     expect(noteNameToChromaticIndex('Cb')).toBe(11);
     expect(normalizeChromaticIndex(-1)).toBe(11);
     expect(buildNoteName('F', 2)).toBe('F##');
     expect(() => buildNoteName('C', 3)).toThrow(RangeError);
+    expect(() => buildNoteName('C', 3)).toThrow(/accidental offset/i);
     expect(simplifyNoteName('B#')).toBe('C');
     expect(enharmonicsForNoteName('C#')).toEqual(expect.arrayContaining(['Db', 'B##']));
     expect(SHARP_PREFERRED_NOTE_NAMES[6]).toBe('F#');
@@ -114,6 +123,7 @@ describe('foundation helpers', () => {
     expect(resolveChordSuffix('maj7')).toBe('majorSeventh');
     expect(resolveChordSuffix('7')).toBe('dominantSeventh');
     expect(() => Reflect.apply(resolveChordSuffix, undefined, ['sus9'])).toThrow(TypeError);
+    expect(() => Reflect.apply(resolveChordSuffix, undefined, ['sus9'])).toThrow(/unsupported/i);
     expect(findChordSuffixByIntervals(['perfectUnison', 'majorThird', 'perfectFifth'])).toBe(
       'major',
     );
@@ -143,5 +153,22 @@ describe('foundation helpers', () => {
     expect(SCALES.ionian.aliases).toContain('major');
     expect(isScaleType('octatonic')).toBe(true);
     expect(isScaleType('superLocrian')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// M3 — KeySignature type-level test
+// ---------------------------------------------------------------------------
+
+describe('KeySignature types', () => {
+  it('KeySignature and AccidentalPreference are usable as type annotations', () => {
+    // The type imports are only used at the type level; this verifies the file
+    // is reachable from the test graph and the types are structurally valid.
+    const accidentalPreference: AccidentalPreference = 'sharps';
+    const sig: KeySignature = { tonic: 'C', scale: 'major', accidentalPreference };
+    expect(typeof sig).toBe('object');
+    expect(sig.tonic).toBe('C');
+    expect(sig.scale).toBe('major');
+    expect(sig.accidentalPreference).toBe('sharps');
   });
 });

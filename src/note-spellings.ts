@@ -33,7 +33,7 @@ export const ACCIDENTALS = ['', '#', 'b', '##', 'bb'] as const;
 /**
  * Natural note letters mapped to their pitch classes.
  */
-export const NATURAL_CHROMATIC_INDEXES = {
+export const NATURAL_CHROMATIC_INDEXES: Record<Natural, number> = {
   C: 0,
   D: 2,
   E: 4,
@@ -41,23 +41,23 @@ export const NATURAL_CHROMATIC_INDEXES = {
   G: 7,
   A: 9,
   B: 11,
-} as const satisfies Record<Natural, number>;
+} satisfies Record<Natural, number>;
 
 /**
  * Supported accidental offsets in semitones.
  */
-export const ACCIDENTAL_OFFSETS = {
+export const ACCIDENTAL_OFFSETS: Record<Accidental, number> = {
   '': 0,
   '#': 1,
   b: -1,
   '##': 2,
   bb: -2,
-} as const satisfies Record<Accidental, number>;
+} satisfies Record<Accidental, number>;
 
 /**
  * Sharp-preferred spellings used when no tonal context is available.
  */
-export const SHARP_PREFERRED_NOTE_NAMES = [
+export const SHARP_PREFERRED_NOTE_NAMES: readonly NoteName[] = [
   'C',
   'C#',
   'D',
@@ -70,7 +70,7 @@ export const SHARP_PREFERRED_NOTE_NAMES = [
   'A',
   'A#',
   'B',
-] as const satisfies readonly NoteName[];
+] satisfies readonly NoteName[];
 
 /**
  * Every supported note name in this library.
@@ -211,7 +211,9 @@ export function buildNoteName(natural: Natural, accidentalOffset: number): NoteN
  * @returns The simplified note name.
  */
 export function simplifyNoteName(note: NoteName): NoteName {
-  return SHARP_PREFERRED_NOTE_NAMES[noteNameToChromaticIndex(note)];
+  // SHARP_PREFERRED_NOTE_NAMES has exactly 12 entries and ChromaticIndex is always 0..11.
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  return SHARP_PREFERRED_NOTE_NAMES[noteNameToChromaticIndex(note)]!;
 }
 
 /**

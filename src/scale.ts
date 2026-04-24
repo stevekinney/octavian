@@ -12,7 +12,7 @@ import {
   type ScaleType,
 } from './scales.js';
 import { Chord } from './chord.js';
-import { Note, setNoteScaleFactory, type NoteLike, type SerializedNote } from './note.js';
+import { Note, type NoteLike, type SerializedNote } from './note.js';
 
 const CHORD_SIZE_BY_STRUCTURE = {
   triad: 3,
@@ -92,8 +92,6 @@ export class Scale {
       SCALES[this.#type].intervals.map((interval) => resolveInterval(interval)),
     );
     this.#notes = Object.freeze(this.#intervals.map((interval) => this.#root.transpose(interval)));
-
-    Object.freeze(this);
   }
 
   /**
@@ -568,5 +566,3 @@ export class Scale {
     return `Scale(${this.root.note} ${this.type})`;
   }
 }
-
-setNoteScaleFactory((note, type) => new Scale(note, type));

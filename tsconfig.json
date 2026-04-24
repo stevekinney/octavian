@@ -13,6 +13,8 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "isolatedDeclarations": true,
+    "declaration": true,
     "noEmit": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,

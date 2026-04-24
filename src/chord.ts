@@ -2,6 +2,8 @@ import type { MidiKey } from './branded-types.js';
 import {
   CHORDS,
   chordQualityForSuffix,
+  createChordName,
+  createSlashChordName,
   findChordSuffixByIntervals,
   resolveChordSuffix,
   type CanonicalChordSuffix,
@@ -14,7 +16,7 @@ import {
 } from './chords.js';
 import { INTERVALS, resolveInterval, type Interval } from './intervals.js';
 import { isInterval } from './music-utilities.js';
-import { Note, setNoteChordFactory, type NoteLike, type SerializedNote } from './note.js';
+import { Note, type NoteLike, type SerializedNote } from './note.js';
 
 /**
  * A normalized voicing for a chord.
@@ -110,6 +112,7 @@ export class Chord {
   readonly #baseNotes: readonly Note[];
   readonly #inversionIndex: InversionCount;
   readonly #notes: readonly Note[];
+  readonly #midi: readonly MidiKey[];
 
   /**
    * Creates an immutable chord from a root note and chord suffix or symbol.
@@ -137,22 +140,19 @@ export class Chord {
 
     this.#inversionIndex = inversion;
     this.#notes = applyInversion(this.#baseNotes, this.#inversionIndex);
-
-    Object.freeze(this);
+    this.#midi = Object.freeze(this.#notes.map((n) => n.midi));
   }
 
   /**
-   * Creates a chord from a root note and chord suffix, symbol, or serialized form.
+   * Creates a chord from a root note and chord suffix or symbol.
+   *
+   * To recreate a chord from serialized data, use {@link Chord.fromJSON} instead.
    *
    * @param note The chord root.
-   * @param chord The chord suffix, symbol, or serialized chord.
+   * @param chord The chord suffix or symbol.
    * @returns The created chord.
    */
-  public static create(note: NoteLike, chord: ChordSuffix | ChordSymbol | SerializedChord): Chord {
-    if (typeof chord === 'object' && chord !== null) {
-      return Chord.fromJSON(chord);
-    }
-
+  public static create(note: NoteLike, chord: ChordSuffix | ChordSymbol): Chord {
     return new Chord(note, chord);
   }
 
@@ -178,9 +178,11 @@ export class Chord {
    * The human-readable chord display name.
    */
   public get name(): ChordDisplayName {
-    return this.isSlashChord
-      ? `${this.root.note}${this.symbol}/${this.bass.note}`
-      : `${this.root.note}${this.symbol}`;
+    if (this.isSlashChord) {
+      return createSlashChordName(`${this.root.note}${this.symbol}/${this.bass.note}`);
+    }
+
+    return createChordName(`${this.root.note}${this.symbol}`);
   }
 
   /**
@@ -234,7 +236,7 @@ export class Chord {
    * The MIDI keys for the notes in the current inversion.
    */
   public get midi(): readonly MidiKey[] {
-    return Object.freeze(this.notes.map((note) => note.midi));
+    return this.#midi;
   }
 
   /**
@@ -624,5 +626,3 @@ export class Chord {
     return new Chord(this.root, suffix, toInversionCount(inversion));
   }
 }
-
-setNoteChordFactory((note, chord) => new Chord(note, chord));

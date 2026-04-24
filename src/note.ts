@@ -10,7 +10,6 @@ import {
   type Octave,
   type Semitones,
 } from './branded-types.js';
-import type { ChordSuffix, ChordSymbol } from './chords.js';
 import {
   INTERVALS,
   findCanonicalIntervalBySemitonesAndDegree,
@@ -39,18 +38,9 @@ import {
   noteNameToMidi,
   parseNoteNameWithOctave,
 } from './music-utilities.js';
-import type { ScaleType } from './scales.js';
 import { STANDARD_TUNING, type Tuning } from './tuning.js';
-import type { Chord } from './chord.js';
-import type { Scale } from './scale.js';
 
 const DEFAULT_OCTAVE = createOctave(4);
-
-type ChordFactory = (note: Note, chord: ChordSuffix | ChordSymbol) => Chord;
-type ScaleFactory = (note: Note, type: ScaleType) => Scale;
-
-let noteChordFactory: ChordFactory | null = null;
-let noteScaleFactory: ScaleFactory | null = null;
 
 /**
  * A JSON-serializable snapshot of a note.
@@ -149,42 +139,6 @@ function createNoteFromStructuredValue(
 }
 
 /**
- * Registers the chord factory used by `Note#chord`.
- *
- * @internal
- * @param factory The factory function to register.
- */
-export function setNoteChordFactory(factory: ChordFactory): void {
-  noteChordFactory = factory;
-}
-
-/**
- * Registers the scale factory used by `Note#scale`.
- *
- * @internal
- * @param factory The factory function to register.
- */
-export function setNoteScaleFactory(factory: ScaleFactory): void {
-  noteScaleFactory = factory;
-}
-
-function requireChordFactory(): ChordFactory {
-  if (!noteChordFactory) {
-    throw new TypeError('Chord support has not been configured.');
-  }
-
-  return noteChordFactory;
-}
-
-function requireScaleFactory(): ScaleFactory {
-  if (!noteScaleFactory) {
-    throw new TypeError('Scale support has not been configured.');
-  }
-
-  return noteScaleFactory;
-}
-
-/**
  * Applies an interval to a note while preserving theory-correct spelling.
  *
  * @param note The starting note.
@@ -244,8 +198,6 @@ export class Note {
     this.#frequency = createFrequency(Number(midiToFrequency(this.#midi)));
     this.#chromaticIndex = createChromaticIndex(noteNameToChromaticIndex(this.#note));
     this.#enharmonics = enharmonicsForNoteName(this.#note);
-
-    Object.freeze(this);
   }
 
   /**
@@ -467,50 +419,6 @@ export class Note {
   }
 
   /**
-   * Creates a scale rooted on this note.
-   *
-   * @param scaleType The scale type to create.
-   * @returns The created scale.
-   */
-  public scale(scaleType: ScaleType): Scale {
-    return requireScaleFactory()(this, scaleType);
-  }
-
-  /**
-   * Creates a chord rooted on this note.
-   *
-   * @param chord The chord suffix or symbol to apply.
-   * @returns The created chord.
-   */
-  public chord(chord: ChordSuffix | ChordSymbol): Chord {
-    return requireChordFactory()(this, chord);
-  }
-
-  /**
-   * Returns the next note above this note that belongs to a scale.
-   *
-   * @param scale The scale instance or scale type to use.
-   * @returns The next scale tone above this note.
-   */
-  public next(scale: Scale | ScaleType): Note {
-    const resolvedScale = typeof scale === 'string' ? this.scale(scale) : scale;
-
-    return resolvedScale.next(this);
-  }
-
-  /**
-   * Returns the previous note below this note that belongs to a scale.
-   *
-   * @param scale The scale instance or scale type to use.
-   * @returns The previous scale tone below this note.
-   */
-  public previous(scale: Scale | ScaleType): Note {
-    const resolvedScale = typeof scale === 'string' ? this.scale(scale) : scale;
-
-    return resolvedScale.previous(this);
-  }
-
-  /**
    * Returns the ascending interval from this note to another note.
    *
    * @param value The target note-like value.
@@ -653,6 +561,7 @@ export class Note {
   }
 
   /**
+   * @deprecated Use `toTuple()` instead. The iterator yields a union type rather than positional types.
    * Iterates over the note tuple values.
    *
    * @returns An iterator over note name, octave, MIDI key, and frequency.

@@ -11,7 +11,7 @@ export type Tuning = {
 /**
  * The standard orchestral tuning reference of A4 = 440Hz.
  */
-export const STANDARD_TUNING = {
+export const STANDARD_TUNING: Tuning = {
   reference: 'A4',
   frequency: createFrequency(440),
-} as const satisfies Tuning;
+} satisfies Tuning;

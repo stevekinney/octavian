@@ -2,18 +2,18 @@ import { $ } from 'bun';
 import chalk from 'chalk';
 import { capitalCase } from 'change-case';
 
-export const isContinuousIntegration = () =>
+export const isContinuousIntegration: () => boolean = () =>
   process.env['CI'] === 'true' || process.env['CI'] === '1';
 
-export function header(title: string) {
+export function header(title: string): void {
   const text = capitalCase(title);
   console.log('\n' + chalk.bgBlue.black(` ${text} `));
 }
 
-export const info = (msg: string) => console.log(chalk.cyan(msg));
-export const success = (msg: string) => console.log(chalk.green(msg));
-export const warning = (msg: string) => console.log(chalk.yellow(msg));
-export const error = (msg: string) => console.error(chalk.red(msg));
+export const info: (msg: string) => void = (msg: string) => console.log(chalk.cyan(msg));
+export const success: (msg: string) => void = (msg: string) => console.log(chalk.green(msg));
+export const warning: (msg: string) => void = (msg: string) => console.log(chalk.yellow(msg));
+export const error: (msg: string) => void = (msg: string) => console.error(chalk.red(msg));
 
 export async function getStagedFiles(): Promise<string[]> {
   const out = await $`git diff --cached --name-only`.text();
@@ -29,7 +29,7 @@ export async function fileChangedBetween(
   return out.trim().length > 0;
 }
 
-export async function printGitStatistics(refA: string, refB: string) {
+export async function printGitStatistics(refA: string, refB: string): Promise<void> {
   const out = await $`git diff --stat ${refA} ${refB}`.text();
   await Bun.write(Bun.stdout, out);
 }

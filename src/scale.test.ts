@@ -34,20 +34,29 @@ describe('Scale', () => {
         notes: scale.toJSON().notes.slice(0, 6),
       }),
     ).toThrow(TypeError);
+    expect(() =>
+      Scale.fromJSON({
+        ...scale.toJSON(),
+        notes: scale.toJSON().notes.slice(0, 6),
+      }),
+    ).toThrow(/do not match/i);
   });
 
   it('indexes and queries scale membership', () => {
     const scale = new Scale('C4', 'major');
     expect(scale.at(0).toString()).toBe('C4');
     expect(() => scale.at(99)).toThrow(RangeError);
+    expect(() => scale.at(99)).toThrow(/out of range/i);
     expect(scale.has('E5')).toBe(true);
     expect(scale.has('F#4')).toBe(false);
     expect(scale.degree(3).toString()).toBe('E4');
     expect(() => scale.degree(0)).toThrow(RangeError);
+    expect(() => scale.degree(0)).toThrow(/range 1\.\.\d+/i);
     expect(scale.degreeOf('Bb4')).toBeNull();
     expect(scale.degreeOf('A4')).toBe(6);
     expect(scale.interval('F4')).toBe('perfectFourth');
     expect(() => scale.interval('F#4')).toThrow(RangeError);
+    expect(() => scale.interval('F#4')).toThrow(/not part of the scale/i);
   });
 
   it('transposes, finds relatives, and derives modes', () => {
@@ -68,9 +77,13 @@ describe('Scale', () => {
     ]);
     expect(scale.rotate(1).toString()).toBe('D dorian');
     expect(() => new Scale('C4', 'majorPentatonic').mode('dorian')).toThrow(RangeError);
+    expect(() => new Scale('C4', 'majorPentatonic').mode('dorian')).toThrow(/seven-note diatonic/i);
     expect(() => new Scale('C4', 'blues').rotate(1)).toThrow(RangeError);
+    expect(() => new Scale('C4', 'blues').rotate(1)).toThrow(/exported scale type/i);
     expect(() => scale.rotate(99)).toThrow(RangeError);
+    expect(() => scale.rotate(99)).toThrow(/rotation index/i);
     expect(() => new Scale('C4', 'chromatic').relative('major')).toThrow(RangeError);
+    expect(() => new Scale('C4', 'chromatic').relative('major')).toThrow(/no relative/i);
   });
 
   it('navigates through notes in the scale', () => {
@@ -101,6 +114,27 @@ describe('Scale', () => {
     ]);
   });
 
+  // ---------------------------------------------------------------------------
+  // M8 — Scale navigation edge cases
+  // ---------------------------------------------------------------------------
+
+  it('navigates scale notes for member and non-member pitches', () => {
+    const scale = new Scale('C4', 'major');
+
+    // nearest: D4 is a member, returns D4 at the same octave
+    expect(scale.nearest('D4').toString()).toBe('D4');
+
+    // ascendingFrom: F#4 is not a member → starts from the next tone above, which is G4
+    const ascending = scale.ascendingFrom('F#4');
+    expect(ascending[0]?.toString()).toBe('G4');
+    expect(ascending).toHaveLength(7);
+
+    // descendingFrom: F#4 is not a member → starts from the next tone below, which is F4
+    const descending = scale.descendingFrom('F#4');
+    expect(descending[0]?.toString()).toBe('F4');
+    expect(descending).toHaveLength(7);
+  });
+
   it('builds tertian chords from supported scales', () => {
     const scale = new Scale('C4', 'major');
     expect(scale.triad(1).name).toBe('C');
@@ -124,6 +158,7 @@ describe('Scale', () => {
       'Bm7b5',
     ]);
     expect(() => new Scale('C4', 'chromatic').triad(1)).toThrow(RangeError);
+    expect(() => new Scale('C4', 'chromatic').triad(1)).toThrow(/no exported chord matches/i);
   });
 
   it('compares, serializes, and iterates scales', () => {

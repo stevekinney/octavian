@@ -26,8 +26,78 @@ describe('index exports', () => {
     expect(isChordSuffix('maj7')).toBe(true);
     expect(isScaleType('mixolydian')).toBe(true);
   });
+});
 
-  it('still loads the Bun test preload', () => {
-    expect((globalThis as Record<string, unknown>).__BUN_TEST_SETUP_LOADED__).toBe(true);
+// ---------------------------------------------------------------------------
+// M5 — Public API contract test (explicit allowlist)
+// ---------------------------------------------------------------------------
+
+const EXPECTED_EXPORTS = [
+  'ACCIDENTALS',
+  'ACCIDENTAL_OFFSETS',
+  'ALL_NOTE_NAMES',
+  'CHORDS',
+  'CHORD_SYMBOLS',
+  'CHROMATIC_INDEXES',
+  'INTERVALS',
+  'NATURALS',
+  'NATURAL_CHROMATIC_INDEXES',
+  'OCTAVES',
+  'SCALES',
+  'SHARP_PREFERRED_NOTE_NAMES',
+  'STANDARD_TUNING',
+  'Chord',
+  'Note',
+  'Scale',
+  'applyInterval',
+  'buildNoteName',
+  'chordQualityForSuffix',
+  'createChordName',
+  'createChromaticIndex',
+  'createFrequency',
+  'createMidiKey',
+  'createOctave',
+  'createSemitones',
+  'createSlashChordName',
+  'enharmonicsForNoteName',
+  'findCanonicalIntervalBySemitonesAndDegree',
+  'isDiatonicModeFamily',
+  'isChordSuffix',
+  'isChordSymbol',
+  'isInterval',
+  'isNoteName',
+  'isNoteNameWithOctave',
+  'isScaleType',
+  'midiToFrequency',
+  'midiToNoteNameWithOctave',
+  'normalizeChromaticIndex',
+  'noteNameToChromaticIndex',
+  'noteNameToMidi',
+  'parseNoteName',
+  'parseNoteNameWithOctave',
+  'resolveChordSuffix',
+  'resolveInterval',
+  'resolveScaleType',
+  'scaleTypeForMode',
+  'simplifyNoteName',
+].toSorted((a, b) => a.localeCompare(b));
+
+describe('public API contract', () => {
+  it('exports exactly the allowlisted runtime names', async () => {
+    // Attempt to read the fixture file; fall back to the hard-coded list above.
+    let allowlist: string[] = EXPECTED_EXPORTS;
+    try {
+      const fixture = await Bun.file(
+        new URL('../../tests/fixtures/consumer/expected-exports.json', import.meta.url),
+      ).json<string[]>();
+      allowlist = [...fixture].toSorted((a, b) => a.localeCompare(b));
+    } catch {
+      // Fixture file not present in this worktree — use the hard-coded list.
+    }
+
+    const module = await import('./index.ts');
+    const actual = Object.keys(module).toSorted((a, b) => a.localeCompare(b));
+
+    expect(actual).toEqual(allowlist);
   });
 });

@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'bun:test';
 
 import { createFrequency, createMidiKey, createSemitones } from './branded-types.ts';
-import { Chord } from './chord.ts';
 import { Note, applyInterval } from './note.ts';
-import { Scale } from './scale.ts';
 
 describe('Note', () => {
   it('creates notes from constructors and note-like inputs', () => {
-    expect(Chord).toBeDefined();
     const note = new Note('C#', 4);
     expect(note.note).toBe('C#');
     expect(note.octave).toBe(4);
@@ -30,10 +27,23 @@ describe('Note', () => {
     expect(() =>
       Note.create({
         ...note.toJSON(),
+        midi: createMidiKey(60),
+      }),
+    ).toThrow(/does not match/i);
+    expect(() =>
+      Note.create({
+        ...note.toJSON(),
         frequency: createFrequency(880),
       }),
     ).toThrow(TypeError);
+    expect(() =>
+      Note.create({
+        ...note.toJSON(),
+        frequency: createFrequency(880),
+      }),
+    ).toThrow(/does not match/i);
     expect(() => Reflect.apply(Note.create, Note, ['H'])).toThrow(TypeError);
+    expect(() => Reflect.apply(Note.create, Note, ['H'])).toThrow(/unsupported/i);
   });
 
   it('validates note-like values and compares notes', () => {
@@ -53,7 +63,9 @@ describe('Note', () => {
     expect(Note.fromFrequency(440).toString()).toBe('A4');
     expect(Note.fromFrequency(createFrequency(261.6255653005986)).toString()).toBe('C4');
     expect(() => Note.fromMidi(200)).toThrow(RangeError);
+    expect(() => Note.fromMidi(200)).toThrow(/range 0\.\.127/i);
     expect(() => Note.fromFrequency(-1)).toThrow(RangeError);
+    expect(() => Note.fromFrequency(-1)).toThrow(/positive finite/i);
   });
 
   it('transposes by intervals and semitones', () => {
@@ -68,7 +80,9 @@ describe('Note', () => {
     expect(note.up().toString()).toBe('B#4');
     expect(note.down().toString()).toBe('B#2');
     expect(() => note.up(-1)).toThrow(RangeError);
+    expect(() => note.up(-1)).toThrow(/non-negative integer/i);
     expect(() => note.down(-1)).toThrow(RangeError);
+    expect(() => note.down(-1)).toThrow(/non-negative integer/i);
 
     expect(new Note('C#', 4).equals('C#4')).toBe(true);
     expect(new Note('C#', 4).equals('Db4')).toBe(false);
@@ -77,14 +91,9 @@ describe('Note', () => {
     expect(note.withOctave(4).toString()).toBe('B#4');
   });
 
-  it('navigates scales and measures intervals', () => {
+  it('measures intervals and distances', () => {
     const note = new Note('C', 4);
-    const scale = new Scale(note, 'major');
 
-    expect(note.scale('major').toString()).toBe('C major');
-    expect(note.chord('maj7').name).toBe('Cmaj7');
-    expect(note.next(scale).toString()).toBe('D4');
-    expect(note.previous('major').toString()).toBe('B3');
     expect(note.distanceTo('E4')).toBe('majorThird');
     expect(new Note('E', 4).distanceTo('C4')).toBe('minorSixth');
     expect(new Note('B', 4).distanceTo('B3')).toBe('perfectOctave');
