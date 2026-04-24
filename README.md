@@ -1,125 +1,216 @@
-# Project Name
+# Octavian
 
-## Prerequisites
-
-- [Bun](https://bun.sh) installed on your machine.
+Type-safe music theory utilities for working with notes, intervals, chords, and scales in
+TypeScript.
 
 ## Installation
 
-Create a new project based on this template:
-
 ```bash
-# Basic installation
-bun create github.com/stevekinney/bun-template $PROJECT_DIRECTORY
-
-# Skip installing dependencies (useful for CI or offline work)
-bun create github.com/stevekinney/bun-template $PROJECT_DIRECTORY --no-install
+npm install octavian
+pnpm add octavian
+yarn add octavian
+bun add octavian
 ```
 
-The `--no-install` flag is helpful when:
+> [!NOTE] Runtime requirements Node 22+ (ESM) or Bun 1.3+. Dual Node/Bun resolution is automatic via
+> the `exports` map—no configuration needed on your end.
 
-- Working in offline environments
-- Using CI pipelines with cached dependencies
-- You plan to modify dependencies before installation
+## Design Goals
 
-## Core Tools
+- Immutable value objects for `Note`, `Chord`, and `Scale`
+- Runtime validation at every trust boundary
+- Theory-first spelling for interval, chord, and scale construction
+- Sharp-preferred simplification when a pitch is derived from raw MIDI or semitone math
+- 100% test coverage with full validation gates
 
-- Bun: runtime, bundler, test runner, and package manager
-- TypeScript: strict type checking
-- Oxlint: fast Rust-based linter
-- Prettier: formatting
-- Lefthook: Git hooks
+## Quick Start
+
+```ts
+import { Chord, Note, Scale } from 'octavian';
+
+const cSharp = new Note('C#', 4);
+const eb = cSharp.transpose('minorThird');
+const cMajorSeven = Chord.create('C4', 'maj7');
+const cMajor = Scale.create('C4', 'major');
+
+console.log(String(eb)); // "E4"
+console.log(cMajorSeven.notes.map(String)); // ["C4", "E4", "G4", "B4"]
+console.log(cMajor.mode('dorian').toString()); // "D dorian"
+```
+
+## Types
+
+All public types are importable directly from `'octavian'`:
+
+```ts
+import type {
+  NoteName,
+  ChordSuffix,
+  ScaleType,
+  Interval,
+  MidiKey,
+  Frequency,
+  Semitones,
+} from 'octavian';
+```
+
+Key exported type names:
+
+- **`NoteName`**: A valid note spelling such as `'C#'` or `'Bb'`.
+- **`ChordSuffix`**: A canonical chord suffix such as `'majorSeventh'` or `'minorTriad'`.
+- **`ScaleType`**: A canonical scale type such as `'major'` or `'melodicMinor'`.
+- **`Interval`**: A canonical interval name such as `'majorThird'` or `'perfectFifth'`.
+- **`MidiKey`**: A branded `number` in the range `0..127`.
+- **`Frequency`**: A branded `number` in hertz.
+- **`Semitones`**: A branded integer semitone distance.
+- **`Octave`**: A branded octave value in the range `-1..9`.
+
+## Core Types
+
+### Notes
+
+`Note` is the base value object for pitch spelling, MIDI conversion, and frequency conversion.
+
+```ts
+import { Note } from 'octavian';
+
+const note = Note.create('Bb3');
+
+note.note; // "Bb"
+note.octave; // 3
+note.midi; // 58
+note.frequency; // 233.08...
+note.enharmonics; // ["A#", "Cbb"]
+```
+
+Useful note operations:
+
+```ts
+const c = new Note('C', 4);
+
+c.transpose('majorThird').toString(); // "E4"
+c.transposeBy(1).toString(); // "C#4"
+c.up().toString(); // "C5"
+c.distanceTo('Bb4'); // "minorSeventh"
+c.simplify().toString(); // sharp-preferred common spelling
+```
+
+### Intervals
+
+The library exports a full interval catalog and helpers for alias resolution.
+
+```ts
+import {
+  INTERVALS,
+  applyInterval,
+  findCanonicalIntervalBySemitonesAndDegree,
+  resolveInterval,
+} from 'octavian';
+
+resolveInterval('tone'); // "majorSecond"
+findCanonicalIntervalBySemitonesAndDegree(6, 5); // "diminishedFifth"
+applyInterval(new Note('F#', 4), 'majorThird').toString(); // "A#4"
+INTERVALS.majorSixth.symbol; // "M6"
+```
+
+### Chords
+
+`Chord` normalizes symbols and suffix aliases into a canonical suffix while keeping immutable note
+collections.
+
+`Chord.create` and `new Chord` both accept a root note string and a suffix; the difference is that
+`Chord.create` additionally accepts a `SerializedChord` via `Chord.fromJSON` for round-tripping
+persisted chord data.
+
+```ts
+import { Chord } from 'octavian';
+
+const chord = new Chord('C4', 'maj7');
+
+chord.name; // "Cmaj7"
+chord.suffix; // "majorSeventh"
+chord.quality; // "major"
+chord.notes.map(String); // ["C4", "E4", "G4", "B4"]
+chord.invert().name; // "Cmaj7/E"
+chord.lowerFromTop(2).notes.map(String); // ["G3", "C4", "E4", "B4"]
+```
+
+Supported chord editing stays catalog-backed:
+
+```ts
+new Chord('C4', 'maj7').omit('majorSeventh').name; // "C"
+new Chord('C4', 'major').add('majorSeventh').name; // "Cmaj7"
+new Chord('C4', 'major').alter('perfectFifth', 'augmentedFifth').name; // "Caug"
+```
+
+### Scales
+
+`Scale` builds theory-correct spellings from a root note and normalized scale type.
+
+```ts
+import { Scale } from 'octavian';
+
+const scale = new Scale('C4', 'major');
+
+scale.notes.map(String); // ["C4", "D4", "E4", "F4", "G4", "A4", "B4"]
+scale.relative('naturalMinor').toString(); // "A naturalMinor"
+scale.parallel('naturalMinor').toString(); // "C naturalMinor"
+scale.mode('lydian').toString(); // "F lydian"
+scale.chord(5, 'seventh').name; // "G7"
+```
+
+Named modes are intentionally limited to the seven-note diatonic family. Other scale families still
+support transposition, navigation, and pitch-class comparison.
+
+## Parsing and Validation
+
+The library exposes small validation helpers for common trust boundaries:
+
+```ts
+import {
+  isChordSuffix,
+  isChordSymbol,
+  isInterval,
+  isNoteName,
+  isNoteNameWithOctave,
+  isScaleType,
+} from 'octavian';
+
+isNoteName('Db'); // true
+isNoteNameWithOctave('Db4'); // true
+isInterval('sharpEleven'); // true
+isChordSuffix('minorTriad'); // true
+isChordSymbol('m7b5'); // true
+isScaleType('mixolydian'); // true
+```
+
+Invalid input throws `TypeError` or `RangeError` from constructors and factory methods instead of
+failing silently.
+
+## MIDI and Frequency
+
+The library uses standard equal temperament with `A4 = 440Hz`.
+
+```ts
+import { Note, STANDARD_TUNING } from 'octavian';
+
+STANDARD_TUNING.frequency; // 440
+Note.fromMidi(69).toString(); // "A4"
+Note.fromFrequency(440).toString(); // "A4"
+```
+
+When a note is derived from MIDI or raw semitone movement, the result is simplified to a
+sharp-preferred common spelling. When a note is derived from a spelled interval, the result
+preserves theory-correct note letters.
 
 ## Development
 
-Start the development server:
+Run the local quality gates with Bun:
 
 ```bash
-bun run dev
+bun run typecheck
+bun run lint
+bun test
+bun run build
+bun run validate
 ```
-
-### Git Hooks (Lefthook)
-
-Lefthook is installed via the `prepare` script on `bun install`. Hook implementations live in `scripts/hooks/` and are configured in `lefthook.yml`.
-
-- `pre-commit`: formats staged files with Prettier, runs oxlint --fix on staged files, checks that `bun.lock` is staged when `package.json` changes. Fast by design — typecheck and tests are intentionally deferred to pre-push.
-- `pre-push`: runs `bun run validate` (format check, lint, typecheck, tests, build, and package validation). This is the full gate before code leaves your machine.
-- `post-checkout`: installs deps when `package.json` + `bun.lock` changed; surfaces config changes.
-- `post-merge`: installs/cleans when dependencies or config changed; shows merge stats.
-
-Use `--no-verify` to bypass hooks (not recommended; CI will catch you anyway).
-
-### Running Tests
-
-This template uses Bun's built-in test runner with a preloaded setup file at `test/setup.ts` that resets mocks and system time after each test.
-
-```bash
-bun test              # run all tests
-bun test --watch      # watch mode
-bun test --coverage   # coverage report
-```
-
-Coverage thresholds are configured in `bunfig.toml` under `[test]`. The default is 100% for `src/`.
-
-For mocking, clock control, and module mocking see the [bun:test docs](https://bun.sh/docs/test/mocks).
-
-### Continuous Integration
-
-A CI workflow at `.github/workflows/ci.yaml` runs `bun run validate` on every push and pull request against Node 22 (LTS) and Node 24 (latest). This includes linting, typechecking, tests, build, and package validation (`publint` + `@arethetypeswrong/cli`).
-
-### Understanding `bun run` vs `bunx`
-
-- **bun run**: Executes scripts defined in `package.json` or runs local TypeScript/JavaScript files directly.
-- **bun x**: Executes binaries from installed packages. For packages already in `devDependencies`, prefer `bun run <script>` or calling the binary directly rather than `bunx`, which can pull a remote version.
-
-## Project Structure
-
-- `src/` — Source code
-- `test/` — Test setup (`test/setup.ts` is preloaded by bun:test)
-- `scripts/hooks/` — Git hook implementations (TypeScript + Bun)
-- `scripts/setup/` — One-time `bun create` setup scripts (self-remove after first install)
-- `lefthook.yml` — Git hook configuration
-
-## Library Output
-
-When built, the package emits two ESM bundles:
-
-- `dist/node/index.js` — Node-compatible build (`Bun.build target: 'node'`)
-- `dist/bun/index.js` — Bun-optimized build (`Bun.build target: 'bun'`)
-- `dist/index.d.ts` — Shared TypeScript declarations
-
-The `package.json` `exports` map routes Bun consumers to the Bun build and Node/bundler consumers to the Node build automatically.
-
-Published `src/` code must not use Bun-only runtime APIs (`Bun.file`, `Bun.serve`, etc.) — those belong in `scripts/` and tests only.
-
-## Publishing
-
-Publishing is opt-in. When you're ready to publish to npm:
-
-1. Set `publishConfig` in your `package.json` as needed:
-   ```json
-   "publishConfig": { "access": "public", "provenance": true }
-   ```
-2. Tag the release: `git tag vX.Y.Z && git push --tags`
-3. The `release.yaml` workflow triggers, verifies the tag matches `package.json`, builds, validates the package exports, and publishes with npm provenance (requires `id-token: write` permission, already set in the workflow).
-
-## Customization
-
-### TypeScript Configuration
-
-The base `tsconfig.json` targets ESNext with strict settings tuned for a Bun library. To add a frontend app layer:
-
-- Extend `tsconfig.json` in a new `tsconfig.frontend.json`
-- Add `"lib": ["ESNext","DOM","DOM.Iterable"]` and `"jsx": "react-jsx"` (or your framework equivalent)
-
-### Template Setup (bun-create)
-
-When using `bun create` with this template, a postinstall sequence runs once to bootstrap the project:
-
-- Sets `package.json:name` from the folder name
-- Copies `.env.example` to `.env` (or appends missing keys)
-- Writes `OPEN_AI_API_KEY`, `ANTHROPIC_AI_API_KEY`, and `GEMINI_AI_API_KEY` from your shell into `.env` if the values are currently empty or placeholder
-- Runs `bun run prepare` to install Lefthook hooks
-- Removes `scripts/setup/` and the `bun-create` entry from `package.json`
-
-These steps are idempotent — safe to re-run if something fails partway through.

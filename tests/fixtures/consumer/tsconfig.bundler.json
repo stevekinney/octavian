@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "target": "ES2022",
+    "strict": true,
+    "noEmit": true
+  },
+  "files": ["consumer.ts"]
+}

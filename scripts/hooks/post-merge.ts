@@ -24,13 +24,7 @@ const changed = changedList.split('\n').filter(Boolean);
 const has = (f: string) => changed.includes(f);
 const any = (files: string[]) => files.some((f) => has(f));
 
-const configFiles = [
-  'tsconfig.json',
-  '.oxlintrc.json',
-  '.prettierrc',
-  'bunfig.toml',
-  '.env.example',
-];
+const configFiles = ['tsconfig.json', '.oxlintrc.json', '.prettierrc.json', 'bunfig.toml'];
 
 const needsInstall = any(['package.json', 'bun.lock']);
 const needsClean = any(configFiles);
@@ -68,13 +62,10 @@ if (important.length) {
 info('Merge statistics:');
 await printGitStatistics('ORIG_HEAD', 'HEAD');
 
-try {
-  await $`git grep -n "^<<<<<<< |^======= |^>>>>>>> "`;
-  // If grep finds matches, it exits 0 and prints them, which is bad — treat as error
+const result = await $`git grep -n "<<<<<<< |======= |>>>>>>> "`.nothrow();
+if (result.exitCode === 0) {
   error('Found conflict markers in files!');
   info('Please resolve any remaining conflicts');
-} catch {
-  // No conflict markers found; grep exits with non-zero status
 }
 
 const branchText = await $`git rev-parse --abbrev-ref HEAD`.text();

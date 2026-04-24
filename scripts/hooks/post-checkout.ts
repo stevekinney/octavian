@@ -43,7 +43,7 @@ if (lockChanged) {
   info("You may need to run 'bun install' to update dependencies");
 }
 
-const configFiles = ['tsconfig.json', '.oxlintrc.json', '.prettierrc', 'bunfig.toml'];
+const configFiles = ['tsconfig.json', '.oxlintrc.json', '.prettierrc.json', 'bunfig.toml'];
 let configChanged = false;
 for (const f of configFiles) {
   if (await fileChangedBetween(f, prevHead, newHead)) {

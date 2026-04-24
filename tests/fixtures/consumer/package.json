@@ -1,0 +1,15 @@
+{
+  "name": "octavian-consumer-smoke",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fixture consumer for verifying the packed octavian tarball",
+  "scripts": {
+    "typecheck:node16": "tsc -p tsconfig.node16.json",
+    "typecheck:bundler": "tsc -p tsconfig.bundler.json",
+    "smoke": "node consumer.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

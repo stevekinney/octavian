@@ -1,7 +1,7 @@
 {
   "name": "octavian",
   "version": "0.0.1",
-  "description": "",
+  "description": "Type-safe music theory utilities for notes, intervals, chords, and scales.",
   "license": "MIT",
   "author": "Steve Kinney <hello@stevekinney.net>",
   "sideEffects": false,
@@ -45,8 +45,7 @@
     "verify:release-version": "bun run scripts/verify-release-version.ts"
   },
   "dependencies": {
-    "change-case": "^5.4.4",
-    "zod": "^4.3.6"
+    "change-case": "^5.4.4"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.3",

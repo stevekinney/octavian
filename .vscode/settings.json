@@ -22,6 +22,8 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "explicit"
   },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
