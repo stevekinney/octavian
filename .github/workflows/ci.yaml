@@ -13,27 +13,133 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  format:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install --frozen-lockfile
+      - run: bun run format:check
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run typecheck:test
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install --frozen-lockfile
+      - run: bun run test:ci
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  package-check:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - uses: actions/setup-node@v5
+        with: { node-version: '22' }
+      - run: bun install --frozen-lockfile
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - run: bun run package:check
+
+  smoke-node:
+    runs-on: ubuntu-latest
+    needs: build
     strategy:
-      fail-fast: false
       matrix:
         node-version: ['22', '24']
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - run: bun install --frozen-lockfile
+      - name: Pack tarball
+        run: npm pack --pack-destination tests/fixtures/consumer/
+      - name: Install fixture consumer deps
+        working-directory: tests/fixtures/consumer
+        run: npm install $(ls octavian-*.tgz) && npm install
+      - name: Typecheck node16
+        working-directory: tests/fixtures/consumer
+        run: npx tsc -p tsconfig.node16.json
+      - name: Typecheck bundler
+        working-directory: tests/fixtures/consumer
+        run: npx tsc -p tsconfig.bundler.json
+      - name: Runtime smoke
+        working-directory: tests/fixtures/consumer
+        run: node consumer.mjs
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Validate
-        run: bun run validate
+  smoke-bun:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - run: bun install --frozen-lockfile
+      - name: Pack tarball
+        run: npm pack --pack-destination tests/fixtures/consumer/
+      - name: Install fixture consumer deps (Bun)
+        working-directory: tests/fixtures/consumer
+        run: bun install && bun add $(ls octavian-*.tgz)
+      - name: Runtime smoke (Bun)
+        working-directory: tests/fixtures/consumer
+        run: bun consumer.mjs

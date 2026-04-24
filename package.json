@@ -37,6 +37,7 @@
     "prepublishOnly": "bun run validate",
     "start": "bun run src/index.ts",
     "test": "bun test",
+    "test:ci": "bun test --coverage",
     "test:coverage": "bun test --coverage",
     "tsc": "tsc",
     "typecheck": "tsc --noEmit",

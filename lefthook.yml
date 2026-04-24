@@ -12,10 +12,22 @@ pre-commit:
     - name: package-lock-check
       run: bun scripts/hooks/package-lock-check.ts
       glob: "{package.json,bun.lock}"
+    - name: typecheck
+      run: bun run typecheck
 
 pre-push:
+  parallel: true
   jobs:
-    - run: bun run validate
+    - name: format-check
+      run: bun run format:check
+    - name: lint
+      run: bun run lint
+    - name: typecheck
+      run: bun run typecheck
+    - name: typecheck-test
+      run: bun run typecheck:test
+    - name: test
+      run: bun run test:ci
 
 post-checkout:
   jobs:
