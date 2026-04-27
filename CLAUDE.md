@@ -65,19 +65,20 @@ bun run package:check    # Run publint + @arethetypeswrong/cli on packed tarball
 
 ### Key Notes
 
-- **ESM-only**: The package is ESM-only. Node 22+ resolves via the `"import"` condition. There is
-  no CJS bundle.
-- **ESM + TypeScript**: Source files are TypeScript modules; build output targets a browser-safe
-  ESM bundle.
+- **ESM-only**: The package is ESM-only. Node 22+ resolves via the `"import"` condition. There is no
+  CJS bundle.
+- **ESM + TypeScript**: Source files are TypeScript modules; build output targets a browser-safe ESM
+  bundle.
 - **Import paths**: Use standard TS/ESM imports; no `@/*` path alias (it leaks into `.d.ts` files).
-- **Library output**: Single browser-safe ESM bundle in `dist/browser/` for all runtimes (Node
-  22+, Bun, browser bundlers). The `exports` map routes consumers automatically.
+- **Library output**: Single browser-safe ESM bundle in `dist/browser/` for all runtimes (Node 22+,
+  Bun, browser bundlers). The `exports` map routes consumers automatically.
 
 ### Library Packaging
 
 The build produces:
 
-- `dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external deps (zero runtime dependencies)
+- `dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external deps (zero
+  runtime dependencies)
 - `dist/index.d.ts` — TypeScript declarations (shared, generated with `isolatedDeclarations: true`)
 
 The `exports` map in `package.json`:

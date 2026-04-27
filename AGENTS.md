@@ -124,10 +124,12 @@ there. There are no secondary entry points.
 
 Build output targets both Node and Bun via `scripts/build.ts`:
 
-- `dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external deps (zero runtime dependencies)
+- `dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external deps (zero
+  runtime dependencies)
 - `dist/index.d.ts` — shared TypeScript declarations
 
-The `exports` map in `package.json` routes consumers automatically to the single browser-safe bundle.
+The `exports` map in `package.json` routes consumers automatically to the single browser-safe
+bundle.
 
 ### Source Constraints
 
