@@ -129,8 +129,8 @@ Note.compare(a, b); // -1 | 0 | 1 (by MIDI key)
 
 #### Frequency and tuning
 
-`note.frequency` always returns the standard-tuning (A4 = 440 Hz) value. For alternate tunings,
-use `frequencyAt` or the free function `noteToFrequency`:
+`note.frequency` always returns the standard-tuning (A4 = 440 Hz) value. For alternate tunings, use
+`frequencyAt` or the free function `noteToFrequency`:
 
 ```ts
 import { Note, noteToFrequency, createFrequency } from 'octavian';
@@ -252,7 +252,7 @@ Navigation and relationships:
 scale.relative('naturalMinor').toString(); // "A naturalMinor"
 scale.parallel('naturalMinor').toString(); // "C naturalMinor"
 scale.mode('lydian').toString(); // "F lydian"
-scale.modes().map(m => m.toString()); // all 7 modes
+scale.modes().map((m) => m.toString()); // all 7 modes
 scale.rotate(2).toString(); // rotation by 2 positions
 scale.next().toString(); // next scale root (semitone up)
 scale.previous().toString(); // previous scale root
@@ -265,8 +265,8 @@ scale.degree(1).toString(); // "C4"
 scale.degree(5).toString(); // "G4"
 scale.degreeOf(Note.create('E4')); // 3
 scale.chord(5, 'seventh').name; // "G7"
-scale.chords().map(c => c.name); // triads for every degree
-scale.seventhChords().map(c => c.name); // seventh chords for every degree
+scale.chords().map((c) => c.name); // triads for every degree
+scale.seventhChords().map((c) => c.name); // seventh chords for every degree
 scale.triad(1).name; // "C"
 ```
 
@@ -294,7 +294,13 @@ isDiatonicModeFamily('blues'); // false
 The library uses standard equal temperament with A4 = 440 Hz.
 
 ```ts
-import { Note, STANDARD_TUNING, midiToFrequency, midiToNoteNameWithOctave, noteNameToMidi } from 'octavian';
+import {
+  Note,
+  STANDARD_TUNING,
+  midiToFrequency,
+  midiToNoteNameWithOctave,
+  noteNameToMidi,
+} from 'octavian';
 
 STANDARD_TUNING; // { reference: 'A4', frequency: 440 }
 Note.fromMidi(69).toString(); // "A4"
