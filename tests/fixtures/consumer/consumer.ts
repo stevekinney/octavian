@@ -11,7 +11,7 @@ import type {
 import { Note, Chord, Scale, INTERVALS, CHORDS, SCALES, STANDARD_TUNING } from 'octavian';
 
 // Quick-start examples from README
-const cSharp: Note = new Note('C#', 4);
+const cSharp: Note = Note.create('C#4');
 const eb: Note = cSharp.transpose('minorThird');
 const cMajorSeven: Chord = Chord.create('C4', 'maj7');
 const cMajor: Scale = Scale.create('C4', 'major');
