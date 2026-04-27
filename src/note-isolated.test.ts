@@ -36,7 +36,7 @@ describe('Note in isolation (no Chord or Scale imports)', () => {
 
   it('uses Note static methods without error', () => {
     expect(Note.fromMidi(60).toString()).toBe('C4');
-    expect(Note.fromFrequency(440).toString()).toBe('A4');
+    expect(Note.nearestTo(440).toString()).toBe('A4');
     expect(Note.create('C#4').toString()).toBe('C#4');
     expect(Note.isNoteLike('C4')).toBe(true);
     expect(Note.compare('C4', 'D4')).toBe(-1);

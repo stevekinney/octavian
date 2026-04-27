@@ -248,7 +248,7 @@ export class Note {
    * @returns The nearest note.
    * @throws {RangeError} When the frequency is not positive or resolves outside the supported MIDI range.
    */
-  public static fromFrequency(frequency: number, tuning: Tuning = STANDARD_TUNING): Note {
+  public static nearestTo(frequency: number, tuning: Tuning = STANDARD_TUNING): Note {
     return Note.fromMidi(frequencyToNearestMidi(createFrequency(frequency), tuning));
   }
 
@@ -317,10 +317,20 @@ export class Note {
   }
 
   /**
-   * The equal-tempered frequency in hertz.
+   * Standard-tuning (A4 = 440 Hz) frequency. For alternate tunings, use `frequencyAt(tuning)`.
    */
   public get frequency(): Frequency {
     return this.#frequency;
+  }
+
+  /**
+   * Returns the frequency of this note under the given tuning reference.
+   *
+   * @param tuning The tuning reference to use.
+   * @returns The frequency in hertz under the given tuning.
+   */
+  public frequencyAt(tuning: Tuning): Frequency {
+    return midiToFrequency(this.#midi, tuning);
   }
 
   /**
@@ -558,4 +568,15 @@ export class Note {
   public [Symbol.iterator](): IterableIterator<NoteName | Octave | MidiKey | Frequency> {
     return this.toTuple()[Symbol.iterator]();
   }
+}
+
+/**
+ * Returns the frequency of a note-like value under the given tuning.
+ *
+ * @param note Any note-like value.
+ * @param tuning The tuning reference. Defaults to standard tuning (A4 = 440 Hz).
+ * @returns The frequency in hertz.
+ */
+export function noteToFrequency(note: NoteLike, tuning: Tuning = STANDARD_TUNING): Frequency {
+  return Note.create(note).frequencyAt(tuning);
 }

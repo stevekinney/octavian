@@ -10,8 +10,8 @@ repository.
 ```bash
 bun run dev               # Start development with watch mode
 bun run build             # Build for production (outputs to dist/)
-bun ./dist/bun/index.js   # Run Bun-optimized build
-node ./dist/node/index.js # Run Node-compatible build
+bun ./dist/browser/index.js  # Run the browser-safe ESM build
+node ./dist/browser/index.js # Run the browser-safe ESM build
 ```
 
 ### Testing
@@ -65,19 +65,19 @@ bun run package:check    # Run publint + @arethetypeswrong/cli on packed tarball
 
 ### Key Notes
 
-- **ESM-only**: The package is ESM-only. Node 22+ resolves via the `"import"` condition; Bun via
-  `"bun"`. There is no CJS bundle and no `"default"` condition.
-- **ESM + TypeScript**: Source files are TypeScript modules; build output targets both Node and Bun.
+- **ESM-only**: The package is ESM-only. Node 22+ resolves via the `"import"` condition. There is
+  no CJS bundle.
+- **ESM + TypeScript**: Source files are TypeScript modules; build output targets a browser-safe
+  ESM bundle.
 - **Import paths**: Use standard TS/ESM imports; no `@/*` path alias (it leaks into `.d.ts` files).
-- **Library output**: Dual-emit — `dist/node/` for Node consumers, `dist/bun/` for Bun consumers.
-  The `exports` map routes consumers automatically.
+- **Library output**: Single browser-safe ESM bundle in `dist/browser/` for all runtimes (Node
+  22+, Bun, browser bundlers). The `exports` map routes consumers automatically.
 
 ### Library Packaging
 
 The build produces:
 
-- `dist/node/index.js` — ESM bundle, `Bun.build target: 'node'`, all deps external
-- `dist/bun/index.js` — ESM bundle, `Bun.build target: 'bun'`, all deps external
+- `dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external deps (zero runtime dependencies)
 - `dist/index.d.ts` — TypeScript declarations (shared, generated with `isolatedDeclarations: true`)
 
 The `exports` map in `package.json`:
@@ -86,8 +86,9 @@ The `exports` map in `package.json`:
 {
   ".": {
     "types": "./dist/index.d.ts",
-    "bun": "./dist/bun/index.js",
-    "import": "./dist/node/index.js"
+    "browser": "./dist/browser/index.js",
+    "import": "./dist/browser/index.js",
+    "default": "./dist/browser/index.js"
   },
   "./package.json": "./package.json"
 }
@@ -111,7 +112,7 @@ Hooks are configured in `lefthook.yml` and implemented as Bun TypeScript files u
 - **post-merge** (`scripts/hooks/post-merge.ts`): installs/cleans when dependencies or config
   changed; shows merge stats.
 
-They use `chalk` for color, `change-case` for headings, and Bun's `$` and `Bun.write` for shell/IO.
+They use `chalk` for color and Bun's `$` and `Bun.write` for shell/IO.
 
 ### Types
 

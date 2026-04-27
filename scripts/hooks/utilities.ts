@@ -1,6 +1,12 @@
 import { $ } from 'bun';
 import chalk from 'chalk';
-import { capitalCase } from 'change-case';
+
+function capitalCase(input: string): string {
+  return input
+    .replace(/[-_]+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
 
 export const isContinuousIntegration: () => boolean = () =>
   process.env['CI'] === 'true' || process.env['CI'] === '1';

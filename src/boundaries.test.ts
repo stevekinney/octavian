@@ -33,15 +33,15 @@ describe('MIDI range boundaries', () => {
 });
 
 describe('frequency boundaries', () => {
-  it('Note.fromFrequency resolves the lowest practical frequency near MIDI 0', () => {
+  it('Note.nearestTo resolves the lowest practical frequency near MIDI 0', () => {
     // MIDI 0 ≈ 8.175 Hz at standard tuning
-    const note = Note.fromFrequency(8.175);
+    const note = Note.nearestTo(8.175);
     expect(Number(note.midi)).toBe(0);
   });
 
-  it('Note.fromFrequency resolves the highest practical frequency near MIDI 127', () => {
+  it('Note.nearestTo resolves the highest practical frequency near MIDI 127', () => {
     // MIDI 127 ≈ 12543.85 Hz at standard tuning
-    const note = Note.fromFrequency(12543.85);
+    const note = Note.nearestTo(12543.85);
     expect(Number(note.midi)).toBe(127);
   });
 

@@ -82,8 +82,11 @@ export {
   parseNoteNameWithOctave,
 } from './music-utilities.js';
 
-export { Note, applyInterval } from './note.js';
+export { Note, applyInterval, noteToFrequency } from './note.js';
 export type { NoteLike, SerializedNote } from './note.js';
+
+export { randomNote, randomInterval } from './random.js';
+export type { RandomFunction, RandomNoteOptions, RandomIntervalOptions } from './random.js';
 
 export { Chord } from './chord.js';
 export type { ChordVoicing, SerializedChord } from './chord.js';

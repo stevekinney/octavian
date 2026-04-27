@@ -9,8 +9,8 @@ Guidance for AI coding agents (Claude Code, Codex, etc.) working in this reposit
 ```bash
 bun run dev               # Start development with watch mode
 bun run build             # Build for production (outputs to dist/)
-bun ./dist/bun/index.js   # Run Bun-optimized build
-node ./dist/node/index.js # Run Node-compatible build
+bun ./dist/browser/index.js  # Run the browser-safe ESM build
+node ./dist/browser/index.js # Run the browser-safe ESM build
 ```
 
 ### Testing
@@ -124,12 +124,10 @@ there. There are no secondary entry points.
 
 Build output targets both Node and Bun via `scripts/build.ts`:
 
-- `dist/node/index.js` — ESM bundle, `Bun.build target: 'node'`, all deps external
-- `dist/bun/index.js` — ESM bundle, `Bun.build target: 'bun'`, all deps external
+- `dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external deps (zero runtime dependencies)
 - `dist/index.d.ts` — shared TypeScript declarations
 
-The `exports` map in `package.json` routes consumers automatically. Dual-emit means Node and bundler
-consumers get `dist/node/` and Bun consumers get `dist/bun/` with no user configuration.
+The `exports` map in `package.json` routes consumers automatically to the single browser-safe bundle.
 
 ### Source Constraints
 

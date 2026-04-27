@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test';
 
 import { createFrequency, createMidiKey, createSemitones } from './branded-types.ts';
-import { Note, applyInterval } from './note.ts';
+import { midiToFrequency } from './music-utilities.ts';
+import { Note, applyInterval, noteToFrequency } from './note.ts';
+import { STANDARD_TUNING } from './tuning.ts';
 
 describe('Note', () => {
   it('creates notes from constructors and note-like inputs', () => {
@@ -60,12 +62,85 @@ describe('Note', () => {
   it('builds notes from MIDI and frequency inputs', () => {
     expect(Note.fromMidi(60).toString()).toBe('C4');
     expect(Note.fromMidi(createMidiKey(69)).toString()).toBe('A4');
-    expect(Note.fromFrequency(440).toString()).toBe('A4');
-    expect(Note.fromFrequency(createFrequency(261.6255653005986)).toString()).toBe('C4');
+    expect(Note.nearestTo(440).toString()).toBe('A4');
+    expect(Note.nearestTo(createFrequency(261.6255653005986)).toString()).toBe('C4');
     expect(() => Note.fromMidi(200)).toThrow(RangeError);
     expect(() => Note.fromMidi(200)).toThrow(/range 0\.\.127/i);
-    expect(() => Note.fromFrequency(-1)).toThrow(RangeError);
-    expect(() => Note.fromFrequency(-1)).toThrow(/positive finite/i);
+    expect(() => Note.nearestTo(-1)).toThrow(RangeError);
+    expect(() => Note.nearestTo(-1)).toThrow(/positive finite/i);
+  });
+
+  describe('frequencyAt and noteToFrequency', () => {
+    const tunings = [
+      STANDARD_TUNING,
+      { reference: 'A4', frequency: createFrequency(432) },
+      { reference: 'A4', frequency: createFrequency(442) },
+    ] as const;
+
+    it('matches midiToFrequency across the full MIDI range for supported tunings', () => {
+      for (let midi = 0; midi <= 127; midi += 1) {
+        for (const tuning of tunings) {
+          expect(
+            Math.abs(
+              Number(Note.fromMidi(midi).frequencyAt(tuning)) -
+                Number(midiToFrequency(midi, tuning)),
+            ),
+          ).toBeLessThan(1e-9);
+        }
+      }
+    });
+
+    it('round-trips nearestTo across the full MIDI range for supported tunings', () => {
+      for (let midi = 0; midi <= 127; midi += 1) {
+        for (const tuning of tunings) {
+          const frequency = midiToFrequency(midi, tuning);
+          expect(Note.nearestTo(Number(frequency), tuning).midi).toBe(midi);
+        }
+      }
+    });
+
+    it('keeps the frequency getter pinned to standard tuning', () => {
+      expect(Number(Note.create('A4').frequency)).toBe(440);
+    });
+
+    it('returns the tuned frequency through frequencyAt', () => {
+      expect(
+        Math.abs(
+          Number(
+            Note.create('A4').frequencyAt({
+              reference: 'A4',
+              frequency: createFrequency(432),
+            }),
+          ) - 432,
+        ),
+      ).toBeLessThan(1e-9);
+    });
+
+    it('preserves standard frequency while exposing alternate tuning through frequencyAt', () => {
+      const tuning432 = { reference: 'A4', frequency: createFrequency(432) } as const;
+      const note = Note.nearestTo(432, tuning432);
+
+      expect(note.note).toBe('A');
+      expect(note.octave).toBe(4);
+      expect(Math.abs(Number(note.frequency) - 440)).toBeLessThan(1e-9);
+      expect(Math.abs(Number(note.frequencyAt(tuning432)) - 432)).toBeLessThan(1e-9);
+    });
+
+    it('accepts note-like inputs in noteToFrequency', () => {
+      const note = Note.create('A4');
+      const inputs = ['A4', { note: 'A', octave: 4 }, note] as const;
+
+      for (const input of inputs) {
+        expect(
+          Math.abs(
+            Number(noteToFrequency(input)) -
+              Number(Note.create(input).frequencyAt(STANDARD_TUNING)),
+          ),
+        ).toBeLessThan(1e-9);
+      }
+
+      expect(Number(noteToFrequency(Note.create('A4')))).toBe(440);
+    });
   });
 
   it('transposes by intervals and semitones', () => {

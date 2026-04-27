@@ -11,7 +11,10 @@
     "midi",
     "typescript",
     "music",
-    "audio"
+    "audio",
+    "browser",
+    "web-audio",
+    "web-audio-api"
   ],
   "homepage": "https://github.com/stevekinney/octavian#readme",
   "bugs": {
@@ -28,8 +31,9 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "bun": "./dist/bun/index.js",
-      "import": "./dist/node/index.js"
+      "browser": "./dist/browser/index.js",
+      "import": "./dist/browser/index.js",
+      "default": "./dist/browser/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -58,9 +62,6 @@
     "typecheck:test": "tsc --noEmit --project tsconfig.test.json",
     "validate": "bun run format:check && bun run lint && bun run typecheck && bun run typecheck:test && bun run test && bun run build && bun run package:check",
     "verify:release-version": "bun run scripts/verify-release-version.ts"
-  },
-  "dependencies": {
-    "change-case": "^5.4.4"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.3",
