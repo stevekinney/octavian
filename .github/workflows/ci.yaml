@@ -108,7 +108,7 @@ jobs:
           path: dist/
       - run: bun install --frozen-lockfile
       - name: Pack tarball
-        run: npm pack --pack-destination tests/fixtures/consumer/
+        run: npm pack --ignore-scripts --pack-destination tests/fixtures/consumer/
       - name: Install fixture consumer deps
         working-directory: tests/fixtures/consumer
         run: npm install $(ls octavian-*.tgz) && npm install
@@ -136,7 +136,7 @@ jobs:
           path: dist/
       - run: bun install --frozen-lockfile
       - name: Pack tarball
-        run: npm pack --pack-destination tests/fixtures/consumer/
+        run: npm pack --ignore-scripts --pack-destination tests/fixtures/consumer/
       - name: Install fixture consumer deps (Bun)
         working-directory: tests/fixtures/consumer
         run: bun install && bun add $(ls octavian-*.tgz)
