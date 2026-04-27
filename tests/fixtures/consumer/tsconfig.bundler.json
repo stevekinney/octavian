@@ -4,7 +4,8 @@
     "module": "esnext",
     "target": "ES2022",
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": []
   },
   "files": ["consumer.ts"]
 }
