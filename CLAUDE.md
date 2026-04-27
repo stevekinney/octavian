@@ -48,19 +48,25 @@ bun run package:check    # Run publint + @arethetypeswrong/cli on packed tarball
 
 ### Core Design Principles
 
-1. **Environment-First Configuration**: All configuration starts with environment variables
-   validated through Zod schemas in `src/environment.ts`. The `environment` object is the single
-   source of truth.
+1. **Immutable value objects**: `Note`, `Chord`, and `Scale` are the primary types. All fields are
+   private `#fields` (non-writable by spec). No `Object.freeze` wrappers.
 
-2. **Lean Surface Area**: This template intentionally avoids framework-specific scaffolding (custom
-   error classes, logger wrappers, etc.). Add only what you need for your project.
+2. **Branded types for domain validation**: `MidiKey`, `Frequency`, `Semitones`, `Octave`, and
+   `ChromaticIndex` are `Brand<number, …>` types validated at construction time. Public method
+   parameters accept plain `number`; brands are applied internally via the `create*` helpers.
 
-3. **Runtime-Neutral Published Code**: `src/` must not use Bun-only runtime APIs (`Bun.file`,
+3. **Catalog-driven data with alias resolution**: `INTERVALS`, `CHORDS`, and `SCALES` are the
+   authoritative data catalogs. Every alias resolves to a canonical key via `resolveInterval`,
+   `resolveChordSuffix`, and `resolveScaleType`.
+
+4. **Runtime-neutral published code**: `src/` must not use Bun-only runtime APIs (`Bun.file`,
    `Bun.env`, `Bun.serve`, etc.). Those APIs are fine in `scripts/` and test files, but must not
    appear in published library output.
 
 ### Key Notes
 
+- **ESM-only**: The package is ESM-only. Node 22+ resolves via the `"import"` condition; Bun via
+  `"bun"`. There is no CJS bundle and no `"default"` condition.
 - **ESM + TypeScript**: Source files are TypeScript modules; build output targets both Node and Bun.
 - **Import paths**: Use standard TS/ESM imports; no `@/*` path alias (it leaks into `.d.ts` files).
 - **Library output**: Dual-emit — `dist/node/` for Node consumers, `dist/bun/` for Bun consumers.
@@ -72,7 +78,7 @@ The build produces:
 
 - `dist/node/index.js` — ESM bundle, `Bun.build target: 'node'`, all deps external
 - `dist/bun/index.js` — ESM bundle, `Bun.build target: 'bun'`, all deps external
-- `dist/index.d.ts` — TypeScript declarations (shared)
+- `dist/index.d.ts` — TypeScript declarations (shared, generated with `isolatedDeclarations: true`)
 
 The `exports` map in `package.json`:
 
@@ -81,8 +87,7 @@ The `exports` map in `package.json`:
   ".": {
     "types": "./dist/index.d.ts",
     "bun": "./dist/bun/index.js",
-    "import": "./dist/node/index.js",
-    "default": "./dist/node/index.js"
+    "import": "./dist/node/index.js"
   },
   "./package.json": "./package.json"
 }
@@ -99,7 +104,8 @@ Hooks are configured in `lefthook.yml` and implemented as Bun TypeScript files u
 - **pre-commit** (`lefthook.yml` inline, piped/sequential): formats staged files with Prettier, runs
   oxlint --fix on staged files, checks `bun.lock` is staged when `package.json` changes. Fast by
   design.
-- **pre-push** (`lefthook.yml`): runs full `bun run validate`.
+- **pre-push** (`lefthook.yml`): runs format check, lint, typecheck, and tests in parallel (build
+  and package check are CI-only).
 - **post-checkout** (`scripts/hooks/post-checkout.ts`): installs deps when `package.json`+`bun.lock`
   change; surfaces config changes.
 - **post-merge** (`scripts/hooks/post-merge.ts`): installs/cleans when dependencies or config
@@ -109,15 +115,16 @@ They use `chalk` for color, `change-case` for headings, and Bun's `$` and `Bun.w
 
 ### Types
 
-There is no shared `src/types.ts` in this template. Add shared or domain-specific types near their
-modules as needed.
+There is no shared `src/types.ts`. Domain-specific types live near their modules (e.g.,
+`SerializedNote` in `note.ts`, `SerializedChord` in `chord.ts`).
 
 ## Development Patterns
 
 ### Adding New Features
 
-1. **Environment variables**: Add to `.env.example` first, then update the schema in
-   `src/environment.ts`.
+1. **Catalog entries**: New intervals, chord suffixes, or scale types go into the corresponding
+   catalog file (`src/intervals.ts`, `src/chords.ts`, `src/scales.ts`). Add a canonical entry first,
+   then any aliases.
 2. **Types**: Domain-specific types live near their modules.
 
 ### Testing Approach
@@ -138,7 +145,7 @@ Keep imports in this order:
 
 1. Bun built-ins (e.g., `import { file, write } from 'bun'`)
 2. Node built-ins (e.g., `import { readFile } from 'node:fs'`)
-3. External packages (e.g., `import { z } from 'zod'`)
+3. External packages (e.g., `import { fc } from 'fast-check'`)
 4. Relative imports (e.g., `./local-module`)
 
 No path alias (`@/*`) — use relative imports everywhere.

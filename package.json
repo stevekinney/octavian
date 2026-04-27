@@ -10,8 +10,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "bun": "./dist/bun/index.js",
-      "import": "./dist/node/index.js",
-      "default": "./dist/node/index.js"
+      "import": "./dist/node/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -31,11 +30,10 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "lint": "oxlint --type-aware --tsconfig ./tsconfig.json",
     "lint:fix": "oxlint --fix --type-aware --tsconfig ./tsconfig.json",
-    "package:check": "publint && attw --pack --ignore-rules cjs-resolves-to-esm",
+    "package:check": "publint && attw --pack",
     "prepack": "bun run build",
     "prepare": "lefthook install",
     "prepublishOnly": "bun run validate",
-    "start": "bun run src/index.ts",
     "test": "bun test --parallel",
     "test:ci": "bun test --coverage --parallel",
     "typecheck": "tsc --noEmit",

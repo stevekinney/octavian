@@ -234,9 +234,8 @@ export class Note {
    * @param midi The MIDI key to convert.
    * @returns The created note.
    */
-  public static fromMidi(midi: MidiKey | number): Note {
-    const normalizedMidi = typeof midi === 'number' ? createMidiKey(midi) : midi;
-    const { note, octave } = midiToNoteNameWithOctave(normalizedMidi);
+  public static fromMidi(midi: number): Note {
+    const { note, octave } = midiToNoteNameWithOctave(createMidiKey(midi));
 
     return new Note(note, octave);
   }
@@ -249,14 +248,8 @@ export class Note {
    * @returns The nearest note.
    * @throws {RangeError} When the frequency is not positive or resolves outside the supported MIDI range.
    */
-  public static fromFrequency(
-    frequency: Frequency | number,
-    tuning: Tuning = STANDARD_TUNING,
-  ): Note {
-    const normalizedFrequency =
-      typeof frequency === 'number' ? createFrequency(frequency) : frequency;
-
-    return Note.fromMidi(frequencyToNearestMidi(Number(normalizedFrequency), tuning));
+  public static fromFrequency(frequency: number, tuning: Tuning = STANDARD_TUNING): Note {
+    return Note.fromMidi(frequencyToNearestMidi(createFrequency(frequency), tuning));
   }
 
   /**
@@ -357,7 +350,7 @@ export class Note {
    * @param value The interval or semitone distance to apply.
    * @returns The transposed note.
    */
-  public transpose(value: Interval | Semitones | number): Note {
+  public transpose(value: Interval | number): Note {
     if (typeof value === 'string' && isInterval(value)) {
       return applyInterval(this, value);
     }
@@ -371,11 +364,8 @@ export class Note {
    * @param semitones The semitone distance to apply.
    * @returns The transposed note.
    */
-  public transposeBy(semitones: Semitones | number): Note {
-    const normalizedSemitones =
-      typeof semitones === 'number' ? createSemitones(semitones) : semitones;
-
-    return Note.fromMidi(Number(this.midi) + Number(normalizedSemitones));
+  public transposeBy(semitones: number): Note {
+    return Note.fromMidi(Number(this.midi) + Number(createSemitones(semitones)));
   }
 
   /**
@@ -484,7 +474,7 @@ export class Note {
    * @param octave The octave to apply.
    * @returns The respelled note.
    */
-  public withOctave(octave: Octave): Note {
+  public withOctave(octave: number): Note {
     return new Note(this.note, createOctave(octave));
   }
 
@@ -561,7 +551,6 @@ export class Note {
   }
 
   /**
-   * @deprecated Use `toTuple()` instead. The iterator yields a union type rather than positional types.
    * Iterates over the note tuple values.
    *
    * @returns An iterator over note name, octave, MIDI key, and frequency.
