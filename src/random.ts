@@ -32,8 +32,9 @@ function pick<T>(pool: readonly T[], random: RandomFunction): T {
     );
   }
 
-  // pool is guaranteed non-empty by callers; value is in [0, 1) so index is always valid
-  return pool[Math.floor(value * pool.length)] as T;
+  // pool is non-empty (callers check) and value is in [0, 1), so index is always valid
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  return pool[Math.floor(value * pool.length)]!;
 }
 
 function hasRangeOption(

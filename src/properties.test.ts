@@ -52,9 +52,7 @@ describe('property-based invariants', () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 0, max: 115 }),
-        fc.constantFrom('major', 'naturalMinor', 'majorPentatonic', 'blues') as fc.Arbitrary<
-          'major' | 'naturalMinor' | 'majorPentatonic' | 'blues'
-        >,
+        fc.constantFrom('major', 'naturalMinor', 'majorPentatonic', 'blues'),
         (midiRoot, scaleType) => {
           const root = Note.fromMidi(midiRoot);
           const scale = new Scale(root, scaleType);
@@ -81,14 +79,12 @@ describe('property-based invariants', () => {
           'augmented',
           'majorSeventh',
           'minorSeventh',
-        ) as fc.Arbitrary<
-          'major' | 'minor' | 'diminished' | 'augmented' | 'majorSeventh' | 'minorSeventh'
-        >,
+        ),
         (midiRoot, suffix) => {
           const root = Note.fromMidi(midiRoot);
           const chord = new Chord(root, suffix);
           const cycled = chord.invert(chord.size);
-          expect(Number(cycled.root.chromaticIndex)).toBe(Number(chord.root.chromaticIndex));
+          expect(cycled.root.chromaticIndex).toBe(chord.root.chromaticIndex);
         },
       ),
       { numRuns: 50 },

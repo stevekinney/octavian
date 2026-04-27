@@ -3,11 +3,11 @@ import * as path from 'node:path';
 
 type RuntimeDependencyField = 'dependencies' | 'peerDependencies' | 'optionalDependencies';
 
-type PackageJson = Partial<
-  Record<RuntimeDependencyField, Record<string, string>> & {
-    name: string;
-  }
->;
+type PackageJson = Partial<Record<RuntimeDependencyField, Record<string, string>>>;
+
+function isPackageJson(value: unknown): value is PackageJson {
+  return typeof value === 'object' && value !== null;
+}
 
 type PatternCheck = {
   description: string;
@@ -21,7 +21,11 @@ const packageJsonPath = path.join(root, 'package.json');
 
 const browserArtifact = await fs.readFile(browserArtifactPath, 'utf8');
 const declarationsArtifact = await fs.readFile(declarationsPath, 'utf8');
-const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8')) as PackageJson;
+const rawPackageJson: unknown = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+if (!isPackageJson(rawPackageJson)) {
+  throw new TypeError('package.json is not a valid object');
+}
+const packageJson: PackageJson = rawPackageJson;
 
 const failures: string[] = [];
 

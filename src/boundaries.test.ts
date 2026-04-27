@@ -3,6 +3,7 @@ import { describe, expect, it } from 'bun:test';
 import { createFrequency, createSemitones } from './branded-types.ts';
 import { applyInterval, Note } from './note.ts';
 import { ACCIDENTALS, NATURALS, type NoteName } from './note-spellings.ts';
+import { isNoteName } from './music-utilities.ts';
 
 describe('MIDI range boundaries', () => {
   it('Note.fromMidi handles the lowest valid MIDI value', () => {
@@ -147,7 +148,9 @@ describe('note name construction matrix', () => {
   it.each(NATURALS.flatMap((natural) => ACCIDENTALS.map((accidental) => [natural, accidental])))(
     'Note name %s%s at octave 4 either constructs validly or throws RangeError',
     (natural, accidental) => {
-      const noteName = `${natural}${accidental}` as NoteName;
+      const candidate = `${natural}${accidental}`;
+      if (!isNoteName(candidate)) return;
+      const noteName: NoteName = candidate;
       try {
         const note = new Note(noteName, 4);
         expect(Number(note.midi)).toBeGreaterThanOrEqual(0);
