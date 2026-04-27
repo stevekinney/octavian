@@ -100,3 +100,8 @@ repomix-output.xml
 .env.local
 .env.*.local
 tmp/
+examples/.tarball/
+examples/node-consumer/node_modules/
+examples/node-consumer/tmp/
+examples/web-audio/node_modules/
+examples/web-audio/dist/
