@@ -118,9 +118,8 @@ INTERVALS.majorSixth.symbol; // "M6"
 `Chord` normalizes symbols and suffix aliases into a canonical suffix while keeping immutable note
 collections.
 
-`Chord.create` and `new Chord` both accept a root note string and a suffix; the difference is that
-`Chord.create` additionally accepts a `SerializedChord` via `Chord.fromJSON` for round-tripping
-persisted chord data.
+`Chord.create` and `new Chord` are equivalent for constructing a chord from a root and suffix. To
+recreate a chord from serialized data, use `Chord.fromJSON(serialized)`.
 
 ```ts
 import { Chord } from 'octavian';

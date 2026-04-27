@@ -2,6 +2,25 @@
   "name": "octavian",
   "version": "0.0.1",
   "description": "Type-safe music theory utilities for notes, intervals, chords, and scales.",
+  "keywords": [
+    "music-theory",
+    "notes",
+    "chords",
+    "scales",
+    "intervals",
+    "midi",
+    "typescript",
+    "music",
+    "audio"
+  ],
+  "homepage": "https://github.com/stevekinney/octavian#readme",
+  "bugs": {
+    "url": "https://github.com/stevekinney/octavian/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stevekinney/octavian.git"
+  },
   "license": "MIT",
   "author": "Steve Kinney <hello@stevekinney.net>",
   "sideEffects": false,
@@ -14,7 +33,6 @@
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/node/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
