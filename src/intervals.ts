@@ -207,7 +207,7 @@ const CANONICAL_INTERVAL_LOOKUP = new Map<string, CanonicalInterval>(
  * bugs where compound entries would have to be hand-classified to match
  * what their simple form already specifies.
  */
-type SimpleCanonicalInterval =
+export type SimpleCanonicalInterval =
   | 'perfectUnison'
   | 'augmentedUnison'
   | 'diminishedSecond'
@@ -312,7 +312,9 @@ function buildEnrichedIntervals(): Record<Interval, IntervalInformation> {
  *
  * Every entry carries the foundational fields (`semitones`, `symbol`,
  * `degree`, `quality`) plus the enrichment fields added in roadmap
- * items 1.2 and 1.3 (`simpleInterval`, `octaveOffset`, `consonance`).
+ * item 1.2 (`simpleInterval`, `octaveOffset`). Consonance classification
+ * is exposed via {@link consonanceOf}, {@link isConsonant}, and
+ * {@link isDissonant} (roadmap item 1.3) — not as a field on this type.
  */
 export const INTERVALS: Readonly<Record<Interval, IntervalInformation>> =
   Object.freeze(buildEnrichedIntervals());

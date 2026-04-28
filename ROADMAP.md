@@ -73,8 +73,10 @@ Model the relationships between simple and compound intervals.
 
 ### 1.3 Consonance and dissonance classification
 
-- [x] `consonance` field on every interval catalog entry:
-      `'perfect-consonance' | 'imperfect-consonance' | 'mild-dissonance' | 'sharp-dissonance'`
+- [x] `IntervalConsonance` taxonomy exposed via `consonanceOf(name)` (returns
+      `'perfect-consonance' | 'imperfect-consonance' | 'mild-dissonance' | 'sharp-dissonance'`).
+      Implementation note: classification is a function rather than a field on `IntervalInformation`
+      to keep a single source of truth.
 - [x] Standard taxonomy: P1/P8/P5 = perfect consonance; P4 = perfect (with note about contextual
       dissonance); M3/m3/M6/m6 = imperfect; M2/m7 = mild dissonance; m2/M7/A4/d5 = sharp dissonance
 - [x] `isConsonant(name)`, `isDissonant(name)` predicates (also `consonanceOf(name)` for the full

@@ -147,8 +147,11 @@ export type KeySignatureKey =
   | 'Ab-minor';
 
 /**
- * Catalog of all 30 standard key signatures (15 major + 15 minor) plus the
- * theoretical keys that complete the enharmonic chart.
+ * Catalog of key signatures: 15 standard major keys, 15 standard minor keys,
+ * and 4 theoretical major keys (G♯ / D♯ / A♯ major and F♭ major) that
+ * complete the enharmonic chart. Theoretical entries are tagged
+ * `accidentalPreference: 'theoretical'` and are excluded from
+ * {@link keySignatureFromAccidentals} but accessible by name.
  *
  * Keyed by `${tonic}-${mode}` (tonic spelled per the conventional notation
  * for that key — e.g., `Db-major`, not `C#-major`). Enharmonic equivalents

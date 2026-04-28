@@ -56,6 +56,7 @@ export type {
   IntervalInformation,
   IntervalQuality,
   IntervalSymbol,
+  SimpleCanonicalInterval,
 } from './intervals.js';
 
 export type { AccidentalPreference, KeySignature } from './key-signatures.js';
