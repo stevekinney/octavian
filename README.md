@@ -93,7 +93,7 @@ note.enharmonics; // ["A#", "Cbb"]
 import { Note, createOctave } from 'octavian';
 
 Note.create('C#4'); // from a note-name-with-octave string
-Note.create({ note: 'C#', octave: createOctave(4) }); // from a structured object
+Note.create({ note: 'C#', octave: 4 }); // from a structured object
 Note.fromMidi(61); // from a MIDI key (sharp-preferred spelling)
 Note.nearestTo(440); // nearest equal-tempered note for a frequency under standard tuning
 Note.nearestTo(432, { reference: 'A4', frequency: createFrequency(432) }); // alternate tuning

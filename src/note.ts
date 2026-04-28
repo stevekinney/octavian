@@ -67,7 +67,7 @@ export type NoteLike =
   | SerializedNote
   | {
       readonly note: NoteName;
-      readonly octave?: Octave;
+      readonly octave?: number;
     };
 
 function noteNameWithOctave(note: NoteName, octave: Octave): `${NoteName}${Octave}` {
