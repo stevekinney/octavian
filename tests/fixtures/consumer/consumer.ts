@@ -8,21 +8,12 @@ import type {
   Semitones,
   Octave,
 } from 'octavian';
-import {
-  Note,
-  Chord,
-  Scale,
-  INTERVALS,
-  CHORDS,
-  SCALES,
-  STANDARD_TUNING,
-  createOctave,
-} from 'octavian';
+import { Note, Chord, Scale, INTERVALS, CHORDS, SCALES, STANDARD_TUNING } from 'octavian';
 
 // Quick-start examples from README
-const cSharp: Note = new Note('C#', createOctave(4));
+const cSharp: Note = Note.create({ note: 'C#', octave: 4 });
 const eb: Note = cSharp.transpose('minorThird');
-const c4: Note = new Note('C', createOctave(4));
+const c4: Note = Note.create({ note: 'C', octave: 4 });
 const cMajorSeven: Chord = Chord.create(c4, 'maj7');
 const cMajor: Scale = Scale.create(c4, 'major');
 
