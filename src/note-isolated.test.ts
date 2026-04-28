@@ -7,7 +7,7 @@ import { Note, applyInterval } from './note.ts';
 
 describe('Note in isolation (no Chord or Scale imports)', () => {
   it('constructs notes and accesses all independent properties', () => {
-    const c = new Note('C', 4);
+    const c = Note.create('C4');
     expect(c.note).toBe('C');
     expect(c.octave).toBe(4);
     expect(c.midi).toBe(60);
@@ -17,7 +17,7 @@ describe('Note in isolation (no Chord or Scale imports)', () => {
   });
 
   it('uses all remaining instance methods without error', () => {
-    const c = new Note('C', 4);
+    const c = Note.create('C4');
     expect(c.transpose('majorThird').toString()).toBe('E4');
     expect(c.transposeBy(7).toString()).toBe('G4');
     expect(c.up().toString()).toBe('C5');
@@ -40,6 +40,6 @@ describe('Note in isolation (no Chord or Scale imports)', () => {
     expect(Note.create('C#4').toString()).toBe('C#4');
     expect(Note.isNoteLike('C4')).toBe(true);
     expect(Note.compare('C4', 'D4')).toBe(-1);
-    expect(applyInterval(new Note('C', 4), 'perfectFifth').toString()).toBe('G4');
+    expect(applyInterval(Note.create('C4'), 'perfectFifth').toString()).toBe('G4');
   });
 });

@@ -46,3 +46,5 @@ Thumbs.db
 *.d.ts.map
 *.tsbuildinfo
 .dccache
+.codex-worktrees/
+.claude/worktrees/

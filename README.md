@@ -26,12 +26,12 @@ bun add octavian
 ## Quick Start
 
 ```ts
-import { Chord, Note, Scale, createOctave } from 'octavian';
+import { Chord, Note, Scale } from 'octavian';
 
-const cSharp = new Note('C#', createOctave(4));
+const cSharp = Note.create('C#4');
 const eb = cSharp.transpose('minorThird');
-const cMajorSeven = new Chord(Note.create('C4'), 'maj7');
-const cMajor = new Scale(Note.create('C4'), 'major');
+const cMajorSeven = Chord.create('C4', 'maj7');
+const cMajor = Scale.create('C4', 'major');
 
 console.log(String(eb)); // "E4"
 console.log(cMajorSeven.notes.map(String)); // ["C4", "E4", "G4", "B4"]
@@ -92,7 +92,6 @@ note.enharmonics; // ["A#", "Cbb"]
 ```ts
 import { Note, createOctave } from 'octavian';
 
-new Note('C#', createOctave(4)); // from a spelled name + branded octave
 Note.create('C#4'); // from a note-name-with-octave string
 Note.create({ note: 'C#', octave: createOctave(4) }); // from a structured object
 Note.fromMidi(61); // from a MIDI key (sharp-preferred spelling)
@@ -182,8 +181,8 @@ INTERVALS.majorSixth.degree; // 6
 `Chord` normalizes symbols and suffix aliases into a canonical suffix while keeping immutable note
 collections.
 
-`Chord.create` and `new Chord` are equivalent for construction. To recreate a chord from serialized
-data, use `Chord.fromJSON(serialized)`.
+Use `Chord.create(root, suffix)` to construct a chord. To recreate a chord from serialized data, use
+`Chord.fromJSON(serialized)`.
 
 ```ts
 import { Chord, Note } from 'octavian';

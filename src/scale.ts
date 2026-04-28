@@ -85,7 +85,8 @@ export class Scale {
    * @param note The scale root.
    * @param type The scale type.
    */
-  public constructor(note: NoteLike, type: ScaleType) {
+  /** @internal Use {@link Scale.create} or {@link Scale.fromJSON} instead. */
+  protected constructor(note: NoteLike, type: ScaleType) {
     this.#root = Note.create(note);
     this.#type = resolveScaleType(type);
     this.#intervals = Object.freeze(
@@ -475,7 +476,7 @@ export class Scale {
       );
     }
 
-    return new Chord(root, suffix);
+    return Chord.create(root, suffix);
   }
 
   /**

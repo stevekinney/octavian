@@ -121,7 +121,8 @@ export class Chord {
    * @param chord The chord suffix or symbol.
    * @param inversion The inversion index to apply. Defaults to `0`.
    */
-  public constructor(
+  /** @internal Use {@link Chord.create} or {@link Chord.fromJSON} instead. */
+  protected constructor(
     note: NoteLike,
     chord: ChordSuffix | ChordSymbol,
     inversion: InversionCount = 0,

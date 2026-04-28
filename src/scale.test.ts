@@ -4,7 +4,7 @@ import { Scale } from './scale.ts';
 
 describe('Scale', () => {
   it('creates scales and recreates them from serialized data', () => {
-    const scale = new Scale('C4', 'ionian');
+    const scale = Scale.create('C4', 'ionian');
     expect(scale.root.toString()).toBe('C4');
     expect(scale.type).toBe('major');
     expect(scale.notes.map((note) => note.toString())).toEqual([
@@ -43,7 +43,7 @@ describe('Scale', () => {
   });
 
   it('indexes and queries scale membership', () => {
-    const scale = new Scale('C4', 'major');
+    const scale = Scale.create('C4', 'major');
     expect(scale.at(0).toString()).toBe('C4');
     expect(() => scale.at(99)).toThrow(RangeError);
     expect(() => scale.at(99)).toThrow(/out of range/i);
@@ -60,7 +60,7 @@ describe('Scale', () => {
   });
 
   it('transposes, finds relatives, and derives modes', () => {
-    const scale = new Scale('C4', 'major');
+    const scale = Scale.create('C4', 'major');
     expect(scale.transpose('majorSecond').toString()).toBe('D major');
     expect(scale.transposeBy(1).toString()).toBe('C# major');
     expect(scale.relative('naturalMinor').toString()).toBe('A naturalMinor');
@@ -76,18 +76,20 @@ describe('Scale', () => {
       'B locrian',
     ]);
     expect(scale.rotate(1).toString()).toBe('D dorian');
-    expect(() => new Scale('C4', 'majorPentatonic').mode('dorian')).toThrow(RangeError);
-    expect(() => new Scale('C4', 'majorPentatonic').mode('dorian')).toThrow(/seven-note diatonic/i);
-    expect(() => new Scale('C4', 'blues').rotate(1)).toThrow(RangeError);
-    expect(() => new Scale('C4', 'blues').rotate(1)).toThrow(/exported scale type/i);
+    expect(() => Scale.create('C4', 'majorPentatonic').mode('dorian')).toThrow(RangeError);
+    expect(() => Scale.create('C4', 'majorPentatonic').mode('dorian')).toThrow(
+      /seven-note diatonic/i,
+    );
+    expect(() => Scale.create('C4', 'blues').rotate(1)).toThrow(RangeError);
+    expect(() => Scale.create('C4', 'blues').rotate(1)).toThrow(/exported scale type/i);
     expect(() => scale.rotate(99)).toThrow(RangeError);
     expect(() => scale.rotate(99)).toThrow(/rotation index/i);
-    expect(() => new Scale('C4', 'chromatic').relative('major')).toThrow(RangeError);
-    expect(() => new Scale('C4', 'chromatic').relative('major')).toThrow(/no relative/i);
+    expect(() => Scale.create('C4', 'chromatic').relative('major')).toThrow(RangeError);
+    expect(() => Scale.create('C4', 'chromatic').relative('major')).toThrow(/no relative/i);
   });
 
   it('navigates through notes in the scale', () => {
-    const scale = new Scale('C4', 'major');
+    const scale = Scale.create('C4', 'major');
     expect(scale.next('C4').toString()).toBe('D4');
     expect(scale.next('B4').toString()).toBe('C5');
     expect(scale.previous('C4').toString()).toBe('B3');
@@ -119,7 +121,7 @@ describe('Scale', () => {
   // ---------------------------------------------------------------------------
 
   it('navigates scale notes for member and non-member pitches', () => {
-    const scale = new Scale('C4', 'major');
+    const scale = Scale.create('C4', 'major');
 
     // nearest: D4 is a member, returns D4 at the same octave
     expect(scale.nearest('D4').toString()).toBe('D4');
@@ -136,7 +138,7 @@ describe('Scale', () => {
   });
 
   it('builds tertian chords from supported scales', () => {
-    const scale = new Scale('C4', 'major');
+    const scale = Scale.create('C4', 'major');
     expect(scale.triad(1).name).toBe('C');
     expect(scale.chord(2, 'seventh').name).toBe('Dm7');
     expect(scale.chords().map((chord) => chord.name)).toEqual([
@@ -157,15 +159,15 @@ describe('Scale', () => {
       'Am7',
       'Bm7b5',
     ]);
-    expect(() => new Scale('C4', 'chromatic').triad(1)).toThrow(RangeError);
-    expect(() => new Scale('C4', 'chromatic').triad(1)).toThrow(/no exported chord matches/i);
+    expect(() => Scale.create('C4', 'chromatic').triad(1)).toThrow(RangeError);
+    expect(() => Scale.create('C4', 'chromatic').triad(1)).toThrow(/no exported chord matches/i);
   });
 
   it('compares, serializes, and iterates scales', () => {
-    const cMajor = new Scale('C4', 'major');
-    const aMinor = new Scale('A3', 'naturalMinor');
+    const cMajor = Scale.create('C4', 'major');
+    const aMinor = Scale.create('A3', 'naturalMinor');
     expect(cMajor.samePitchClasses(aMinor)).toBe(true);
-    expect(cMajor.equals(new Scale('C4', 'ionian'))).toBe(true);
+    expect(cMajor.equals(Scale.create('C4', 'ionian'))).toBe(true);
     expect(cMajor.equals(aMinor)).toBe(false);
     expect([...cMajor].map((note) => note.toString())).toEqual([
       'C4',

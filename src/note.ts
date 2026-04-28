@@ -42,6 +42,11 @@ import { STANDARD_TUNING, type Tuning } from './tuning.js';
 
 const DEFAULT_OCTAVE = createOctave(4);
 
+// Module-scoped factory populated by Note's static initializer block,
+// so module-level functions (applyInterval, createNoteFromStructuredValue)
+// can construct Notes without exposing a public constructor.
+let createNote: (note: NoteName, octave: Octave) => Note;
+
 /**
  * A JSON-serializable snapshot of a note.
  */
@@ -129,7 +134,7 @@ function createNoteFromStructuredValue(
 ): Note {
   const octave =
     'octave' in value && value.octave !== undefined ? createOctave(value.octave) : DEFAULT_OCTAVE;
-  const note = new Note(value.note, octave);
+  const note = createNote(value.note, octave);
 
   if ('midi' in value && 'frequency' in value) {
     validateSerializedNote(note, value);
@@ -166,7 +171,7 @@ export function applyInterval(note: Note, interval: Interval): Note {
     Math.floor((targetMidiNumber - noteNameToRawSemitone(targetNoteName)) / 12) - 1,
   );
 
-  return new Note(targetNoteName, targetOctave);
+  return createNote(targetNoteName, targetOctave);
 }
 
 /**
@@ -181,13 +186,9 @@ export class Note {
   readonly #enharmonics: readonly NoteName[];
 
   /**
-   * Creates an immutable note from a validated spelling and octave.
-   *
-   * @param note The note spelling to construct.
-   * @param octave The octave to use. Defaults to `4`.
-   * @throws {RangeError} When the resulting note falls outside the supported MIDI range.
+   * @internal Use {@link Note.create}, {@link Note.fromMidi}, or {@link Note.nearestTo} instead.
    */
-  public constructor(note: NoteName, octave: Octave = DEFAULT_OCTAVE) {
+  protected constructor(note: NoteName, octave: Octave = DEFAULT_OCTAVE) {
     if (!isNoteName(note)) {
       throw new TypeError(`Unsupported note name: ${String(note)}.`);
     }
@@ -198,6 +199,10 @@ export class Note {
     this.#frequency = createFrequency(Number(midiToFrequency(this.#midi)));
     this.#chromaticIndex = createChromaticIndex(noteNameToChromaticIndex(this.#note));
     this.#enharmonics = enharmonicsForNoteName(this.#note);
+  }
+
+  static {
+    createNote = (note: NoteName, octave: Octave) => new Note(note, octave);
   }
 
   /**
@@ -214,11 +219,11 @@ export class Note {
 
     if (isNoteNameWithOctave(value)) {
       const { note, octave } = parseNoteNameWithOctave(value);
-      return new Note(note, octave);
+      return createNote(note, octave);
     }
 
     if (isNoteName(value)) {
-      return new Note(value, DEFAULT_OCTAVE);
+      return createNote(value, DEFAULT_OCTAVE);
     }
 
     if (isStructuredNoteLike(value)) {
@@ -237,7 +242,7 @@ export class Note {
   public static fromMidi(midi: number): Note {
     const { note, octave } = midiToNoteNameWithOctave(createMidiKey(midi));
 
-    return new Note(note, octave);
+    return createNote(note, octave);
   }
 
   /**
@@ -485,7 +490,7 @@ export class Note {
    * @returns The respelled note.
    */
   public withOctave(octave: number): Note {
-    return new Note(this.note, createOctave(octave));
+    return createNote(this.note, createOctave(octave));
   }
 
   /**

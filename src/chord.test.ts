@@ -5,7 +5,7 @@ import { Note } from './note.ts';
 
 describe('Chord', () => {
   it('creates chords from symbols, suffixes, and serialized input', () => {
-    const chord = new Chord('C4', 'maj7');
+    const chord = Chord.create('C4', 'maj7');
     expect(chord.name).toBe('Cmaj7');
     expect(chord.symbol).toBe('maj7');
     expect(chord.suffix).toBe('majorSeventh');
@@ -39,7 +39,7 @@ describe('Chord', () => {
   });
 
   it('indexes notes and chord members', () => {
-    const chord = new Chord('C4', 'maj7');
+    const chord = Chord.create('C4', 'maj7');
     expect(chord.at(1).toString()).toBe('E4');
     expect(() => chord.at(99)).toThrow(RangeError);
     expect(() => chord.at(99)).toThrow(/out of range/i);
@@ -50,7 +50,7 @@ describe('Chord', () => {
   });
 
   it('transposes, changes roots, and inverts chords', () => {
-    const chord = new Chord('C4', 'maj7');
+    const chord = Chord.create('C4', 'maj7');
     expect(chord.transpose('majorSecond').name).toBe('Dmaj7');
     expect(chord.transposeBy(1).name).toBe('C#maj7');
     expect(chord.withRoot('D4').name).toBe('Dmaj7');
@@ -66,34 +66,34 @@ describe('Chord', () => {
     expect(() => chord.invert(-1)).toThrow(/non-negative inversion/i);
     expect(() => chord.inversion(6)).toThrow(RangeError);
     expect(() => chord.inversion(6)).toThrow(/cannot set inversion/i);
-    expect(() => new Chord('C4', 'major', 3)).toThrow(RangeError);
-    expect(() => new Chord('C4', 'major', 3)).toThrow(/cannot invert/i);
+    expect(() => Chord.create('C4', 'major').inversion(3)).toThrow(RangeError);
+    expect(() => Chord.create('C4', 'major').inversion(3)).toThrow(/cannot set inversion/i);
   });
 
   it('supports slash chords and catalog-backed interval edits', () => {
-    const chord = new Chord('C4', 'maj7');
+    const chord = Chord.create('C4', 'maj7');
     expect(chord.slash('E4').equals(chord.inversion(1))).toBe(true);
     expect(() => chord.slash('F4')).toThrow(RangeError);
     expect(() => chord.slash('F4')).toThrow(/slash chords are restricted/i);
 
     expect(chord.omit('majorSeventh').suffix).toBe('major');
-    expect(new Chord('C4', 'major').add('majorSeventh').suffix).toBe('majorSeventh');
-    expect(new Chord('C4', 'major').alter('perfectFifth', 'augmentedFifth').suffix).toBe(
+    expect(Chord.create('C4', 'major').add('majorSeventh').suffix).toBe('majorSeventh');
+    expect(Chord.create('C4', 'major').alter('perfectFifth', 'augmentedFifth').suffix).toBe(
       'augmented',
     );
-    expect(() => new Chord('C4', 'major').add('minorSecond')).toThrow(RangeError);
-    expect(() => new Chord('C4', 'major').add('minorSecond')).toThrow(
+    expect(() => Chord.create('C4', 'major').add('minorSecond')).toThrow(RangeError);
+    expect(() => Chord.create('C4', 'major').add('minorSecond')).toThrow(
       /does not match an exported chord/i,
     );
   });
 
   it('validates and derives voicings', () => {
-    const chord = new Chord('C4', 'maj7');
+    const chord = Chord.create('C4', 'maj7');
     const voicing = chord.voicing([
-      new Note('C', 4),
-      new Note('E', 4),
-      new Note('G', 4),
-      new Note('B', 4),
+      Note.create('C4'),
+      Note.create('E4'),
+      Note.create('G4'),
+      Note.create('B4'),
     ]);
     expect(voicing.bass.toString()).toBe('C4');
     expect(voicing.midi).toEqual([60, 64, 67, 71]);
@@ -109,13 +109,13 @@ describe('Chord', () => {
       'E4',
       'B4',
     ]);
-    expect(() => chord.voicing([new Note('C', 4)])).toThrow(RangeError);
-    expect(() => chord.voicing([new Note('C', 4)])).toThrow(/expected \d+ notes/i);
+    expect(() => chord.voicing([Note.create('C4')])).toThrow(RangeError);
+    expect(() => chord.voicing([Note.create('C4')])).toThrow(/expected \d+ notes/i);
     expect(() =>
-      chord.voicing([new Note('C', 4), new Note('E', 4), new Note('G', 4), new Note('A', 4)]),
+      chord.voicing([Note.create('C4'), Note.create('E4'), Note.create('G4'), Note.create('A4')]),
     ).toThrow(RangeError);
     expect(() =>
-      chord.voicing([new Note('C', 4), new Note('E', 4), new Note('G', 4), new Note('A', 4)]),
+      chord.voicing([Note.create('C4'), Note.create('E4'), Note.create('G4'), Note.create('A4')]),
     ).toThrow(/pitch classes/i);
     expect(() => chord.lowerFromTop(0)).toThrow(RangeError);
     expect(() => chord.lowerFromTop(0)).toThrow(/range 1\.\.\d+/i);
@@ -124,21 +124,21 @@ describe('Chord', () => {
   });
 
   it('compares chords and checks membership', () => {
-    const cMajorSix = new Chord('C4', 'majorSixth');
-    const aMinorSeven = new Chord('A3', 'minorSeventh');
+    const cMajorSix = Chord.create('C4', 'majorSixth');
+    const aMinorSeven = Chord.create('A3', 'minorSeventh');
 
-    expect(cMajorSix.equals(new Chord('C4', 'majorSixth'))).toBe(true);
+    expect(cMajorSix.equals(Chord.create('C4', 'majorSixth'))).toBe(true);
     expect(cMajorSix.equals(aMinorSeven)).toBe(false);
     expect(cMajorSix.sameChromaticIndexes(aMinorSeven)).toBe(true);
     expect(cMajorSix.isEnharmonicTo(aMinorSeven)).toBe(false);
-    expect(new Chord('C#4', 'major').isEnharmonicTo(new Chord('Db4', 'major'))).toBe(true);
+    expect(Chord.create('C#4', 'major').isEnharmonicTo(Chord.create('Db4', 'major'))).toBe(true);
     expect(cMajorSix.has('A4')).toBe(true);
     expect(cMajorSix.has('minorSeventh')).toBe(false);
     expect(cMajorSix.has('majorSixth')).toBe(true);
   });
 
   it('serializes and iterates chords', () => {
-    const chord = new Chord('C4', 'maj7');
+    const chord = Chord.create('C4', 'maj7');
     expect(chord.toJSON()).toEqual({
       name: 'Cmaj7',
       symbol: 'maj7',
@@ -157,7 +157,7 @@ describe('Chord', () => {
   // ---------------------------------------------------------------------------
 
   it('returns the same instance when omit, add, or alter are no-ops', () => {
-    const cMajor = new Chord('C4', 'major');
+    const cMajor = Chord.create('C4', 'major');
 
     // omit: interval not present in chord → no-op → same reference
     const afterOmitAbsent = cMajor.omit('minorSecond');

@@ -23,12 +23,12 @@ describe('MIDI range boundaries', () => {
   });
 
   it('Note constructed at MIDI 0 (C-1) is valid', () => {
-    const note = new Note('C', -1);
+    const note = Note.create('C-1');
     expect(Number(note.midi)).toBe(0);
   });
 
   it('Note constructed at MIDI 127 (G9) is valid', () => {
-    const note = new Note('G', 9);
+    const note = Note.create('G9');
     expect(Number(note.midi)).toBe(127);
   });
 });
@@ -69,51 +69,51 @@ describe('frequency boundaries', () => {
 
 describe('enharmonic and octave-crossing spellings', () => {
   it('B#3 is in the next octave (MIDI 60 = C4)', () => {
-    expect(Number(new Note('B#', 3).midi)).toBe(60);
+    expect(Number(Note.create('B#3').midi)).toBe(60);
   });
 
   it('B#3 simplifies to C4', () => {
-    expect(new Note('B#', 3).simplify().toString()).toBe('C4');
+    expect(Note.create('B#3').simplify().toString()).toBe('C4');
   });
 
   it('Cb4 is in the previous octave (MIDI 59 = B3)', () => {
-    expect(Number(new Note('Cb', 4).midi)).toBe(59);
+    expect(Number(Note.create('Cb4').midi)).toBe(59);
   });
 
   it('E#4 and F4 share the same MIDI value', () => {
-    expect(Number(new Note('E#', 4).midi)).toBe(Number(new Note('F', 4).midi));
+    expect(Number(Note.create('E#4').midi)).toBe(Number(Note.create('F4').midi));
   });
 
   it('Fb4 and E4 share the same MIDI value', () => {
-    expect(Number(new Note('Fb', 4).midi)).toBe(Number(new Note('E', 4).midi));
+    expect(Number(Note.create('Fb4').midi)).toBe(Number(Note.create('E4').midi));
   });
 
   it('F##4 and G4 share the same MIDI value', () => {
-    expect(Number(new Note('F##', 4).midi)).toBe(Number(new Note('G', 4).midi));
+    expect(Number(Note.create('F##4').midi)).toBe(Number(Note.create('G4').midi));
   });
 
   it('Gbb4 and F4 share the same MIDI value', () => {
-    expect(Number(new Note('Gbb', 4).midi)).toBe(Number(new Note('F', 4).midi));
+    expect(Number(Note.create('Gbb4').midi)).toBe(Number(Note.create('F4').midi));
   });
 
   it('B#9 throws RangeError because it resolves to MIDI 132', () => {
-    expect(() => new Note('B#', 9)).toThrow(RangeError);
+    expect(() => Note.create('B#9')).toThrow(RangeError);
   });
 
   it('Cb-1 throws RangeError because it resolves to MIDI -1', () => {
-    expect(() => new Note('Cb', -1)).toThrow(RangeError);
+    expect(() => Note.create('Cb-1')).toThrow(RangeError);
   });
 });
 
 describe('octave boundary cases for Note.up and Note.down', () => {
   it('Note.up throws RangeError when the result exceeds octave 9', () => {
     // G9 is the highest valid note (MIDI 127); going up one octave requires octave 10
-    expect(() => new Note('G', 9).up()).toThrow(RangeError);
+    expect(() => Note.create('G9').up()).toThrow(RangeError);
   });
 
   it('Note.down throws RangeError when the result goes below octave -1', () => {
     // C-1 is MIDI 0; going down one octave requires octave -2
-    expect(() => new Note('C', -1).down()).toThrow(RangeError);
+    expect(() => Note.create('C-1').down()).toThrow(RangeError);
   });
 });
 
@@ -134,13 +134,13 @@ describe('createSemitones edge cases', () => {
 describe('applyInterval boundaries', () => {
   it('applyInterval from F#9 by minorSecond reaches G9 (MIDI 127)', () => {
     // F#9 = MIDI 126; minorSecond = +1 semitone; result = G9 = MIDI 127
-    const result = applyInterval(new Note('F#', 9), 'minorSecond');
+    const result = applyInterval(Note.create('F#9'), 'minorSecond');
     expect(Number(result.midi)).toBe(127);
   });
 
   it('applyInterval from G9 by minorSecond throws RangeError (MIDI 128 out of range)', () => {
     // G9 = MIDI 127; minorSecond = +1 semitone; result would be MIDI 128 which is invalid
-    expect(() => applyInterval(new Note('G', 9), 'minorSecond')).toThrow(RangeError);
+    expect(() => applyInterval(Note.create('G9'), 'minorSecond')).toThrow(RangeError);
   });
 });
 
@@ -152,7 +152,7 @@ describe('note name construction matrix', () => {
       if (!isNoteName(candidate)) return;
       const noteName: NoteName = candidate;
       try {
-        const note = new Note(noteName, 4);
+        const note = Note.create(`${noteName}4`);
         expect(Number(note.midi)).toBeGreaterThanOrEqual(0);
         expect(Number(note.midi)).toBeLessThanOrEqual(127);
       } catch (error) {

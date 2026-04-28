@@ -24,7 +24,7 @@ if (JSON.stringify(actualExports) !== JSON.stringify(expectedSorted)) {
 }
 
 // README quick-start
-const cSharp = new Note('C#', 4);
+const cSharp = Note.create('C#4');
 const eb = cSharp.transpose('minorThird');
 console.assert(String(eb) === 'E4', `Expected E4, got ${String(eb)}`);
 

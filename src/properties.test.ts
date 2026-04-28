@@ -55,7 +55,7 @@ describe('property-based invariants', () => {
         fc.constantFrom('major', 'naturalMinor', 'majorPentatonic', 'blues'),
         (midiRoot, scaleType) => {
           const root = Note.fromMidi(midiRoot);
-          const scale = new Scale(root, scaleType);
+          const scale = Scale.create(root, scaleType);
           try {
             const transposed = scale.transposeBy(12);
             expect(transposed.samePitchClasses(scale)).toBe(true);
@@ -82,7 +82,7 @@ describe('property-based invariants', () => {
         ),
         (midiRoot, suffix) => {
           const root = Note.fromMidi(midiRoot);
-          const chord = new Chord(root, suffix);
+          const chord = Chord.create(root, suffix);
           const cycled = chord.invert(chord.size);
           expect(cycled.root.chromaticIndex).toBe(chord.root.chromaticIndex);
         },

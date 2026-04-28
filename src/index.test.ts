@@ -15,9 +15,9 @@ import {
 
 describe('index exports', () => {
   it('re-exports the public music theory API', () => {
-    expect(new Note('C', 4).toString()).toBe('C4');
-    expect(new Scale('C4', 'major').toString()).toBe('C major');
-    expect(applyInterval(new Note('C', 4), 'perfectFifth').toString()).toBe('G4');
+    expect(Note.create('C4').toString()).toBe('C4');
+    expect(Scale.create('C4', 'major').toString()).toBe('C major');
+    expect(applyInterval(Note.create('C4'), 'perfectFifth').toString()).toBe('G4');
     expect(INTERVALS.majorThird.symbol).toBe('M3');
     expect(CHORDS.majorSeventh.symbol).toBe('maj7');
     expect(SCALES.major.intervals).toContain('majorThird');
