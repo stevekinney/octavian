@@ -11,6 +11,7 @@ import { CHORDS, CHORD_SYMBOLS, type ChordSuffix, type ChordSymbol } from './cho
 import { INTERVALS, type Interval } from './intervals.js';
 import {
   ALL_NOTE_NAMES,
+  FLAT_PREFERRED_NOTE_NAMES,
   SHARP_PREFERRED_NOTE_NAMES,
   accidentalFromNoteName,
   naturalFromNoteName,
@@ -21,6 +22,7 @@ import {
 } from './note-spellings.js';
 import { SCALES, type ScaleType } from './scales.js';
 import { STANDARD_TUNING, type Tuning } from './tuning.js';
+import type { AccidentalPreference } from './key-signatures.js';
 
 const NOTE_WITH_OCTAVE_PATTERN = /^([A-G](?:##|bb|#|b)?)(-1|0|1|2|3|4|5|6|7|8|9)$/u;
 
@@ -152,20 +154,27 @@ export function noteNameToMidi(note: NoteName, octave: Octave): MidiKey {
 }
 
 /**
- * Converts a MIDI key number to its sharp-preferred note spelling and octave.
+ * Converts a MIDI key number to a note spelling and octave.
  *
  * @param midi The MIDI key to convert.
- * @returns The sharp-preferred note spelling and octave.
+ * @param accidentalPreference Whether to prefer sharps or flats for ambiguous pitch classes. Defaults to `'sharps'`.
+ * @returns The note spelling and octave.
  */
-export function midiToNoteNameWithOctave(midi: MidiKey): {
+export function midiToNoteNameWithOctave(
+  midi: MidiKey,
+  accidentalPreference: AccidentalPreference = 'sharps',
+): {
   readonly note: NoteName;
   readonly octave: Octave;
 } {
   const numericMidi = Number(midi);
   const octave = createOctave(Math.floor(numericMidi / 12) - 1);
-  // SHARP_PREFERRED_NOTE_NAMES has exactly 12 entries and ChromaticIndex is always 0..11.
+  const chromaticIndex = createChromaticIndex(numericMidi % 12);
+  const noteNames =
+    accidentalPreference === 'flats' ? FLAT_PREFERRED_NOTE_NAMES : SHARP_PREFERRED_NOTE_NAMES;
+  // Both arrays have exactly 12 entries and ChromaticIndex is always 0..11.
   // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
-  const note = SHARP_PREFERRED_NOTE_NAMES[createChromaticIndex(numericMidi % 12)]!;
+  const note = noteNames[chromaticIndex]!;
 
   return { note, octave };
 }

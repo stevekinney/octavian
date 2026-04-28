@@ -59,6 +59,7 @@ const EXPECTED_EXPORTS = [
   'createOctave',
   'createSemitones',
   'createSlashChordName',
+  'FLAT_PREFERRED_NOTE_NAMES',
   'enharmonicsForNoteName',
   'findCanonicalIntervalBySemitonesAndDegree',
   'isDiatonicModeFamily',

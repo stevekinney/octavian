@@ -39,6 +39,7 @@ import {
   parseNoteNameWithOctave,
 } from './music-utilities.js';
 import { STANDARD_TUNING, type Tuning } from './tuning.js';
+import type { AccidentalPreference } from './key-signatures.js';
 
 const DEFAULT_OCTAVE = createOctave(4);
 
@@ -234,13 +235,17 @@ export class Note {
   }
 
   /**
-   * Creates a note from a MIDI key using sharp-preferred spellings.
+   * Creates a note from a MIDI key.
    *
    * @param midi The MIDI key to convert.
+   * @param accidentalPreference Whether to prefer sharps or flats for ambiguous pitch classes. Defaults to `'sharps'`.
    * @returns The created note.
    */
-  public static fromMidi(midi: number): Note {
-    const { note, octave } = midiToNoteNameWithOctave(createMidiKey(midi));
+  public static fromMidi(
+    midi: number,
+    accidentalPreference: AccidentalPreference = 'sharps',
+  ): Note {
+    const { note, octave } = midiToNoteNameWithOctave(createMidiKey(midi), accidentalPreference);
 
     return createNote(note, octave);
   }
@@ -250,11 +255,19 @@ export class Note {
    *
    * @param frequency The frequency in hertz.
    * @param tuning The tuning reference to use.
+   * @param accidentalPreference Whether to prefer sharps or flats for ambiguous pitch classes. Defaults to `'sharps'`.
    * @returns The nearest note.
    * @throws {RangeError} When the frequency is not positive or resolves outside the supported MIDI range.
    */
-  public static nearestTo(frequency: number, tuning: Tuning = STANDARD_TUNING): Note {
-    return Note.fromMidi(frequencyToNearestMidi(createFrequency(frequency), tuning));
+  public static nearestTo(
+    frequency: number,
+    tuning: Tuning = STANDARD_TUNING,
+    accidentalPreference: AccidentalPreference = 'sharps',
+  ): Note {
+    return Note.fromMidi(
+      frequencyToNearestMidi(createFrequency(frequency), tuning),
+      accidentalPreference,
+    );
   }
 
   /**
@@ -374,13 +387,20 @@ export class Note {
   }
 
   /**
-   * Transposes the note by a semitone distance using sharp-preferred spelling.
+   * Transposes the note by a semitone distance.
    *
    * @param semitones The semitone distance to apply.
+   * @param accidentalPreference Whether to prefer sharps or flats for ambiguous pitch classes. Defaults to `'sharps'`.
    * @returns The transposed note.
    */
-  public transposeBy(semitones: number): Note {
-    return Note.fromMidi(Number(this.midi) + Number(createSemitones(semitones)));
+  public transposeBy(
+    semitones: number,
+    accidentalPreference: AccidentalPreference = 'sharps',
+  ): Note {
+    return Note.fromMidi(
+      Number(this.midi) + Number(createSemitones(semitones)),
+      accidentalPreference,
+    );
   }
 
   /**
@@ -475,12 +495,13 @@ export class Note {
   }
 
   /**
-   * Simplifies the note to a common sharp-preferred spelling while preserving pitch.
+   * Re-spells the note to a common single-accidental (or natural) form while preserving pitch.
    *
+   * @param accidentalPreference Whether to prefer sharps or flats. Defaults to `'sharps'`.
    * @returns The simplified note.
    */
-  public simplify(): Note {
-    return Note.fromMidi(this.midi);
+  public simplify(accidentalPreference: AccidentalPreference = 'sharps'): Note {
+    return Note.fromMidi(this.midi, accidentalPreference);
   }
 
   /**

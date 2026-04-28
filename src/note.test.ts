@@ -70,6 +70,30 @@ describe('Note', () => {
     expect(() => Note.nearestTo(-1)).toThrow(/positive finite/i);
   });
 
+  it('respects accidentalPreference for fromMidi, nearestTo, transposeBy, and simplify', () => {
+    // C#4 (MIDI 61) default is sharp
+    expect(Note.fromMidi(61).toString()).toBe('C#4');
+    // flat preferred
+    expect(Note.fromMidi(61, 'flats').toString()).toBe('Db4');
+    // natural notes are unambiguous either way
+    expect(Note.fromMidi(60, 'flats').toString()).toBe('C4');
+    expect(Note.fromMidi(60, 'sharps').toString()).toBe('C4');
+
+    // nearestTo inherits preference
+    expect(Note.nearestTo(277.18, STANDARD_TUNING, 'sharps').toString()).toBe('C#4');
+    expect(Note.nearestTo(277.18, STANDARD_TUNING, 'flats').toString()).toBe('Db4');
+
+    // transposeBy up one semitone from C
+    expect(Note.create('C4').transposeBy(1)).toEqual(Note.create('C#4'));
+    expect(Note.create('C4').transposeBy(1, 'flats')).toEqual(Note.create('Db4'));
+
+    // simplify a double-sharp
+    expect(Note.create('C##4').simplify()).toEqual(Note.create('D4'));
+    expect(Note.create('A##4').simplify()).toEqual(Note.create('B4'));
+    expect(Note.create('Abb4').simplify('flats')).toEqual(Note.create('Gb4'));
+    expect(Note.create('Abb4').simplify('sharps')).toEqual(Note.create('F#4'));
+  });
+
   describe('frequencyAt and noteToFrequency', () => {
     const tunings = [
       STANDARD_TUNING,

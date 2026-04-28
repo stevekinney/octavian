@@ -73,6 +73,24 @@ export const SHARP_PREFERRED_NOTE_NAMES: readonly NoteName[] = [
 ] satisfies readonly NoteName[];
 
 /**
+ * The flat-preferred chromatic scale, one name per pitch class.
+ */
+export const FLAT_PREFERRED_NOTE_NAMES: readonly NoteName[] = [
+  'C',
+  'Db',
+  'D',
+  'Eb',
+  'E',
+  'F',
+  'Gb',
+  'G',
+  'Ab',
+  'A',
+  'Bb',
+  'B',
+] satisfies readonly NoteName[];
+
+/**
  * Every supported note name in this library.
  */
 export const ALL_NOTE_NAMES: readonly NoteName[] = Object.freeze(
