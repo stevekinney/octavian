@@ -7,8 +7,14 @@ export type Natural = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
 
 /**
  * A supported accidental suffix.
+ *
+ * Triple accidentals (`'###'` and `'bbb'`) are valid but rare — they appear
+ * primarily in extreme theoretical contexts and deeply modulating chains.
+ * They are accepted on input and produced by enharmonic operations when
+ * relevant; {@link simplifyNoteName} reduces them to common single- or
+ * double-accidental equivalents.
  */
-export type Accidental = '' | '#' | 'b' | '##' | 'bb';
+export type Accidental = '' | '#' | 'b' | '##' | 'bb' | '###' | 'bbb';
 
 /**
  * A spelled note name without an octave.
@@ -27,8 +33,11 @@ export const NATURALS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
 
 /**
  * The supported accidental suffixes.
+ *
+ * Includes triple accidentals (`'###'`, `'bbb'`) for completeness in
+ * extreme theoretical contexts.
  */
-export const ACCIDENTALS = ['', '#', 'b', '##', 'bb'] as const;
+export const ACCIDENTALS = ['', '#', 'b', '##', 'bb', '###', 'bbb'] as const;
 
 /**
  * Natural note letters mapped to their pitch classes.
@@ -52,6 +61,8 @@ export const ACCIDENTAL_OFFSETS: Record<Accidental, number> = {
   b: -1,
   '##': 2,
   bb: -2,
+  '###': 3,
+  bbb: -3,
 } satisfies Record<Accidental, number>;
 
 /**
@@ -133,6 +144,15 @@ export function naturalFromNoteName(note: NoteName): Natural {
  * @returns The accidental suffix.
  */
 export function accidentalFromNoteName(note: NoteName): Accidental {
+  // Order matters: check triples before doubles before singles.
+  if (note.endsWith('###')) {
+    return '###';
+  }
+
+  if (note.endsWith('bbb')) {
+    return 'bbb';
+  }
+
   if (note.endsWith('##')) {
     return '##';
   }
@@ -205,6 +225,8 @@ export function normalizeChromaticIndex(value: number): ChromaticIndex {
  */
 export function buildNoteName(natural: Natural, accidentalOffset: number): NoteName {
   switch (accidentalOffset) {
+    case -3:
+      return `${natural}bbb`;
     case -2:
       return `${natural}bb`;
     case -1:
@@ -215,6 +237,8 @@ export function buildNoteName(natural: Natural, accidentalOffset: number): NoteN
       return `${natural}#`;
     case 2:
       return `${natural}##`;
+    case 3:
+      return `${natural}###`;
     default:
       throw new RangeError(
         `Cannot spell ${natural} with an accidental offset of ${accidentalOffset}.`,

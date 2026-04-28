@@ -4,13 +4,44 @@
 export type IntervalQuality = 'perfect' | 'major' | 'minor' | 'augmented' | 'diminished';
 
 /**
+ * The consonance/dissonance classification for an interval, per the
+ * common-practice taxonomy used in *Aldwell & Schachter* and similar texts.
+ *
+ * - `perfect-consonance`: P1, P5, P8 (also compound forms).
+ * - `imperfect-consonance`: M3, m3, M6, m6 (and compound forms).
+ * - `mild-dissonance`: M2, m7 (and compound forms).
+ * - `sharp-dissonance`: m2, M7, A4 / d5 (the tritone), and compound forms.
+ *
+ * Note on the perfect fourth: P4 is consonant melodically and against
+ * upper voices, but dissonant against the bass — this catalog classifies
+ * P4 as `perfect-consonance` (the standard taxonomy choice). Callers
+ * needing bass-relative analysis should layer their own check on top.
+ */
+export type IntervalConsonance =
+  | 'perfect-consonance'
+  | 'imperfect-consonance'
+  | 'mild-dissonance'
+  | 'sharp-dissonance';
+
+/**
  * Structured information about an interval.
+ *
+ * The `simpleInterval`, `octaveOffset`, and `consonance` fields are
+ * optional to preserve backward compatibility with consumers constructing
+ * `IntervalInformation` literals directly. Built-in catalog entries
+ * always populate them; foundational widening per roadmap items 1.2/1.3.
  */
 export type IntervalInformation = {
   readonly semitones: number;
   readonly symbol: string;
   readonly degree: number;
   readonly quality: IntervalQuality;
+  /** Canonical interval after octave-removal (P11 → P4, M9 → M2). */
+  readonly simpleInterval?: CanonicalInterval;
+  /** Number of octaves above the simple form (0 for simple, 1+ for compound). */
+  readonly octaveOffset?: number;
+  /** Consonance/dissonance classification per the common-practice taxonomy. */
+  readonly consonance?: IntervalConsonance;
 };
 
 /**
@@ -148,14 +179,8 @@ const INTERVAL_ALIAS_DEFINITIONS: Record<IntervalAliasKey, IntervalInformation> 
   thirteenth: CANONICAL_INTERVALS.majorThirteenth,
 } satisfies Record<IntervalAliasKey, IntervalInformation>;
 
-/**
- * Structured interval definitions, including accepted aliases.
- */
-export const INTERVALS: Readonly<Record<Interval, IntervalInformation>> = Object.freeze({
-  ...CANONICAL_INTERVALS,
-  ...INTERVAL_ALIAS_DEFINITIONS,
-});
-
+// Lookup tables hoisted ahead of `INTERVALS` enrichment so the enrichment
+// helper can reference them. Also used by public functions further below.
 const CANONICAL_INTERVAL_LOOKUP = new Map<string, CanonicalInterval>(
   Object.entries(CANONICAL_INTERVALS).map(([interval, information]) => [
     `${information.semitones}:${information.degree}`,
@@ -163,6 +188,109 @@ const CANONICAL_INTERVAL_LOOKUP = new Map<string, CanonicalInterval>(
     interval as CanonicalInterval,
   ]),
 );
+
+const SIMPLE_CONSONANCE_TABLE: Readonly<Record<CanonicalInterval, IntervalConsonance>> = {
+  perfectUnison: 'perfect-consonance',
+  perfectFifth: 'perfect-consonance',
+  perfectOctave: 'perfect-consonance',
+  perfectFourth: 'perfect-consonance',
+  majorThird: 'imperfect-consonance',
+  minorThird: 'imperfect-consonance',
+  majorSixth: 'imperfect-consonance',
+  minorSixth: 'imperfect-consonance',
+  majorSecond: 'mild-dissonance',
+  minorSeventh: 'mild-dissonance',
+  minorSecond: 'sharp-dissonance',
+  majorSeventh: 'sharp-dissonance',
+  augmentedFourth: 'sharp-dissonance',
+  diminishedFifth: 'sharp-dissonance',
+  augmentedUnison: 'sharp-dissonance',
+  diminishedSecond: 'sharp-dissonance',
+  diminishedThird: 'sharp-dissonance',
+  augmentedSecond: 'sharp-dissonance',
+  diminishedFourth: 'sharp-dissonance',
+  augmentedThird: 'sharp-dissonance',
+  diminishedSixth: 'sharp-dissonance',
+  augmentedFifth: 'sharp-dissonance',
+  diminishedSeventh: 'sharp-dissonance',
+  augmentedSixth: 'sharp-dissonance',
+  diminishedOctave: 'sharp-dissonance',
+  augmentedOctave: 'sharp-dissonance',
+  // Compound entries — referenced when a compound canonical itself is asked
+  // for; `consonanceOf` simplifies first, so these are unreachable from the
+  // public API but required by Record<> type completeness.
+  minorNinth: 'sharp-dissonance',
+  majorNinth: 'mild-dissonance',
+  diminishedTenth: 'imperfect-consonance',
+  minorTenth: 'imperfect-consonance',
+  augmentedNinth: 'mild-dissonance',
+  majorTenth: 'imperfect-consonance',
+  diminishedEleventh: 'sharp-dissonance',
+  perfectEleventh: 'perfect-consonance',
+  augmentedTenth: 'imperfect-consonance',
+  augmentedEleventh: 'sharp-dissonance',
+  diminishedTwelfth: 'sharp-dissonance',
+  perfectTwelfth: 'perfect-consonance',
+  minorThirteenth: 'imperfect-consonance',
+  augmentedTwelfth: 'sharp-dissonance',
+  majorThirteenth: 'imperfect-consonance',
+  diminishedFourteenth: 'sharp-dissonance',
+};
+
+function computeSimpleForm(degree: number, semitones: number): CanonicalInterval {
+  // The catalog covers every (simpleSemitones, simpleDegree) pair this
+  // function can ever be asked about, so the lookup is guaranteed to hit.
+  // Callers are: catalog enrichment (valid by construction) and
+  // simplifyInterval (only invoked on degree > 8, which always has a simple
+  // form in the catalog). Asserting via `!` keeps coverage faithful.
+  const simpleDegree = ((degree - 1) % 7) + 1;
+  const simpleSemitones = semitones % 12;
+  return CANONICAL_INTERVAL_LOOKUP.get(`${simpleSemitones}:${simpleDegree}`)!;
+}
+
+function enrichIntervalInformation(
+  canonical: CanonicalInterval,
+  base: IntervalInformation,
+): IntervalInformation {
+  const octaveOffset = base.degree <= 8 ? 0 : Math.floor((base.degree - 1) / 7);
+  const simpleInterval =
+    octaveOffset === 0 ? canonical : computeSimpleForm(base.degree, base.semitones);
+  const consonance =
+    octaveOffset === 0
+      ? SIMPLE_CONSONANCE_TABLE[canonical]
+      : SIMPLE_CONSONANCE_TABLE[simpleInterval];
+  return {
+    ...base,
+    simpleInterval,
+    octaveOffset,
+    consonance,
+  };
+}
+
+function buildEnrichedIntervals(): Record<Interval, IntervalInformation> {
+  const result: Partial<Record<Interval, IntervalInformation>> = {};
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+  for (const canonical of Object.keys(CANONICAL_INTERVALS) as readonly CanonicalInterval[]) {
+    result[canonical] = enrichIntervalInformation(canonical, CANONICAL_INTERVALS[canonical]);
+  }
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+  for (const alias of Object.keys(INTERVAL_ALIAS_DEFINITIONS) as readonly IntervalAliasKey[]) {
+    const canonical = resolveInterval(alias);
+    result[alias] = enrichIntervalInformation(canonical, INTERVAL_ALIAS_DEFINITIONS[alias]);
+  }
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+  return result as Record<Interval, IntervalInformation>;
+}
+
+/**
+ * Structured interval definitions, including accepted aliases.
+ *
+ * Every entry carries the foundational fields (`semitones`, `symbol`,
+ * `degree`, `quality`) plus the enrichment fields added in roadmap
+ * items 1.2 and 1.3 (`simpleInterval`, `octaveOffset`, `consonance`).
+ */
+export const INTERVALS: Readonly<Record<Interval, IntervalInformation>> =
+  Object.freeze(buildEnrichedIntervals());
 
 /**
  * The shorthand notation used to display an interval.
@@ -222,4 +350,107 @@ export function findCanonicalIntervalBySemitonesAndDegree(
   degree: number,
 ): CanonicalInterval | null {
   return CANONICAL_INTERVAL_LOOKUP.get(`${semitones}:${degree}`) ?? null;
+}
+
+/**
+ * Inverts a simple interval (P5 → P4, M3 → m6, A4 → d5, P1 → P8).
+ *
+ * The inversion of an interval `n` is the interval that completes an
+ * octave with it: `n + invert(n) = P8`. Quality flips between major and
+ * minor, augmented and diminished; perfect stays perfect.
+ *
+ * Compound intervals are first simplified, then inverted; the result is
+ * always a simple interval (1–8).
+ *
+ * @throws {RangeError} when the interval has no defined inversion (e.g.,
+ *   intervals beyond an octave that don't simplify cleanly — currently
+ *   none, but the guard is here for future extensions).
+ */
+export function invertInterval(interval: Interval): CanonicalInterval {
+  const canonical = resolveInterval(interval);
+  const simple = simplifyInterval(canonical);
+  const simpleInfo = CANONICAL_INTERVALS[simple];
+  const newDegree = 9 - simpleInfo.degree;
+  const newSemitones = 12 - simpleInfo.semitones;
+  const result = findCanonicalIntervalBySemitonesAndDegree(newSemitones, newDegree);
+  if (!result) {
+    throw new RangeError(
+      `No inversion defined for interval "${interval}" — its inverse (semitones=${newSemitones}, degree=${newDegree}) is not in the catalog.`,
+    );
+  }
+  return result;
+}
+
+/**
+ * Reduces a compound interval to its simple form (P11 → P4, M9 → M2).
+ *
+ * Simple intervals (degree 1–8) are returned unchanged. Compound intervals
+ * (degree > 8) are reduced to a degree-1-through-7 interval with the same
+ * quality and the semitone count modulo 12.
+ */
+export function simplifyInterval(interval: Interval): CanonicalInterval {
+  const canonical = resolveInterval(interval);
+  const information = CANONICAL_INTERVALS[canonical];
+  if (information.degree <= 8) {
+    return canonical;
+  }
+  return computeSimpleForm(information.degree, information.semitones);
+}
+
+/**
+ * Extends a simple interval by `octaves`, producing a compound interval.
+ *
+ * `compoundInterval('perfectFourth', 1) === 'perfectEleventh'`.
+ * `compoundInterval('majorSecond', 1) === 'majorNinth'`.
+ *
+ * @throws {RangeError} when `octaves` is negative or non-integer, or when
+ *   the resulting interval is not represented in the catalog.
+ */
+export function compoundInterval(interval: Interval, octaves: number): CanonicalInterval {
+  if (!Number.isInteger(octaves) || octaves < 0) {
+    throw new RangeError(`Octaves must be a non-negative integer; got ${octaves}.`);
+  }
+  if (octaves === 0) {
+    return resolveInterval(interval);
+  }
+  const canonical = resolveInterval(interval);
+  const information = CANONICAL_INTERVALS[canonical];
+  const targetDegree = information.degree + 7 * octaves;
+  const targetSemitones = information.semitones + 12 * octaves;
+  const result = findCanonicalIntervalBySemitonesAndDegree(targetSemitones, targetDegree);
+  if (!result) {
+    throw new RangeError(
+      `Cannot compound interval "${interval}" by ${octaves} octave(s) — result (semitones=${targetSemitones}, degree=${targetDegree}) is not in the catalog.`,
+    );
+  }
+  return result;
+}
+
+/**
+ * Returns whether an interval is consonant per the common-practice taxonomy.
+ *
+ * Consonant: perfect consonances (P1/P5/P8), imperfect consonances
+ * (M3/m3/M6/m6), and their compound forms.
+ */
+export function isConsonant(interval: Interval): boolean {
+  const consonance = consonanceOf(interval);
+  return consonance === 'perfect-consonance' || consonance === 'imperfect-consonance';
+}
+
+/**
+ * Returns whether an interval is dissonant per the common-practice taxonomy.
+ *
+ * Dissonant: mild dissonances (M2/m7) and sharp dissonances (m2/M7/A4/d5),
+ * and their compound forms. The complement of {@link isConsonant}.
+ */
+export function isDissonant(interval: Interval): boolean {
+  return !isConsonant(interval);
+}
+
+/**
+ * Returns the consonance classification for an interval.
+ */
+export function consonanceOf(interval: Interval): IntervalConsonance {
+  const simple = simplifyInterval(interval);
+  return SIMPLE_CONSONANCE_TABLE[simple];
 }
