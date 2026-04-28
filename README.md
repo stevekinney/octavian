@@ -20,7 +20,8 @@ bun add octavian
 - Immutable value objects for `Note`, `Chord`, and `Scale`
 - Runtime validation at every trust boundary
 - Theory-first spelling for interval, chord, and scale construction
-- Sharp-preferred simplification when a pitch is derived from raw MIDI or semitone math
+- Sharp-preferred simplification by default when a pitch is derived from raw MIDI or semitone math;
+  flat-preferred available via `'flats'` preference
 - 100% test coverage with full validation gates
 
 ## Quick Start
@@ -90,13 +91,15 @@ note.enharmonics; // ["A#", "Cbb"]
 #### Constructing notes
 
 ```ts
-import { Note, createOctave } from 'octavian';
+import { Note, createFrequency, STANDARD_TUNING } from 'octavian';
 
 Note.create('C#4'); // from a note-name-with-octave string
 Note.create({ note: 'C#', octave: 4 }); // from a structured object
-Note.fromMidi(61); // from a MIDI key (sharp-preferred spelling)
-Note.nearestTo(440); // nearest equal-tempered note for a frequency under standard tuning
+Note.fromMidi(61); // "C#4" — sharp-preferred by default
+Note.fromMidi(61, 'flats'); // "Db4" — flat-preferred
+Note.nearestTo(440); // nearest equal-tempered note under standard tuning
 Note.nearestTo(432, { reference: 'A4', frequency: createFrequency(432) }); // alternate tuning
+Note.nearestTo(277.18, STANDARD_TUNING, 'flats'); // "Db4"
 ```
 
 #### Transposition and movement
@@ -105,12 +108,14 @@ Note.nearestTo(432, { reference: 'A4', frequency: createFrequency(432) }); // al
 const c = Note.create('C4');
 
 c.transpose('majorThird').toString(); // "E4"  — theory-correct spelling
-c.transposeBy(1).toString(); // "C#4" — semitone step, sharp-preferred
+c.transposeBy(1).toString(); // "C#4" — sharp-preferred by default
+c.transposeBy(1, 'flats').toString(); // "Db4"
 c.up().toString(); // "C5"
 c.up(2).toString(); // "C6"
 c.down().toString(); // "C3"
 c.withOctave(5).toString(); // "C5"
-c.simplify().toString(); // sharp-preferred common spelling
+c.simplify().toString(); // "C4" — sharp-preferred common spelling
+c.simplify('flats').toString(); // flat-preferred common spelling
 ```
 
 #### Comparison and distance
@@ -303,9 +308,11 @@ import {
 
 STANDARD_TUNING; // { reference: 'A4', frequency: 440 }
 Note.fromMidi(69).toString(); // "A4"
+Note.fromMidi(61, 'flats').toString(); // "Db4"
 Note.nearestTo(440); // Note at A4
 midiToFrequency(69); // 440
 midiToNoteNameWithOctave(69); // { note: "A", octave: 4 }
+midiToNoteNameWithOctave(61, 'flats'); // { note: "Db", octave: 4 }
 noteNameToMidi('A', createOctave(4)); // 69
 ```
 
@@ -408,6 +415,7 @@ import {
   NATURALS,
   ACCIDENTALS,
   ALL_NOTE_NAMES,
+  FLAT_PREFERRED_NOTE_NAMES,
   SHARP_PREFERRED_NOTE_NAMES,
   NATURAL_CHROMATIC_INDEXES,
   ACCIDENTAL_OFFSETS,
@@ -422,6 +430,7 @@ NATURALS; // ["C", "D", "E", "F", "G", "A", "B"]
 ACCIDENTALS; // ["", "#", "b", "##", "bb"]
 ALL_NOTE_NAMES; // all 35 note names (all naturals × all accidentals)
 SHARP_PREFERRED_NOTE_NAMES; // 12-note chromatic scale, sharp spellings
+FLAT_PREFERRED_NOTE_NAMES; // 12-note chromatic scale, flat spellings
 
 buildNoteName('C', 1); // "C#"   (natural + accidental offset)
 simplifyNoteName('Bbb'); // "A"  (sharp-preferred common spelling)
