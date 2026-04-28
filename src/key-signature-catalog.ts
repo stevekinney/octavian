@@ -31,8 +31,45 @@ export type KeySignatureInformation = {
   readonly accidentalPreference: AccidentalPreference;
 };
 
-const SHARP_ORDER: readonly NoteName[] = ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'] as const;
-const FLAT_ORDER: readonly NoteName[] = ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'] as const;
+// Standard order of sharps (positions 1–7) plus the double-sharp
+// continuation (positions 8–14) used in theoretical keys with > 7 sharps.
+// Each step past the seventh re-walks the letter sequence with one more
+// sharp added: G♯ major (8 sharps) ends with F##.
+const SHARP_ORDER: readonly NoteName[] = [
+  'F#',
+  'C#',
+  'G#',
+  'D#',
+  'A#',
+  'E#',
+  'B#',
+  'F##',
+  'C##',
+  'G##',
+  'D##',
+  'A##',
+  'E##',
+  'B##',
+];
+
+// Standard order of flats (1–7) plus the double-flat continuation used in
+// theoretical keys with > 7 flats.
+const FLAT_ORDER: readonly NoteName[] = [
+  'Bb',
+  'Eb',
+  'Ab',
+  'Db',
+  'Gb',
+  'Cb',
+  'Fb',
+  'Bbb',
+  'Ebb',
+  'Abb',
+  'Dbb',
+  'Gbb',
+  'Cbb',
+  'Fbb',
+];
 
 function buildSharpKey(
   tonic: NoteName,

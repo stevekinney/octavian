@@ -94,16 +94,30 @@ describe('invertInterval', () => {
     expect(invertInterval('majorNinth')).toBe('minorSeventh');
   });
 
+  it('inverts augmented unison to diminished octave and back', () => {
+    // augmentedUnison is invertible — its inverse is in the catalog.
+    expect(invertInterval('augmentedUnison')).toBe('diminishedOctave');
+    expect(invertInterval('diminishedOctave')).toBe('augmentedUnison');
+  });
+
   it('property: invert(invert(x)) returns to a pitch-class-equivalent simple interval', () => {
-    // Exclude intervals whose inversion mathematics produce out-of-range
-    // semitones (negative or beyond an octave): augmentedOctave (13 st,
-    // deg 8 → inversion would need semitones=-1) and diminishedSecond
-    // (0 st, deg 2 → inversion would need semitones=12 deg=7 not in
-    // catalog). Both are valid catalog entries but their inversion is
-    // not represented. The property holds for all other simple intervals.
+    // Two intervals are excluded because their inverses are genuinely not
+    // in the catalog:
+    // - augmentedOctave (13 st, deg 8) — inverse needs semitones=-1 (invalid).
+    // - diminishedSecond (0 st, deg 2) — inverse needs (semitones=12, deg=7),
+    //   which would be a "perfect seventh"; the catalog does not represent it.
     const invertible = CANONICAL_INTERVAL_KEYS.filter(
-      (i) => i !== 'augmentedOctave' && i !== 'diminishedSecond' && i !== 'augmentedUnison',
+      (i) => i !== 'augmentedOctave' && i !== 'diminishedSecond',
     );
+    // Exhaustive sweep first (deterministic coverage), then a property test
+    // for the algebraic claim.
+    for (const interval of invertible) {
+      const inverted = invertInterval(interval);
+      const back = invertInterval(inverted);
+      expect(INTERVALS[back].semitones % 12).toBe(
+        INTERVALS[simplifyInterval(interval)].semitones % 12,
+      );
+    }
     fc.assert(
       fc.property(fc.constantFrom(...invertible), (interval) => {
         const inverted = invertInterval(interval);
@@ -112,7 +126,7 @@ describe('invertInterval', () => {
         const result = INTERVALS[back];
         return original.semitones % 12 === result.semitones % 12;
       }),
-      { numRuns: 50 },
+      { numRuns: 50, seed: 42 },
     );
   });
 
@@ -193,7 +207,7 @@ describe('compoundInterval', () => {
         const compounded = compoundInterval(interval, 1);
         return simplifyInterval(compounded) === interval;
       }),
-      { numRuns: 50 },
+      { numRuns: 50, seed: 42 },
     );
   });
 
@@ -205,12 +219,11 @@ describe('compoundInterval', () => {
 });
 
 describe('IntervalInformation enrichment', () => {
-  it('every canonical entry has simpleInterval, octaveOffset, and consonance populated', () => {
+  it('every canonical entry has simpleInterval and octaveOffset populated', () => {
     for (const canonical of CANONICAL_INTERVAL_KEYS) {
       const info = INTERVALS[canonical];
       expect(info.simpleInterval).toBeDefined();
       expect(info.octaveOffset).toBeDefined();
-      expect(info.consonance).toBeDefined();
     }
   });
 
@@ -279,7 +292,7 @@ describe('consonance classification', () => {
       fc.property(fc.constantFrom(...CANONICAL_INTERVAL_KEYS), (interval: Interval) => {
         return isConsonant(interval) !== isDissonant(interval);
       }),
-      { numRuns: 50 },
+      { numRuns: 50, seed: 42 },
     );
   });
 

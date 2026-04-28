@@ -70,6 +70,24 @@ describe('KEY_SIGNATURES catalog', () => {
     expect(KEY_SIGNATURES['Fb-major'].accidentalPreference).toBe('theoretical');
   });
 
+  it('theoretical keys with >7 accidentals store the full set including double accidentals', () => {
+    const gSharpMajor = KEY_SIGNATURES['G#-major'];
+    expect(gSharpMajor.accidentalCount).toBe(8);
+    expect(gSharpMajor.accidentals).toHaveLength(8);
+    expect(gSharpMajor.accidentals[7]).toBe('F##');
+
+    const fFlatMajor = KEY_SIGNATURES['Fb-major'];
+    expect(fFlatMajor.accidentalCount).toBe(8);
+    expect(fFlatMajor.accidentals).toHaveLength(8);
+    expect(fFlatMajor.accidentals[7]).toBe('Bbb');
+
+    // The most-extreme theoretical key in the catalog: A# major has 10 sharps.
+    const aSharpMajor = KEY_SIGNATURES['A#-major'];
+    expect(aSharpMajor.accidentalCount).toBe(10);
+    expect(aSharpMajor.accidentals).toHaveLength(10);
+    expect(aSharpMajor.accidentals).toContain('G##');
+  });
+
   it('parallels minor keys to their relative major (both have same accidental count)', () => {
     // Relative pairs:
     expect(KEY_SIGNATURES['G-major'].accidentalCount).toBe(
@@ -88,15 +106,34 @@ describe('KEY_SIGNATURES catalog', () => {
 });
 
 describe('keySignatureFor', () => {
-  it('returns the catalog entry for valid tonic+mode', () => {
+  it('returns the catalog entry for a sharp-key tonic', () => {
     const gMajor = keySignatureFor('G', 'major');
     expect(gMajor.tonic).toBe('G');
     expect(gMajor.mode).toBe('major');
     expect(gMajor.accidentalCount).toBe(1);
+    expect(gMajor.order).toBe('sharps');
   });
 
-  it('throws TypeError for unknown tonic+mode combinations', () => {
-    expect(() => keySignatureFor('Hbb', 'major')).toThrow(TypeError);
+  it('returns the catalog entry for a flat-key tonic', () => {
+    const bbMajor = keySignatureFor('Bb', 'major');
+    expect(bbMajor.tonic).toBe('Bb');
+    expect(bbMajor.mode).toBe('major');
+    expect(bbMajor.accidentalCount).toBe(2);
+    expect(bbMajor.order).toBe('flats');
+  });
+
+  it('returns minor-mode entries', () => {
+    const dMinor = keySignatureFor('D', 'minor');
+    expect(dMinor.tonic).toBe('D');
+    expect(dMinor.mode).toBe('minor');
+    expect(dMinor.accidentalCount).toBe(1);
+    expect(dMinor.order).toBe('flats');
+  });
+
+  it('throws TypeError for valid tonic+mode combinations not in the catalog', () => {
+    // E# is a valid NoteName but the catalog has no E#-major (that would be
+    // the enharmonic theoretical equivalent of F major — not represented).
+    expect(() => keySignatureFor('E#', 'major')).toThrow(TypeError);
   });
 });
 

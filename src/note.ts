@@ -86,8 +86,11 @@ function naturalIndex(note: NoteName): number {
 
 function accidentalOffsetForPitchClass(natural: Natural, targetPitchClass: ChromaticIndex): number {
   const rawOffset = targetPitchClass - NATURAL_CHROMATIC_INDEXES[natural];
+  // Search range widened from ±2 to ±3 once triple accidentals were
+  // supported by buildNoteName. Existing precedence (first candidate in the
+  // raw, raw-12, raw+12 sequence wins) is preserved.
   for (const candidate of [rawOffset, rawOffset - 12, rawOffset + 12]) {
-    if (candidate >= -2 && candidate <= 2) {
+    if (candidate >= -3 && candidate <= 3) {
       return candidate;
     }
   }

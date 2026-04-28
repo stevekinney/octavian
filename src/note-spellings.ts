@@ -241,7 +241,7 @@ export function buildNoteName(natural: Natural, accidentalOffset: number): NoteN
       return `${natural}###`;
     default:
       throw new RangeError(
-        `Cannot spell ${natural} with an accidental offset of ${accidentalOffset}.`,
+        `Cannot spell ${natural} with an accidental offset of ${accidentalOffset}; supported offsets are -3..3 (triple flat through triple sharp).`,
       );
   }
 }
