@@ -86,6 +86,18 @@ export {
 export { Key, isKnownKey } from './key.js';
 export type { KeyLike, SerializedKey } from './key.js';
 
+export { RomanNumeral } from './roman-numeral.js';
+export type {
+  RomanNumeralAlteration,
+  RomanNumeralDegree,
+  RomanNumeralInversion,
+  RomanNumeralLike,
+  RomanNumeralQuality,
+  SerializedRomanNumeral,
+} from './roman-numeral.js';
+
+export { chordFromRomanNumeral, romanNumeralFor } from './key-roman.js';
+
 export {
   ACCIDENTALS,
   ACCIDENTAL_OFFSETS,
