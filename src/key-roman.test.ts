@@ -72,6 +72,23 @@ describe('chordFromRomanNumeral', () => {
     expect(v7.suffix).toBe('dominantSeventh');
   });
 
+  it('applies Roman numeral inversion figures to built chords', () => {
+    const cMajor = Key.create('C', 'major');
+    const firstInversionTriad = chordFromRomanNumeral(cMajor, 'I6');
+    const secondInversionTriad = chordFromRomanNumeral(cMajor, 'I64');
+    const firstInversionSeventh = chordFromRomanNumeral(cMajor, 'V65');
+    const thirdInversionSeventh = chordFromRomanNumeral(cMajor, 'V42');
+
+    expect(firstInversionTriad.inversionIndex).toBe(1);
+    expect(firstInversionTriad.bass.note).toBe('E');
+    expect(secondInversionTriad.inversionIndex).toBe(2);
+    expect(secondInversionTriad.bass.note).toBe('G');
+    expect(firstInversionSeventh.inversionIndex).toBe(1);
+    expect(firstInversionSeventh.bass.note).toBe('B');
+    expect(thirdInversionSeventh.inversionIndex).toBe(3);
+    expect(thirdInversionSeventh.bass.note).toBe('F');
+  });
+
   it('builds half-diminished on vii° when figured as a seventh', () => {
     const cMajor = Key.create('C', 'major');
     const halfDim = chordFromRomanNumeral(cMajor, 'vii°7');

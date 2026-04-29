@@ -59,7 +59,7 @@ function qualityToMode(quality: RomanNumeralQuality): 'major' | 'minor' {
 function buildChordFromNumeralInKey(key: Key, rn: RomanNumeral): Chord {
   const tonic = chordTonicForNumeral(key, rn);
   const suffix = suffixForNumeral(rn, key);
-  return Chord.create(tonic, suffix);
+  return Chord.create(tonic, suffix).inversion(inversionIndexForNumeral(rn.inversion));
 }
 
 function chordTonicForNumeral(key: Key, rn: RomanNumeral): Note {
@@ -235,4 +235,20 @@ function inversionForChord(chord: Chord, isSeventh: boolean): RomanNumeralInvers
   const index = chord.inversionIndex;
   // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
   return table[index] ?? table[0]!;
+}
+
+function inversionIndexForNumeral(inversion: RomanNumeralInversion): 0 | 1 | 2 | 3 {
+  switch (inversion) {
+    case '5/3':
+    case '7':
+      return 0;
+    case '6':
+    case '6/5':
+      return 1;
+    case '6/4':
+    case '4/3':
+      return 2;
+    case '4/2':
+      return 3;
+  }
 }

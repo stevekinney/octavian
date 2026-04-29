@@ -98,6 +98,15 @@ export type {
 
 export { chordFromRomanNumeral, romanNumeralFor } from './key-roman.js';
 
+export { identifyCadence, identifyCadenceSequence } from './cadence.js';
+export type {
+  CadenceInput,
+  CadenceOccurrence,
+  CadenceType,
+  CadenceVoicing,
+  VoicedCadenceChord,
+} from './cadence.js';
+
 export {
   harmonicFunctionFor,
   harmonicFunctionForAsAlias,
