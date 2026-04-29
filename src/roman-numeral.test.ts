@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'bun:test';
-import * as fc from 'fast-check';
 
 import { Chord } from './chord.js';
 import { chordFromRomanNumeral, romanNumeralFor } from './key-roman.js';
@@ -209,15 +208,65 @@ describe('RomanNumeral round-trip', () => {
     expect(RomanNumeral.parse('V7/V').toString()).toBe('V⁷/V');
   });
 
-  it('round-trips JSON', () => {
-    fc.assert(
-      fc.property(fc.constantFrom(...examples), (raw: string) => {
-        const parsed = RomanNumeral.parse(raw);
-        const restored = RomanNumeral.fromJSON(parsed.toJSON());
-        return restored.equals(parsed);
-      }),
-      { numRuns: 50, seed: 42 },
+  it.each(examples)('round-trips JSON for %s', (raw: string) => {
+    const parsed = RomanNumeral.parse(raw);
+    const restored = RomanNumeral.fromJSON(parsed.toJSON());
+    expect(restored.equals(parsed)).toBe(true);
+  });
+});
+
+describe('RomanNumeral.fromJSON validation', () => {
+  it('rejects an out-of-range degree', () => {
+    const bad = { degree: 99, quality: 'major', inversion: '5/3' };
+    // Cast through unknown to feed the type-checker something the
+    // public type doesn't allow.
+    expect(() => RomanNumeral.fromJSON(bad as unknown as SerializedRomanNumeral)).toThrow(
+      TypeError,
     );
+  });
+
+  it('rejects an unknown quality', () => {
+    const bad = { degree: 1, quality: 'sus2', inversion: '5/3' };
+    expect(() => RomanNumeral.fromJSON(bad as unknown as SerializedRomanNumeral)).toThrow(
+      TypeError,
+    );
+  });
+
+  it('rejects an unknown inversion', () => {
+    const bad = { degree: 1, quality: 'major', inversion: '8/3' };
+    expect(() => RomanNumeral.fromJSON(bad as unknown as SerializedRomanNumeral)).toThrow(
+      TypeError,
+    );
+  });
+
+  it('rejects an unknown alteration', () => {
+    const bad = {
+      degree: 1,
+      quality: 'major',
+      inversion: '5/3',
+      alteration: 'doubleFlat',
+    };
+    expect(() => RomanNumeral.fromJSON(bad as unknown as SerializedRomanNumeral)).toThrow(
+      TypeError,
+    );
+  });
+
+  it('rejects bad nested applied target', () => {
+    const bad = {
+      degree: 5,
+      quality: 'major',
+      inversion: '5/3',
+      applied: { degree: 99, quality: 'major', inversion: '5/3' },
+    };
+    expect(() => RomanNumeral.fromJSON(bad as unknown as SerializedRomanNumeral)).toThrow(
+      TypeError,
+    );
+  });
+
+  it('omits undefined fields from toJSON', () => {
+    const snap = RomanNumeral.parse('I').toJSON();
+    expect('alteration' in snap).toBe(false);
+    expect('applied' in snap).toBe(false);
   });
 });
 
@@ -378,7 +427,7 @@ describe('Key.chordFromRomanNumeral', () => {
     expect(sharpFour.suffix).toBe('diminished');
   });
 
-  it('builds applied chords (V/V in C major = D7)', () => {
+  it('builds V/V in C major as the D major triad (no seventh)', () => {
     const cMajor = Key.create('C', 'major');
     const vOfV = chordFromRomanNumeral(cMajor, 'V/V');
     // V of G major is D major triad.
@@ -405,6 +454,65 @@ describe('Key.chordFromRomanNumeral', () => {
     const dimOfV = chordFromRomanNumeral(cMajor, 'vii°/V');
     expect(dimOfV.root.note).toBe('F#');
     expect(dimOfV.suffix).toBe('diminished');
+  });
+
+  it('builds vii°/ii in C major using the harmonic-minor leading tone (C#°)', () => {
+    // The temporary tonic is D (minor); D minor's leading tone is C#
+    // (raised from natural C). vii° must be built on C#, not C.
+    const cMajor = Key.create('C', 'major');
+    const dimOfII = chordFromRomanNumeral(cMajor, 'vii°/ii');
+    expect(dimOfII.root.note).toBe('C#');
+    expect(dimOfII.suffix).toBe('diminished');
+  });
+
+  it('builds nested applied chords V/V/V in C major', () => {
+    // V of (V of V) = V of D major = A major triad.
+    const cMajor = Key.create('C', 'major');
+    const result = chordFromRomanNumeral(cMajor, 'V/V/V');
+    expect(result.root.note).toBe('A');
+    expect(result.suffix).toBe('major');
+  });
+
+  it('builds I⁷ in C major as the major-seventh chord (regression test)', () => {
+    // Major-quality seventh on a non-V degree should be majorSeventh,
+    // not dominantSeventh. Direct test of suffixForNumeral's branch.
+    const cMajor = Key.create('C', 'major');
+    const iMaj7 = chordFromRomanNumeral(cMajor, 'I7');
+    expect(iMaj7.root.note).toBe('C');
+    expect(iMaj7.suffix).toBe('majorSeventh');
+  });
+
+  it('builds VII7 in A minor as a dominant seventh (G7)', () => {
+    // Diatonic VII in natural minor (G major triad in A minor) +
+    // seventh figure produces a dominant-seventh chord (G-B-D-F),
+    // not a major seventh.
+    const aMinor = Key.create('A', 'minor');
+    const vii7 = chordFromRomanNumeral(aMinor, 'VII7');
+    expect(vii7.root.note).toBe('G');
+    expect(vii7.suffix).toBe('dominantSeventh');
+  });
+
+  it('builds V7 in A minor as the dominant seventh on the raised leading tone implied by uppercase V', () => {
+    // V in minor is uppercase (major-quality, taking the harmonic-minor
+    // raised leading tone). E major triad becomes E7 with the seventh.
+    const aMinor = Key.create('A', 'minor');
+    const v7 = chordFromRomanNumeral(aMinor, 'V7');
+    expect(v7.root.note).toBe('E');
+    expect(v7.suffix).toBe('dominantSeventh');
+  });
+});
+
+describe('chordFromRomanNumeral — applied-chord error paths', () => {
+  it('rejects an empty applied head (/V)', () => {
+    expect(() => RomanNumeral.parse('/V')).toThrow(TypeError);
+  });
+
+  it('rejects an unrecognized applied head (Z/V)', () => {
+    expect(() => RomanNumeral.parse('Z/V')).toThrow(TypeError);
+  });
+
+  it('rejects double-slash applied (V//V)', () => {
+    expect(() => RomanNumeral.parse('V//V')).toThrow(TypeError);
   });
 });
 

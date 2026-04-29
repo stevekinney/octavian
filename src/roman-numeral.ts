@@ -62,6 +62,29 @@ let createRomanNumeral: (
   applied: RomanNumeral | undefined,
 ) => RomanNumeral;
 
+const VALID_DEGREES: ReadonlySet<RomanNumeralDegree> = new Set<RomanNumeralDegree>([
+  1, 2, 3, 4, 5, 6, 7,
+]);
+const VALID_QUALITIES: ReadonlySet<RomanNumeralQuality> = new Set<RomanNumeralQuality>([
+  'major',
+  'minor',
+  'diminished',
+  'augmented',
+]);
+const VALID_INVERSIONS: ReadonlySet<RomanNumeralInversion> = new Set<RomanNumeralInversion>([
+  '5/3',
+  '6',
+  '6/4',
+  '7',
+  '6/5',
+  '4/3',
+  '4/2',
+]);
+const VALID_ALTERATIONS: ReadonlySet<RomanNumeralAlteration> = new Set<RomanNumeralAlteration>([
+  'flat',
+  'sharp',
+]);
+
 /**
  * A Roman-numeral chord symbol — the lingua franca of harmonic analysis.
  *
@@ -135,8 +158,35 @@ export class RomanNumeral {
 
   /**
    * Recreates a Roman numeral from a serialized snapshot.
+   *
+   * Each field is validated against its type-union member values; an
+   * invalid snapshot throws `TypeError`. Recursive `applied` snapshots
+   * are validated bottom-up.
    */
   public static fromJSON(value: SerializedRomanNumeral): RomanNumeral {
+    if (!VALID_DEGREES.has(value.degree)) {
+      throw new TypeError(
+        `SerializedRomanNumeral.degree must be 1..7; got ${String(value.degree)}.`,
+      );
+    }
+    if (!VALID_QUALITIES.has(value.quality)) {
+      throw new TypeError(
+        `SerializedRomanNumeral.quality must be one of ${[...VALID_QUALITIES].join(', ')}; ` +
+          `got "${String(value.quality)}".`,
+      );
+    }
+    if (!VALID_INVERSIONS.has(value.inversion)) {
+      throw new TypeError(
+        `SerializedRomanNumeral.inversion must be one of ${[...VALID_INVERSIONS].join(', ')}; ` +
+          `got "${String(value.inversion)}".`,
+      );
+    }
+    if (value.alteration !== undefined && !VALID_ALTERATIONS.has(value.alteration)) {
+      throw new TypeError(
+        `SerializedRomanNumeral.alteration must be undefined, 'flat', or 'sharp'; ` +
+          `got "${String(value.alteration)}".`,
+      );
+    }
     const applied = value.applied ? RomanNumeral.fromJSON(value.applied) : undefined;
     return createRomanNumeral(
       value.degree,
@@ -456,10 +506,11 @@ function parseInversionFigures(raw: string): RomanNumeralInversion {
 
 function renderRomanNumeral(rn: RomanNumeral): string {
   const head = renderSurface(rn);
-  if (!rn.isApplied) {
+  const applied = rn.applied;
+  if (applied === undefined) {
     return head;
   }
-  return `${head}/${renderRomanNumeral(rn.applied!)}`;
+  return `${head}/${renderRomanNumeral(applied)}`;
 }
 
 function renderSurface(rn: RomanNumeral): string {
