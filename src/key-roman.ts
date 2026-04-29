@@ -132,9 +132,17 @@ function suffixForNumeral(rn: RomanNumeral, key: Key): ChordSuffix {
   // Major-quality seventh chords whose chord-tone stack matches the
   // dominant-seventh shape (root-major3-perfect5-minor7). In a major
   // key that's only V7. In a natural-minor key it's both VII7 (the
-  // diatonic dominant on the natural 7th) and v's harmonic-minor V7.
+  // diatonic dominant on the natural 7th) and uppercase V's
+  // harmonic-minor V7.
   if (rn.quality === 'major' && isDominantSeventhDegree(rn, key)) {
     return 'dominantSeventh';
+  }
+  // Diminished sevenths in minor-key contexts: the leading-tone
+  // diminished (vii°) takes the harmonic-minor 7th, which is a
+  // *fully* diminished seventh (root-m3-d5-d7). Major-key vii°7 is
+  // half-diminished by the natural-major spelling.
+  if (rn.quality === 'diminished' && rn.degree === 7 && key.mode === 'minor') {
+    return 'diminishedSeventh';
   }
   return SEVENTH_SUFFIX_BY_QUALITY[rn.quality];
 }

@@ -187,7 +187,18 @@ export class RomanNumeral {
           `got "${String(value.alteration)}".`,
       );
     }
-    const applied = value.applied ? RomanNumeral.fromJSON(value.applied) : undefined;
+    let applied: RomanNumeral | undefined;
+    if ('applied' in value && value.applied !== undefined) {
+      // Validate by presence, not truthiness — `null` is not a valid
+      // serialized applied target and must be rejected explicitly.
+      if (value.applied === null || typeof value.applied !== 'object') {
+        throw new TypeError(
+          `SerializedRomanNumeral.applied must be a serialized RomanNumeral or undefined; ` +
+            `got ${String(value.applied)}.`,
+        );
+      }
+      applied = RomanNumeral.fromJSON(value.applied);
+    }
     return createRomanNumeral(
       value.degree,
       value.quality,
