@@ -12,8 +12,9 @@ yarn add octavian
 bun add octavian
 ```
 
-> [!NOTE] Works in Node 22+ (ESM), Bun 1.3+, and any browser bundler (Vite, webpack, Rollup). A
-> single browser-safe ESM bundle is published — resolution is automatic via the `exports` map.
+> [!NOTE]
+> Works in Node 22+ (ESM), Bun 1.3+, and any browser bundler (Vite, webpack, Rollup). A single
+> browser-safe ESM bundle is published — resolution is automatic via the `exports` map.
 
 ## Design Goals
 
