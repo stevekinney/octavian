@@ -79,10 +79,12 @@ try {
           process.stderr.write(`bun install failed:\n${install.stderr}\n`);
           exitCode = 1;
         } else {
-          // Copy the consumer check script into the install dir so bun resolves
-          // 'octavian' through the consumer's node_modules, not the repo's.
+          // Copy both the consumer entrypoint and the shared assertions into
+          // the consumer dir. smoke-consumer-check.mjs imports from _smoke-checks.mjs
+          // so assertions stay in one place (smoke-checks.mjs).
           const checkFile = join(installDir, '_smoke-consumer-check.mjs');
           copyFileSync(join(here, 'smoke-consumer-check.mjs'), checkFile);
+          copyFileSync(join(here, 'smoke-checks.mjs'), join(installDir, '_smoke-checks.mjs'));
           const run = spawnSync('bun', [checkFile], {
             cwd: installDir,
             stdio: 'inherit',
