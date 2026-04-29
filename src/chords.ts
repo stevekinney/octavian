@@ -19,7 +19,18 @@ export const CHORD_SYMBOLS = [
   'mMaj7',
   'dim7',
   'm7b5',
+  '7♭9',
+  '7b9',
+  '7♯9',
+  '7#9',
+  '7♭5',
+  '7b5',
+  '7♯5',
   '7#5',
+  '7♯11',
+  '7#11',
+  '7♭13',
+  '7b13',
   'maj7#5',
   '9',
   'maj9',
@@ -68,6 +79,12 @@ export type CanonicalChordSuffix =
   | 'halfDiminishedSeventh'
   | 'augmentedSeventh'
   | 'augmentedMajorSeventh'
+  | 'dominantSevenFlatNine'
+  | 'dominantSevenSharpNine'
+  | 'dominantSevenFlatFive'
+  | 'dominantSevenSharpFive'
+  | 'dominantSevenSharpEleven'
+  | 'dominantSevenFlatThirteen'
   | 'dominantNinth'
   | 'majorNinth'
   | 'minorNinth'
@@ -98,7 +115,18 @@ type ChordAliasKey =
   | 'min7'
   | 'minorMaj7'
   | 'minorSevenFlatFive'
+  | 'sevenFlatNine'
+  | '7b9'
+  | 'sevenSharpNine'
+  | '7#9'
+  | 'sevenFlatFive'
+  | '7b5'
   | 'sevenSharpFive'
+  | '7#5'
+  | 'sevenSharpEleven'
+  | '7#11'
+  | 'sevenFlatThirteen'
+  | '7b13'
   | 'majorSevenSharpFive'
   | 'nine'
   | 'maj9'
@@ -247,6 +275,45 @@ const CANONICAL_CHORDS: Record<CanonicalChordSuffix, ChordInformation> = {
     symbol: 'maj7#5',
     intervals: ['perfectUnison', 'majorThird', 'augmentedFifth', 'majorSeventh'],
   },
+  dominantSevenFlatNine: {
+    symbol: '7♭9',
+    intervals: ['perfectUnison', 'majorThird', 'perfectFifth', 'minorSeventh', 'minorNinth'],
+  },
+  dominantSevenSharpNine: {
+    symbol: '7♯9',
+    intervals: ['perfectUnison', 'majorThird', 'perfectFifth', 'minorSeventh', 'augmentedNinth'],
+  },
+  dominantSevenFlatFive: {
+    symbol: '7♭5',
+    intervals: ['perfectUnison', 'majorThird', 'diminishedFifth', 'minorSeventh'],
+  },
+  dominantSevenSharpFive: {
+    symbol: '7♯5',
+    intervals: ['perfectUnison', 'majorThird', 'augmentedFifth', 'minorSeventh'],
+  },
+  dominantSevenSharpEleven: {
+    symbol: '7♯11',
+    intervals: [
+      'perfectUnison',
+      'majorThird',
+      'perfectFifth',
+      'minorSeventh',
+      'majorNinth',
+      'augmentedEleventh',
+    ],
+  },
+  dominantSevenFlatThirteen: {
+    symbol: '7♭13',
+    intervals: [
+      'perfectUnison',
+      'majorThird',
+      'perfectFifth',
+      'minorSeventh',
+      'majorNinth',
+      'perfectEleventh',
+      'minorThirteenth',
+    ],
+  },
   dominantNinth: {
     symbol: '9',
     intervals: ['perfectUnison', 'majorThird', 'perfectFifth', 'minorSeventh', 'majorNinth'],
@@ -356,7 +423,18 @@ const CHORD_ALIASES: Record<ChordAliasKey, CanonicalChordSuffix> = {
   min7: 'minorSeventh',
   minorMaj7: 'minorMajorSeventh',
   minorSevenFlatFive: 'halfDiminishedSeventh',
-  sevenSharpFive: 'augmentedSeventh',
+  sevenFlatNine: 'dominantSevenFlatNine',
+  '7b9': 'dominantSevenFlatNine',
+  sevenSharpNine: 'dominantSevenSharpNine',
+  '7#9': 'dominantSevenSharpNine',
+  sevenFlatFive: 'dominantSevenFlatFive',
+  '7b5': 'dominantSevenFlatFive',
+  sevenSharpFive: 'dominantSevenSharpFive',
+  '7#5': 'dominantSevenSharpFive',
+  sevenSharpEleven: 'dominantSevenSharpEleven',
+  '7#11': 'dominantSevenSharpEleven',
+  sevenFlatThirteen: 'dominantSevenFlatThirteen',
+  '7b13': 'dominantSevenFlatThirteen',
   majorSevenSharpFive: 'augmentedMajorSeventh',
   nine: 'dominantNinth',
   maj9: 'majorNinth',
@@ -389,7 +467,18 @@ export const CHORDS: Readonly<Record<ChordSuffix, ChordInformation>> = Object.fr
   min7: CANONICAL_CHORDS.minorSeventh,
   minorMaj7: CANONICAL_CHORDS.minorMajorSeventh,
   minorSevenFlatFive: CANONICAL_CHORDS.halfDiminishedSeventh,
-  sevenSharpFive: CANONICAL_CHORDS.augmentedSeventh,
+  sevenFlatNine: CANONICAL_CHORDS.dominantSevenFlatNine,
+  '7b9': CANONICAL_CHORDS.dominantSevenFlatNine,
+  sevenSharpNine: CANONICAL_CHORDS.dominantSevenSharpNine,
+  '7#9': CANONICAL_CHORDS.dominantSevenSharpNine,
+  sevenFlatFive: CANONICAL_CHORDS.dominantSevenFlatFive,
+  '7b5': CANONICAL_CHORDS.dominantSevenFlatFive,
+  sevenSharpFive: CANONICAL_CHORDS.dominantSevenSharpFive,
+  '7#5': CANONICAL_CHORDS.dominantSevenSharpFive,
+  sevenSharpEleven: CANONICAL_CHORDS.dominantSevenSharpEleven,
+  '7#11': CANONICAL_CHORDS.dominantSevenSharpEleven,
+  sevenFlatThirteen: CANONICAL_CHORDS.dominantSevenFlatThirteen,
+  '7b13': CANONICAL_CHORDS.dominantSevenFlatThirteen,
   majorSevenSharpFive: CANONICAL_CHORDS.augmentedMajorSeventh,
   nine: CANONICAL_CHORDS.dominantNinth,
   maj9: CANONICAL_CHORDS.majorNinth,
@@ -446,6 +535,12 @@ const CHORD_QUALITY_BY_SUFFIX: Record<CanonicalChordSuffix, ChordQuality> = {
   suspendedSecond: 'suspended',
   suspendedFourth: 'suspended',
   dominantSeventh: 'dominant',
+  dominantSevenFlatNine: 'altered',
+  dominantSevenSharpNine: 'altered',
+  dominantSevenFlatFive: 'altered',
+  dominantSevenSharpFive: 'altered',
+  dominantSevenSharpEleven: 'altered',
+  dominantSevenFlatThirteen: 'altered',
   dominantNinth: 'dominant',
   dominantEleventh: 'dominant',
   dominantThirteenth: 'dominant',

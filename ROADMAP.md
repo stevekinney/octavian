@@ -221,7 +221,7 @@ harmony, jazz, and modal mixture.
 
 No dependencies. Can ship immediately.
 
-- [ ] Add to `CHORDS` catalog: `dominantSevenFlatNine`, `dominantSevenSharpNine`,
+- [x] Add to `CHORDS` catalog: `dominantSevenFlatNine`, `dominantSevenSharpNine`,
       `dominantSevenFlatFive`, `dominantSevenSharpFive`, `dominantSevenSharpEleven`,
       `dominantSevenFlatThirteen`
 - [ ] Add `dominantNineFlatFive`, `dominantNineSharpFive` (9th chords with altered fifths)
