@@ -31,7 +31,7 @@ const packageJson: PackageJson = rawPackageJson;
 const failures: string[] = [];
 
 const browserGlobalPatterns: PatternCheck[] = [
-  { description: 'process global', expression: /\bprocess[.[]/g },
+  { description: 'process global', expression: /\bprocess\b/g },
   { description: 'Buffer global', expression: /\bBuffer\b/g },
   { description: '__dirname', expression: /__dirname/g },
   { description: '__filename', expression: /__filename/g },
