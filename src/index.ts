@@ -74,6 +74,19 @@ export type {
 } from './key-signature-catalog.js';
 
 export {
+  CIRCLE_OF_FIFTHS_MAJOR,
+  CIRCLE_OF_FIFTHS_MINOR,
+  adjacentKeys,
+  circleOfFifths,
+  distanceInFifths,
+  enharmonicEquivalent,
+  isOnCircleOfFifths,
+} from './circle-of-fifths.js';
+
+export { Key, isKnownKey } from './key.js';
+export type { KeyLike, SerializedKey } from './key.js';
+
+export {
   ACCIDENTALS,
   ACCIDENTAL_OFFSETS,
   ALL_NOTE_NAMES,
