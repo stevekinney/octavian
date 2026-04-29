@@ -106,6 +106,22 @@ export {
 export type { HarmonicFunction, HarmonicFunctionAlias } from './harmonic-function.js';
 
 export {
+  figuredBassForChord,
+  figuredBassInversionFor,
+  figuredBassToChord,
+  formatFiguredBass,
+  parseFiguredBass,
+} from './figured-bass.js';
+export type {
+  FiguredBass,
+  FiguredBassAccidental,
+  FiguredBassDigit,
+  FiguredBassFigure,
+  FiguredBassInversion,
+  FiguredBassLike,
+} from './figured-bass.js';
+
+export {
   ACCIDENTALS,
   ACCIDENTAL_OFFSETS,
   ALL_NOTE_NAMES,

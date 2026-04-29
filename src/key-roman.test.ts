@@ -60,8 +60,8 @@ describe('chordFromRomanNumeral', () => {
     const expected = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
     const numerals: RomanNumeralLike[] = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
     for (let i = 0; i < numerals.length; i++) {
-      const chord = chordFromRomanNumeral(cMajor, numerals[i]!);
-      expect(chord.root.note).toBe(expected[i]!);
+      const chord = chordFromRomanNumeral(cMajor, numerals[i]);
+      expect(chord.root.note).toBe(expected[i]);
     }
   });
 
