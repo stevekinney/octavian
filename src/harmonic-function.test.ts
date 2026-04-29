@@ -67,6 +67,23 @@ describe('harmonicFunctionFor — minor key (A minor)', () => {
       expect(harmonicFunctionFor(aMinor, chord)).toBe(expected);
     },
   );
+
+  it.each([
+    ['A', 'minorSeventh', 'tonic'], // i⁷
+    ['B', 'halfDiminishedSeventh', 'predominant'], // ii°⁷ (natural-minor supertonic)
+    ['C', 'majorSeventh', 'tonic'], // III⁷
+    ['D', 'minorSeventh', 'predominant'], // iv⁷
+    ['E', 'minorSeventh', 'dominant'], // v⁷ (natural-minor diatonic dominant)
+    ['F', 'majorSeventh', 'tonic'], // VI⁷
+    ['G', 'dominantSeventh', 'dominant'], // VII⁷ (natural-minor sub-tonic)
+  ] as const)(
+    'classifies the %s %s diatonic seventh chord as %s',
+    (root: string, suffix: string, expected: HarmonicFunction) => {
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+      const chord = Chord.create(`${root}4`, suffix as never);
+      expect(harmonicFunctionFor(aMinor, chord)).toBe(expected);
+    },
+  );
 });
 
 describe('harmonicFunctionFor — non-functional and edge cases', () => {
@@ -99,6 +116,12 @@ describe('harmonicFunctionForNumeral', () => {
     ['v', 'minor', 'dominant'],
     ['VI', 'minor', 'tonic'],
     ['VII', 'minor', 'dominant'],
+    // Harmonic-minor leading-tone chord: in A minor analyzed off a
+    // raised G♯ root, vii° is dominant just as it is in major.
+    ['vii°', 'minor', 'dominant'],
+    // Harmonic-minor V (major triad in minor) is the textbook
+    // dominant; covered alongside natural-minor v above.
+    ['V', 'minor', 'dominant'],
   ] as const)(
     'classifies %s in %s as %s',
     (rn: string, mode: 'major' | 'minor', expected: HarmonicFunction) => {
@@ -116,6 +139,24 @@ describe('harmonicFunctionForNumeral', () => {
     expect(harmonicFunctionForNumeral(RomanNumeral.parse('V/V'), 'major')).toBeNull();
     expect(harmonicFunctionForNumeral(RomanNumeral.parse('V7/IV'), 'major')).toBeNull();
   });
+
+  it.each([
+    // Borrowed-from-parallel numerals on the same diatonic degree
+    // must return null in v1; they're handled by modal mixture (2.11).
+    ['i', 'major'], // borrowed minor tonic in a major key
+    ['III', 'major'], // borrowed major mediant (♭III material rendered without flat)
+    ['iv', 'major'], // borrowed minor subdominant
+    ['v', 'major'], // borrowed minor dominant (no leading tone)
+    ['vi', 'minor'], // borrowed minor submediant in a minor key
+    ['IV', 'minor'], // borrowed major subdominant
+    ['I', 'minor'], // Picardy-style major tonic
+    ['ii', 'minor'], // borrowed minor supertonic (vs diatonic ii°)
+  ] as const)(
+    'returns null for borrowed-quality numeral %s in %s key',
+    (rn: string, mode: 'major' | 'minor') => {
+      expect(harmonicFunctionForNumeral(RomanNumeral.parse(rn), mode)).toBeNull();
+    },
+  );
 });
 
 describe('harmonicFunctionForAsAlias — predominant ↔ subdominant alias', () => {
