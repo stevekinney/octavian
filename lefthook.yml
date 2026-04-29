@@ -3,7 +3,7 @@ pre-commit:
   jobs:
     - name: format-staged
       run: bun run prettier --write {staged_files}
-      glob: "**/*.{ts,tsx,js,jsx,json,md,css}"
+      glob: "**/*.{ts,tsx,js,jsx,mjs,json,md,css}"
       stage_fixed: true
     - name: lint-fix
       run: bun run oxlint --fix {staged_files}

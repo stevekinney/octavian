@@ -48,8 +48,8 @@
     "check": "bun run format:check && bun run lint && bun run typecheck",
     "clean": "rm -rf dist coverage tsconfig.tsbuildinfo",
     "dev": "bun --watch run src/index.ts",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,json,md}\"",
     "lint": "oxlint --type-aware --tsconfig ./tsconfig.json",
     "lint:fix": "oxlint --fix --type-aware --tsconfig ./tsconfig.json",
     "package:check": "publint && env npm_config_ignore_scripts=true attw --pack --profile esm-only",
@@ -60,7 +60,8 @@
     "test:ci": "bun test --coverage --parallel",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc --noEmit --project tsconfig.test.json",
-    "validate": "bun run format:check && bun run lint && bun run typecheck && bun run typecheck:test && bun run test && bun run build && bun run package:check && bun run validate:artifacts",
+    "smoke:tarball": "bun scripts/smoke-tarball.mjs",
+    "validate": "bun run scripts/validate.ts",
     "validate:artifacts": "bun run scripts/validate-artifacts.ts",
     "verify:release-version": "bun run scripts/verify-release-version.ts"
   },
@@ -75,6 +76,7 @@
     "prettier": "^3.8.3",
     "publint": "^0.3.12",
     "sort-package-json": "^3.6.1",
+    "tsdown": "^0.21.10",
     "typescript": "^5.8.3"
   },
   "engines": {

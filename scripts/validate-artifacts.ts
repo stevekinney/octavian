@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 type RuntimeDependencyField = 'dependencies' | 'peerDependencies' | 'optionalDependencies';
 
@@ -30,7 +31,8 @@ const packageJson: PackageJson = rawPackageJson;
 const failures: string[] = [];
 
 const browserGlobalPatterns: PatternCheck[] = [
-  { description: 'process global', expression: /\bprocess\b/g },
+  // Match process.x and process[x] but not words like "post-process" in comments.
+  { description: 'process global', expression: /\bprocess[.[]/g },
   { description: 'Buffer global', expression: /\bBuffer\b/g },
   { description: '__dirname', expression: /__dirname/g },
   { description: '__filename', expression: /__filename/g },
@@ -112,12 +114,79 @@ assertZeroMatches(
   bareSpecifierPatterns,
 );
 
+// Behavioral smoke test. If this script runs under Bun, `node` in PATH may be
+// Bun's shim rather than a real Node binary. Prefer an explicit override and
+// otherwise probe candidates so the smoke test runs under Node.
+function isBunBinary(command: string, env?: NodeJS.ProcessEnv): boolean {
+  const probe = spawnSync(command, ['-p', 'Boolean(process.versions?.bun)'], {
+    encoding: 'utf8',
+    env,
+    stdio: 'pipe',
+  });
+
+  if (probe.error || probe.status !== 0) {
+    return false;
+  }
+
+  return probe.stdout.trim() === 'true';
+}
+
+function resolveNodeBinary(): { command: string; env?: NodeJS.ProcessEnv } {
+  const override = process.env['OCTAVIAN_NODE_BINARY']?.trim();
+  if (override) {
+    return { command: override, env: process.env };
+  }
+
+  if (!isBunBinary('node', process.env)) {
+    return { command: 'node', env: process.env };
+  }
+
+  const pathKey = Object.keys(process.env).find((key) => key.toLowerCase() === 'path');
+  if (!pathKey) {
+    return { command: 'node', env: process.env };
+  }
+
+  const bunBinDir = path.dirname(process.execPath);
+  const originalPath = process.env[pathKey];
+  if (!originalPath) {
+    return { command: 'node', env: process.env };
+  }
+
+  const filteredPath = originalPath
+    .split(path.delimiter)
+    .filter((entry) => entry && path.resolve(entry) !== path.resolve(bunBinDir))
+    .join(path.delimiter);
+  const envWithoutBun = {
+    ...process.env,
+    [pathKey]: filteredPath,
+  };
+
+  if (!isBunBinary('node', envWithoutBun)) {
+    return { command: 'node', env: envWithoutBun };
+  }
+
+  return { command: 'node', env: process.env };
+}
+
+const { command: nodeBinary, env: nodeBinaryEnv } = resolveNodeBinary();
+const smoke = spawnSync(nodeBinary, ['scripts/smoke-artifact.mjs'], {
+  cwd: root,
+  env: nodeBinaryEnv,
+  stdio: 'pipe',
+});
+const smokeError = smoke.error as NodeJS.ErrnoException | undefined;
+if (smokeError?.code === 'ENOENT') {
+  failures.push(`'node' not found on PATH; cannot run artifact smoke test.`);
+} else if (smoke.status !== 0) {
+  failures.push(`artifact smoke test failed (exit ${smoke.status}):\n${smoke.stderr.toString()}`);
+}
+
 if (failures.length > 0) {
   for (const failure of failures) {
-    console.error(`Validation failed: ${failure}`);
+    process.stderr.write(`Validation failed: ${failure}\n`);
   }
 
   process.exit(1);
 }
 
-console.log('Artifact validation passed.');
+process.stdout.write(`Artifact validation passed. Bundle size: ${browserArtifact.length} bytes\n`);

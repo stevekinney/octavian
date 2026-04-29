@@ -132,8 +132,8 @@ function isFiguredBassDigit(value: number): value is FiguredBassDigit {
  * input form so that
  * `formatFiguredBass(parseFiguredBass('♭7')).inline === '♭7'`
  * round-trips. (Aldwell & Schachter print flats after the digit for
- * typesetting reasons; consumers rendering for engraving should
- * post-process if they need the suffix-flat convention.)
+ * typesetting reasons; consumers rendering for engraving should normalize
+ * afterward if they need the suffix-flat convention.)
  */
 export function formatFiguredBass(figures: FiguredBass): {
   readonly stacked: readonly string[];
