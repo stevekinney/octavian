@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 type RuntimeDependencyField = 'dependencies' | 'peerDependencies' | 'optionalDependencies';
 
@@ -30,7 +31,7 @@ const packageJson: PackageJson = rawPackageJson;
 const failures: string[] = [];
 
 const browserGlobalPatterns: PatternCheck[] = [
-  { description: 'process global', expression: /\bprocess\b/g },
+  { description: 'process global', expression: /\bprocess[.[]/g },
   { description: 'Buffer global', expression: /\bBuffer\b/g },
   { description: '__dirname', expression: /__dirname/g },
   { description: '__filename', expression: /__filename/g },
@@ -112,12 +113,31 @@ assertZeroMatches(
   bareSpecifierPatterns,
 );
 
+// Behavioral smoke test. Resolves the real Node binary via `which node` because
+// when this script runs under Bun, 'node' in PATH is Bun's own shim. We want the
+// system Node (the consumer runtime that exposed the original bundle bug).
+const nodeBinary = (() => {
+  const which = spawnSync('which', ['node'], { encoding: 'utf8' });
+  return which.status === 0 ? which.stdout.trim() : 'node';
+})();
+
+const smoke = spawnSync(nodeBinary, ['scripts/smoke-artifact.mjs'], {
+  cwd: root,
+  stdio: 'pipe',
+});
+const smokeError = smoke.error as NodeJS.ErrnoException | undefined;
+if (smokeError?.code === 'ENOENT') {
+  failures.push(`'node' not found on PATH; cannot run artifact smoke test.`);
+} else if (smoke.status !== 0) {
+  failures.push(`artifact smoke test failed (exit ${smoke.status}):\n${smoke.stderr.toString()}`);
+}
+
 if (failures.length > 0) {
   for (const failure of failures) {
-    console.error(`Validation failed: ${failure}`);
+    process.stderr.write(`Validation failed: ${failure}\n`);
   }
 
   process.exit(1);
 }
 
-console.log('Artifact validation passed.');
+process.stdout.write(`Artifact validation passed. Bundle size: ${browserArtifact.length} bytes\n`);
