@@ -160,14 +160,20 @@ This is the keystone abstraction. Once this lands, much of Phase 1 and Phase 2 b
 
 **Depends on:** 1.6, 1.7
 
-- [ ] `HarmonicFunction` type: `'tonic' | 'predominant' | 'dominant'`
-- [ ] `key.functionOf(chord)` returns the function (or `null` if non-functional)
-- [ ] Classification respects mode: i/iii/vi are tonic in major; i/III/VI in minor
-- [ ] Predominant: ii, ii°, IV, iv, vi
-- [ ] Dominant: V, V7, vii°, vii°7, III in minor (as upper extension of dominant)
-- [ ] Optional `'subdominant'` alias for predominant where pedagogically appropriate
-- [ ] Tests cover function classification for all diatonic chords in both major and minor
-- [ ] Documentation explains the function-vs-substitution distinction
+- [x] `HarmonicFunction` type: `'tonic' | 'predominant' | 'dominant'`
+- [x] `harmonicFunctionFor(key, chord)` returns the function (or `null` if non-functional). Free
+      function for the same circular-import reason as 1.7 — `key.functionOf` would require a static
+      cycle.
+- [x] Classification respects mode: I/iii/vi are tonic in major; i/III/VI in minor
+- [x] Predominant: ii (and ii°), IV (and iv). vi is classified as tonic per the more standard
+      tonic-substitute convention; `harmonicFunctionForAsAlias` provides the `'subdominant'` synonym
+      for callers who prefer that vocabulary.
+- [x] Dominant: V (V⁷), vii° (vii°⁷), VII in minor. The III-as-dominant convention is
+      pedagogy-specific and is not classified as dominant in v1; III in minor is tonic.
+- [x] Optional `'subdominant'` alias via `harmonicFunctionForAsAlias`
+- [x] Tests cover function classification for all 7 triads + 7 sevenths in major and minor
+- [x] Documentation explains the function-vs-substitution distinction in the `HarmonicFunction`
+      JSDoc
 
 ### 1.9 Figured bass notation
 

@@ -99,6 +99,13 @@ export type {
 export { chordFromRomanNumeral, romanNumeralFor } from './key-roman.js';
 
 export {
+  harmonicFunctionFor,
+  harmonicFunctionForAsAlias,
+  harmonicFunctionForNumeral,
+} from './harmonic-function.js';
+export type { HarmonicFunction, HarmonicFunctionAlias } from './harmonic-function.js';
+
+export {
   ACCIDENTALS,
   ACCIDENTAL_OFFSETS,
   ALL_NOTE_NAMES,
