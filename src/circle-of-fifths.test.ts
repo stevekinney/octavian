@@ -163,7 +163,7 @@ describe('adjacentKeys', () => {
 
   it('preserves flat-side spelling for Db major (spelling-correct subdominant Gb-major)', () => {
     // Cardinal-path subdominant would be index 6 = F#-major (wrong spelling
-    // family for Db). SPELLING_NEIGHBORS overrides to Gb-major.
+    // family for Db). Per-direction override fixes it to Gb-major.
     const adjacent = adjacentKeys(KEY_SIGNATURES['Db-major']);
     expect(adjacent.dominant).toBe(KEY_SIGNATURES['Ab-major']);
     expect(adjacent.subdominant).toBe(KEY_SIGNATURES['Gb-major']);
@@ -179,6 +179,26 @@ describe('adjacentKeys', () => {
     const adjacent = adjacentKeys(KEY_SIGNATURES['Eb-minor']);
     expect(adjacent.dominant).toBe(KEY_SIGNATURES['Bb-minor']);
     expect(adjacent.subdominant).toBe(KEY_SIGNATURES['Ab-minor']);
+  });
+
+  it('preserves spelling per-direction independently (Cb dominant override; subdominant cardinal)', () => {
+    // Cb-major's spelling-preserving dominant is the standard Gb-major,
+    // so the dominant override applies. The spelling-preserving
+    // subdominant would be the theoretical Fb-major, so subdominant
+    // falls through to the cardinal path (E-major via the Cb-major
+    // ↔ B-major enharmonic resolution).
+    const adjacent = adjacentKeys(KEY_SIGNATURES['Cb-major']);
+    expect(adjacent.dominant).toBe(KEY_SIGNATURES['Gb-major']);
+    expect(adjacent.subdominant).toBe(KEY_SIGNATURES['E-major']);
+  });
+
+  it('preserves spelling per-direction for C# major (subdominant override; dominant cardinal)', () => {
+    // C#-major's spelling-preserving dominant would be theoretical
+    // G#-major, so dominant falls through to cardinal (Ab-major via
+    // C#-major ↔ Db-major). Subdominant Override → F#-major (standard).
+    const adjacent = adjacentKeys(KEY_SIGNATURES['C#-major']);
+    expect(adjacent.dominant).toBe(KEY_SIGNATURES['Ab-major']);
+    expect(adjacent.subdominant).toBe(KEY_SIGNATURES['F#-major']);
   });
 });
 

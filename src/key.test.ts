@@ -356,6 +356,14 @@ describe('key.transpose / transposeBy', () => {
     const cMajor = Key.create('C', 'major');
     expect(cMajor.transposeBy(7).equals(Key.create('G', 'major'))).toBe(true);
   });
+
+  it('falls back through enharmonics when the direct target is theoretical', () => {
+    // C# major.transpose(P5) lands on G# major (theoretical). The
+    // resolveStandardKey policy walks tonic enharmonics to find Ab major.
+    const cSharp = Key.create('C#', 'major');
+    expect(cSharp.transpose('perfectFifth').isEnharmonicTo(Key.create('Ab', 'major'))).toBe(true);
+    expect(cSharp.transposeBy(7).isEnharmonicTo(Key.create('Ab', 'major'))).toBe(true);
+  });
 });
 
 describe('key.equals / isEnharmonicTo', () => {

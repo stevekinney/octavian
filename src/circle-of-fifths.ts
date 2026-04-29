@@ -159,77 +159,82 @@ export function distanceInFifths(
 }
 
 /**
- * Spelling-preserving neighbors for keys whose cardinal-circle neighbors
- * have the wrong spelling family. For example, `Db-major`'s subdominant
- * on the cardinal circle is at index 6 (`F#-major`), but musically it
- * should be spelled `Gb-major`. Each entry overrides the cardinal lookup
- * with spelling-correct ids.
+ * Spelling-preserving overrides for individual neighbor directions where
+ * the cardinal-circle lookup would produce the wrong spelling family.
+ * Each direction is overridden independently — a key can have a
+ * spelling-correct standard dominant without a spelling-correct
+ * standard subdominant (or vice versa).
  *
- * Both ids in each entry are guaranteed to be standard (non-theoretical)
- * catalog members. Keys whose spelling-preserving neighbors would land
- * on a theoretical key (e.g., the dominant of `C#-major` would be the
- * theoretical `G#-major`) are NOT in this map — they fall through to
- * the cardinal-circle path, which gives the standard enharmonic
- * (e.g., `Ab-major`). This trade-off keeps `Key.adjacentKeys` total
- * across all standard inputs without crossing into theoretical keys.
+ * Cardinal-path lookups produce structurally correct but sometimes
+ * wrong-spelled neighbors at the seams (e.g., `Db-major`'s subdominant
+ * via the cardinal circle is `F#-major` instead of the musically-spelled
+ * `Gb-major`). The override maps below are consulted before the cardinal
+ * path; missing entries fall through to cardinal lookup.
  *
- * Cardinal-circle keys whose neighbors are already correctly-spelled
- * aren't in this map.
+ * Targets are guaranteed standard (non-theoretical) catalog members.
+ * Spelling-preserving neighbors that would point at a theoretical key
+ * are deliberately omitted — those directions fall through to the
+ * cardinal path, which gives the standard enharmonic.
  */
-const SPELLING_NEIGHBORS: ReadonlyMap<
+const DOMINANT_SPELLING_OVERRIDES: ReadonlyMap<string, KeySignatureKey> = new Map<
   string,
-  { readonly dominantId: KeySignatureKey; readonly subdominantId: KeySignatureKey }
-> = new Map<
-  string,
-  { readonly dominantId: KeySignatureKey; readonly subdominantId: KeySignatureKey }
+  KeySignatureKey
 >([
-  // Flat-side seam keys: spelling-preserving neighbors are all standard.
-  ['Db-major', { dominantId: 'Ab-major', subdominantId: 'Gb-major' }],
-  ['Gb-major', { dominantId: 'Db-major', subdominantId: 'Cb-major' }],
-  ['Eb-minor', { dominantId: 'Bb-minor', subdominantId: 'Ab-minor' }],
+  ['Db-major', 'Ab-major'],
+  ['Gb-major', 'Db-major'],
+  ['Cb-major', 'Gb-major'],
+  ['Eb-minor', 'Bb-minor'],
+]);
+
+const SUBDOMINANT_SPELLING_OVERRIDES: ReadonlyMap<string, KeySignatureKey> = new Map<
+  string,
+  KeySignatureKey
+>([
+  ['C#-major', 'F#-major'],
+  ['Db-major', 'Gb-major'],
+  ['Gb-major', 'Cb-major'],
+  ['Eb-minor', 'Ab-minor'],
 ]);
 
 /**
  * Returns the dominant (clockwise) and subdominant (counter-clockwise)
  * neighbors of the given key on the circle of fifths.
  *
- * For cardinal-circle keys, walks the circle directly. For enharmonic and
- * theoretical alternates (e.g., C♯ major, G♭ major), preserves the
- * caller's spelling family: the dominant of C♯ major is G♯ major (not
- * A♭ major); the dominant of G♭ major is D♭ major (not C♯ major).
- *
- * @throws {TypeError} when an enharmonic-alternate input has no
- *   spelling-preserving neighbor pair (e.g., a one-off theoretical key
- *   not represented in the spelling-neighbor map).
+ * For seam keys whose cardinal-circle neighbor would be wrong-spelled
+ * (e.g., D♭ major's subdominant resolves to F♯ major on the cardinal
+ * circle, but musically should be G♭ major), the per-direction overrides
+ * in {@link DOMINANT_SPELLING_OVERRIDES} and
+ * {@link SUBDOMINANT_SPELLING_OVERRIDES} apply. Directions that would
+ * point at a theoretical key fall through to the cardinal path, which
+ * gives the standard enharmonic spelling — `Key.adjacentKeys` further
+ * normalizes through `resolveStandardKey` to keep all results
+ * constructible as `Key` instances.
  */
 export function adjacentKeys(signature: KeySignatureInformation): {
   readonly dominant: KeySignatureInformation;
   readonly subdominant: KeySignatureInformation;
 } {
   const id = keyId(signature);
-  // Enharmonic-alternate path: preserve spelling family.
-  const spellingNeighbors = SPELLING_NEIGHBORS.get(id);
-  if (spellingNeighbors !== undefined) {
-    return {
-      dominant: lookupSignatureById(spellingNeighbors.dominantId),
-      subdominant: lookupSignatureById(spellingNeighbors.subdominantId),
-    };
-  }
-  // Cardinal-circle path.
   const circle = signature.mode === 'major' ? CIRCLE_OF_FIFTHS_MAJOR : CIRCLE_OF_FIFTHS_MINOR;
   const index = indexOnCircle(signature);
-  const dominantIndex = (index + 1) % 12;
-  const subdominantIndex = (index + 11) % 12;
+  const dominantOverride = DOMINANT_SPELLING_OVERRIDES.get(id);
+  const subdominantOverride = SUBDOMINANT_SPELLING_OVERRIDES.get(id);
   // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
-  return { dominant: circle[dominantIndex]!, subdominant: circle[subdominantIndex]! };
+  const cardinalDominant = circle[(index + 1) % 12]!;
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const cardinalSubdominant = circle[(index + 11) % 12]!;
+  return {
+    dominant:
+      dominantOverride !== undefined ? lookupSignatureById(dominantOverride) : cardinalDominant,
+    subdominant:
+      subdominantOverride !== undefined
+        ? lookupSignatureById(subdominantOverride)
+        : cardinalSubdominant,
+  };
 }
 
-function lookupSignatureById(id: string): KeySignatureInformation {
-  // SPELLING_NEIGHBORS only references catalog members (entries whose
-  // neighbors fall outside the catalog are deliberately omitted), so the
-  // lookup is safe by construction.
-  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-  return (KEY_SIGNATURES as Record<string, KeySignatureInformation | undefined>)[id]!;
+function lookupSignatureById(id: KeySignatureKey): KeySignatureInformation {
+  return KEY_SIGNATURES[id];
 }
 
 /**

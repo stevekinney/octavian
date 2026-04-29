@@ -275,18 +275,34 @@ export class Key {
 
   /**
    * Returns a new key transposed by the given interval.
+   *
+   * If the transposed tonic+mode combination falls outside the standard
+   * catalog (e.g., transposing C♯ major by a perfect fifth lands on G♯
+   * major, which is theoretical), the result resolves through the
+   * tonic's enharmonic equivalents to the standard catalog spelling
+   * (G♯ major → A♭ major). Same policy as `relativeKey`/`parallelKey`.
    */
   public transpose(interval: Interval): Key {
     const transposedTonic = this.#tonic.transpose(interval);
-    return Key.create(transposedTonic.note, this.#mode);
+    return resolveStandardKey(
+      transposedTonic,
+      this.#mode,
+      `${this.toString()}.transpose("${String(interval)}")`,
+    );
   }
 
   /**
    * Returns a new key transposed by the given number of semitones.
+   *
+   * Same enharmonic-fallback policy as {@link transpose}.
    */
   public transposeBy(semitones: number): Key {
     const transposedTonic = this.#tonic.transposeBy(semitones);
-    return Key.create(transposedTonic.note, this.#mode);
+    return resolveStandardKey(
+      transposedTonic,
+      this.#mode,
+      `${this.toString()}.transposeBy(${semitones})`,
+    );
   }
 
   /**
