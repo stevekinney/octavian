@@ -114,16 +114,64 @@ assertZeroMatches(
   bareSpecifierPatterns,
 );
 
-// Behavioral smoke test. Resolves the real Node binary via `which node` because
-// when this script runs under Bun, 'node' in PATH is Bun's own shim. We want the
-// system Node (the consumer runtime that exposed the original bundle bug).
-const nodeBinary = (() => {
-  const which = spawnSync('which', ['node'], { encoding: 'utf8' });
-  return which.status === 0 ? which.stdout.trim() : 'node';
-})();
+// Behavioral smoke test. If this script runs under Bun, `node` in PATH may be
+// Bun's shim rather than a real Node binary. Prefer an explicit override and
+// otherwise probe candidates so the smoke test runs under Node.
+function isBunBinary(command: string, env?: NodeJS.ProcessEnv): boolean {
+  const probe = spawnSync(command, ['-p', 'Boolean(process.versions?.bun)'], {
+    encoding: 'utf8',
+    env,
+    stdio: 'pipe',
+  });
 
+  if (probe.error || probe.status !== 0) {
+    return false;
+  }
+
+  return probe.stdout.trim() === 'true';
+}
+
+function resolveNodeBinary(): { command: string; env?: NodeJS.ProcessEnv } {
+  const override = process.env['OCTAVIAN_NODE_BINARY']?.trim();
+  if (override) {
+    return { command: override, env: process.env };
+  }
+
+  if (!isBunBinary('node', process.env)) {
+    return { command: 'node', env: process.env };
+  }
+
+  const pathKey = Object.keys(process.env).find((key) => key.toLowerCase() === 'path');
+  if (!pathKey) {
+    return { command: 'node', env: process.env };
+  }
+
+  const bunBinDir = path.dirname(process.execPath);
+  const originalPath = process.env[pathKey];
+  if (!originalPath) {
+    return { command: 'node', env: process.env };
+  }
+
+  const filteredPath = originalPath
+    .split(path.delimiter)
+    .filter((entry) => entry && path.resolve(entry) !== path.resolve(bunBinDir))
+    .join(path.delimiter);
+  const envWithoutBun = {
+    ...process.env,
+    [pathKey]: filteredPath,
+  };
+
+  if (!isBunBinary('node', envWithoutBun)) {
+    return { command: 'node', env: envWithoutBun };
+  }
+
+  return { command: 'node', env: process.env };
+}
+
+const { command: nodeBinary, env: nodeBinaryEnv } = resolveNodeBinary();
 const smoke = spawnSync(nodeBinary, ['scripts/smoke-artifact.mjs'], {
   cwd: root,
+  env: nodeBinaryEnv,
   stdio: 'pipe',
 });
 const smokeError = smoke.error as NodeJS.ErrnoException | undefined;
