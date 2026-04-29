@@ -160,6 +160,35 @@ describe('adjacentKeys', () => {
     expect(adjacent.dominant).toBe(KEY_SIGNATURES['Db-major']);
     expect(adjacent.subdominant).toBe(KEY_SIGNATURES['B-major']);
   });
+
+  it('preserves sharp-side spelling family for theoretical sharp-side keys', () => {
+    // C# major's spelling-preserving neighbors are G# major and F# major,
+    // not Ab major (the cardinal would be Ab, since C# enharmonically
+    // resolves to Db at index 7 → neighbors are at 6 and 8 → F# and Ab).
+    const adjacent = adjacentKeys(KEY_SIGNATURES['C#-major']);
+    expect(adjacent.dominant).toBe(KEY_SIGNATURES['G#-major']);
+    expect(adjacent.subdominant).toBe(KEY_SIGNATURES['F#-major']);
+
+    // G# major (theoretical) → D# major dominant, C# major subdominant.
+    const gSharp = adjacentKeys(KEY_SIGNATURES['G#-major']);
+    expect(gSharp.dominant).toBe(KEY_SIGNATURES['D#-major']);
+    expect(gSharp.subdominant).toBe(KEY_SIGNATURES['C#-major']);
+  });
+
+  it('preserves flat-side spelling family for the Gb / Cb keys', () => {
+    // Gb major (cardinal index 6, but enharmonic with F# major) — its
+    // dominant should be Db, subdominant Cb.
+    const gFlat = adjacentKeys(KEY_SIGNATURES['Gb-major']);
+    expect(gFlat.dominant).toBe(KEY_SIGNATURES['Db-major']);
+    expect(gFlat.subdominant).toBe(KEY_SIGNATURES['Cb-major']);
+  });
+
+  it('preserves spelling family for the flat-side minor enharmonic alternate Eb-minor', () => {
+    // Eb minor's spelling-preserving neighbors are Bb minor and Ab minor.
+    const ebMinor = adjacentKeys(KEY_SIGNATURES['Eb-minor']);
+    expect(ebMinor.dominant).toBe(KEY_SIGNATURES['Bb-minor']);
+    expect(ebMinor.subdominant).toBe(KEY_SIGNATURES['Ab-minor']);
+  });
 });
 
 describe('enharmonicEquivalent', () => {

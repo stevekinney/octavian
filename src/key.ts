@@ -9,7 +9,6 @@ import {
   KEY_SIGNATURES,
   keySignatureFor,
   type KeySignatureInformation,
-  type KeySignatureKey,
   type KeySignatureMode,
 } from './key-signature-catalog.js';
 import { Note, type NoteLike } from './note.js';
@@ -25,12 +24,13 @@ export type SerializedKey = {
 };
 
 /**
- * Inputs accepted by {@link Key.create}.
+ * Inputs accepted by {@link Key.create} when given a single argument.
+ *
+ * The object form's `tonic` accepts any `NoteLike` (including a `Note`
+ * instance), so it's strictly wider than {@link SerializedKey} for runtime
+ * use — `SerializedKey` is the type used for JSON snapshots specifically.
  */
-export type KeyLike =
-  | Key
-  | SerializedKey
-  | { readonly tonic: NoteLike; readonly mode: KeySignatureMode };
+export type KeyLike = Key | { readonly tonic: NoteLike; readonly mode: KeySignatureMode };
 
 let createKey: (tonic: NoteName, mode: KeySignatureMode) => Key;
 
@@ -56,6 +56,19 @@ export class Key {
     this.#tonic = Note.create(tonic);
     this.#mode = mode;
     this.#signature = keySignatureFor(tonic, mode);
+    if (this.#signature.accidentalPreference === 'theoretical') {
+      // Theoretical keys (e.g., G♯ major) live in the catalog for
+      // completeness, but `Key`'s relationship getters (`relativeKey`,
+      // `dominantKey`, etc.) need standard targets that may fall outside
+      // the catalog. Rather than half-support them, we reject at
+      // construction. The catalog itself remains accessible via
+      // `keySignatureFor`.
+      throw new TypeError(
+        `Key.create does not support theoretical keys (got "${tonic} ${mode}"); use ` +
+          `keySignatureFor for catalog-only access, or use the enharmonic standard ` +
+          `key (e.g., "Ab major" instead of "G# major").`,
+      );
+    }
     const scaleType = mode === 'major' ? 'major' : 'naturalMinor';
     this.#scale = Scale.create(this.#tonic, scaleType);
   }
@@ -72,6 +85,12 @@ export class Key {
    */
   public static create(tonicOrLike: NoteLike | KeyLike, mode?: KeySignatureMode): Key {
     if (tonicOrLike instanceof Key) {
+      if (mode !== undefined && mode !== tonicOrLike.mode) {
+        throw new TypeError(
+          `Key.create received a Key (${tonicOrLike.toString()}) AND a different mode ` +
+            `("${mode}"). Use Key.create(key.tonic, mode) or key.parallelKey instead.`,
+        );
+      }
       return tonicOrLike;
     }
     if (typeof tonicOrLike === 'object' && tonicOrLike !== null && 'mode' in tonicOrLike) {
@@ -79,7 +98,9 @@ export class Key {
       return createKey(note.note, tonicOrLike.mode);
     }
     if (mode === undefined) {
-      throw new TypeError('Key.create requires both a tonic and a mode.');
+      throw new TypeError(
+        'Key.create requires both a tonic and a mode (e.g., Key.create("C", "major")).',
+      );
     }
     const note = Note.create(tonicOrLike);
     return createKey(note.note, mode);
@@ -170,21 +191,21 @@ export class Key {
    * relative is the major a third above.
    */
   public get relativeKey(): Key {
-    if (this.#mode === 'major') {
-      // Relative minor's tonic is the 6th scale degree.
-      const relativeTonic = this.#scale.degree(6);
-      return Key.create(relativeTonic.note, 'minor');
-    }
-    // Relative major's tonic is the 3rd scale degree of the natural minor.
-    const relativeTonic = this.#scale.degree(3);
-    return Key.create(relativeTonic.note, 'major');
+    const targetMode: KeySignatureMode = this.#mode === 'major' ? 'minor' : 'major';
+    const relativeTonic = this.#mode === 'major' ? this.#scale.degree(6) : this.#scale.degree(3);
+    return resolveStandardKey(relativeTonic, targetMode, `${this.toString()}.relativeKey`);
   }
 
   /**
-   * The parallel key — the same tonic letter, opposite mode.
+   * The parallel key — the same tonic, opposite mode.
+   *
+   * If the direct tonic+mode combination has no entry in the catalog
+   * (e.g., D♭ minor isn't catalogued), the enharmonic equivalent of the
+   * tonic is used (D♭ minor → C♯ minor).
    */
   public get parallelKey(): Key {
-    return Key.create(this.#tonic, this.#mode === 'major' ? 'minor' : 'major');
+    const targetMode: KeySignatureMode = this.#mode === 'major' ? 'minor' : 'major';
+    return resolveStandardKey(this.#tonic, targetMode, `${this.toString()}.parallelKey`);
   }
 
   /**
@@ -276,24 +297,54 @@ export class Key {
     };
   }
 
-  public toString(): string {
+  public toString(): `${NoteName} ${KeySignatureMode}` {
     return `${this.#tonic.note} ${this.#mode}`;
   }
 
-  public get [Symbol.toStringTag](): string {
-    return `Key(${this.toString()})`;
+  public get [Symbol.toStringTag](): `Key(${NoteName} ${KeySignatureMode})` {
+    return `Key(${this.#tonic.note} ${this.#mode})`;
   }
 }
 
 /**
- * Returns whether a tonic + mode pair has a key entry in the catalog. The
- * single source of truth is {@link KEY_SIGNATURES} — the same set of keys
- * accepted by {@link Key.create}.
+ * Builds a `Key` for a tonic+mode pair, trying the tonic's spelling first
+ * and falling back through its enharmonic equivalents if the direct
+ * combination has no standard catalog entry. Used by relationship getters
+ * that may land on flat-side spellings whose mode isn't catalogued (e.g.,
+ * D♭ minor → resolves to C♯ minor).
+ *
+ * @throws {TypeError} when neither the tonic nor any of its enharmonic
+ *   equivalents has a standard entry for `mode`.
+ */
+function resolveStandardKey(tonic: Note, mode: KeySignatureMode, source: string): Key {
+  if (isKnownKey(tonic.note, mode)) {
+    return Key.create(tonic, mode);
+  }
+  for (const candidate of tonic.enharmonics) {
+    if (isKnownKey(candidate, mode)) {
+      return Key.create(candidate, mode);
+    }
+  }
+  throw new TypeError(
+    `${source} resolves to "${tonic.note} ${mode}", which has no standard catalog entry ` +
+      `(nor any enharmonic spelling that does).`,
+  );
+}
+
+/**
+ * Returns whether a tonic + mode pair is constructible via {@link Key.create}.
+ *
+ * Theoretical keys (G♯ major, F♭ major, etc.) are present in
+ * {@link KEY_SIGNATURES} for catalog completeness but NOT constructible as
+ * `Key` instances — their relationship getters would fall outside the
+ * catalog. Use {@link keySignatureFor} for catalog-only access.
  */
 export function isKnownKey(tonic: NoteName, mode: KeySignatureMode): boolean {
   const id = `${tonic}-${mode}`;
-  return id in KEY_SIGNATURES;
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+  const signature = (KEY_SIGNATURES as Record<string, KeySignatureInformation | undefined>)[id];
+  if (signature === undefined) {
+    return false;
+  }
+  return signature.accidentalPreference !== 'theoretical';
 }
-
-// Re-export the catalog key type for convenience at the Key boundary.
-export type { KeySignatureKey };

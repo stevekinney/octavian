@@ -1,6 +1,7 @@
 import {
   KEY_SIGNATURES,
   type KeySignatureInformation,
+  type KeySignatureKey,
   type KeySignatureMode,
 } from './key-signature-catalog.js';
 import type { NoteName } from './note-spellings.js';
@@ -54,7 +55,7 @@ export const CIRCLE_OF_FIFTHS_MINOR: readonly KeySignatureInformation[] = Object
  * Enharmonic-equivalent pairs at the bottom of the circle, where sharp-side
  * and flat-side spellings refer to the same pitch class.
  */
-const ENHARMONIC_PAIRS: ReadonlyMap<string, string> = new Map([
+const ENHARMONIC_PAIRS: ReadonlyMap<string, KeySignatureKey> = new Map<string, KeySignatureKey>([
   // Major pairs
   ['F#-major', 'Gb-major'],
   ['Gb-major', 'F#-major'],
@@ -76,6 +77,29 @@ function keyId(signature: KeySignatureInformation): string {
 }
 
 /**
+ * Pre-computed `id → cardinal index` map for both circles, built once at
+ * module load. Looking up a signature by its id (rather than by reference
+ * via `Array.indexOf`) lets callers pass structurally-equivalent objects
+ * without losing position resolution, and gives O(1) lookup.
+ */
+const CARDINAL_INDEX_BY_ID: ReadonlyMap<string, number> = (() => {
+  const map = new Map<string, number>();
+  for (let index = 0; index < CIRCLE_OF_FIFTHS_MAJOR.length; index++) {
+    const entry = CIRCLE_OF_FIFTHS_MAJOR[index];
+    if (entry !== undefined) {
+      map.set(keyId(entry), index);
+    }
+  }
+  for (let index = 0; index < CIRCLE_OF_FIFTHS_MINOR.length; index++) {
+    const entry = CIRCLE_OF_FIFTHS_MINOR[index];
+    if (entry !== undefined) {
+      map.set(keyId(entry), index);
+    }
+  }
+  return map;
+})();
+
+/**
  * Returns the full circle of fifths as an ordered array, starting at C
  * major (or A minor) and proceeding clockwise.
  *
@@ -89,19 +113,21 @@ export function circleOfFifths(
 }
 
 function indexOnCircle(signature: KeySignatureInformation): number {
-  const circle = signature.mode === 'major' ? CIRCLE_OF_FIFTHS_MAJOR : CIRCLE_OF_FIFTHS_MINOR;
-  const index = circle.indexOf(signature);
-  if (index !== -1) {
-    return index;
-  }
-  // The signature is a theoretical key (e.g., G#-major) or another spelling
-  // not present at any cardinal position. Resolve via enharmonic equivalent.
   const id = keyId(signature);
+  const direct = CARDINAL_INDEX_BY_ID.get(id);
+  if (direct !== undefined) {
+    return direct;
+  }
+  // The signature is a theoretical key or an enharmonic alternate spelling
+  // not present at any cardinal position. Resolve via enharmonic equivalent.
   const enharmonicId = ENHARMONIC_PAIRS.get(id);
   if (enharmonicId === undefined) {
     throw new RangeError(`Key "${id}" is not on the circle of fifths.`);
   }
-  return circle.findIndex((entry) => keyId(entry) === enharmonicId);
+  // ENHARMONIC_PAIRS values are typed as KeySignatureKey, so they're
+  // guaranteed members of CARDINAL_INDEX_BY_ID by construction.
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  return CARDINAL_INDEX_BY_ID.get(enharmonicId)!;
 }
 
 /**
@@ -133,21 +159,75 @@ export function distanceInFifths(
 }
 
 /**
+ * Spelling-preserving neighbors for keys that aren't on the cardinal
+ * circle (theoretical or enharmonic alternates). Each entry maps a key
+ * id to the dominant and subdominant id that match the key's spelling
+ * family — e.g., the dominant of `C#-major` is `G#-major`, not `Ab-major`.
+ *
+ * Cardinal-circle keys aren't in this map; their neighbors come from the
+ * `CIRCLE_OF_FIFTHS_*` arrays directly. Keys whose spelling-preserving
+ * neighbors fall outside the catalog (e.g., the dominant of A#-major
+ * would be E#-major, which isn't catalogued) are also omitted —
+ * `adjacentKeys` falls through to the cardinal-circle path and throws
+ * `RangeError` for those, indicating the relationship escapes the
+ * library's coverage.
+ */
+const SPELLING_NEIGHBORS: ReadonlyMap<
+  string,
+  { readonly dominantId: string; readonly subdominantId: string }
+> = new Map([
+  // Sharp-side enharmonic alternates
+  ['C#-major', { dominantId: 'G#-major', subdominantId: 'F#-major' }],
+  ['G#-major', { dominantId: 'D#-major', subdominantId: 'C#-major' }],
+  ['D#-major', { dominantId: 'A#-major', subdominantId: 'G#-major' }],
+  // Flat-side enharmonic alternates
+  ['Gb-major', { dominantId: 'Db-major', subdominantId: 'Cb-major' }],
+  ['Cb-major', { dominantId: 'Gb-major', subdominantId: 'Fb-major' }],
+  // Flat-side minor enharmonic alternate
+  ['Eb-minor', { dominantId: 'Bb-minor', subdominantId: 'Ab-minor' }],
+]);
+
+/**
  * Returns the dominant (clockwise) and subdominant (counter-clockwise)
  * neighbors of the given key on the circle of fifths.
+ *
+ * For cardinal-circle keys, walks the circle directly. For enharmonic and
+ * theoretical alternates (e.g., C♯ major, G♭ major), preserves the
+ * caller's spelling family: the dominant of C♯ major is G♯ major (not
+ * A♭ major); the dominant of G♭ major is D♭ major (not C♯ major).
+ *
+ * @throws {TypeError} when an enharmonic-alternate input has no
+ *   spelling-preserving neighbor pair (e.g., a one-off theoretical key
+ *   not represented in the spelling-neighbor map).
  */
 export function adjacentKeys(signature: KeySignatureInformation): {
   readonly dominant: KeySignatureInformation;
   readonly subdominant: KeySignatureInformation;
 } {
+  const id = keyId(signature);
+  // Enharmonic-alternate path: preserve spelling family.
+  const spellingNeighbors = SPELLING_NEIGHBORS.get(id);
+  if (spellingNeighbors !== undefined) {
+    return {
+      dominant: lookupSignatureById(spellingNeighbors.dominantId),
+      subdominant: lookupSignatureById(spellingNeighbors.subdominantId),
+    };
+  }
+  // Cardinal-circle path.
   const circle = signature.mode === 'major' ? CIRCLE_OF_FIFTHS_MAJOR : CIRCLE_OF_FIFTHS_MINOR;
   const index = indexOnCircle(signature);
   const dominantIndex = (index + 1) % 12;
   const subdominantIndex = (index + 11) % 12;
-  return {
-    dominant: circle[dominantIndex]!,
-    subdominant: circle[subdominantIndex]!,
-  };
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  return { dominant: circle[dominantIndex]!, subdominant: circle[subdominantIndex]! };
+}
+
+function lookupSignatureById(id: string): KeySignatureInformation {
+  // SPELLING_NEIGHBORS only references catalog members (entries whose
+  // neighbors fall outside the catalog are deliberately omitted), so the
+  // lookup is safe by construction.
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+  return (KEY_SIGNATURES as Record<string, KeySignatureInformation | undefined>)[id]!;
 }
 
 /**
@@ -162,8 +242,7 @@ export function enharmonicEquivalent(
   if (enharmonicId === undefined) {
     return null;
   }
-  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-  return KEY_SIGNATURES[enharmonicId as keyof typeof KEY_SIGNATURES];
+  return KEY_SIGNATURES[enharmonicId];
 }
 
 /**

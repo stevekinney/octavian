@@ -3,6 +3,7 @@ import { describe, expect, it } from 'bun:test';
 import { Chord } from './chord.js';
 import { Key, isKnownKey } from './key.js';
 import { KEY_SIGNATURES } from './key-signature-catalog.js';
+import type { NoteName } from './note-spellings.js';
 import { Note } from './note.js';
 import { Scale } from './scale.js';
 
@@ -37,12 +38,30 @@ describe('Key.create', () => {
     expect(Key.create(original)).toBe(original);
   });
 
+  it('returns the same Key when given a Key and a matching mode', () => {
+    const original = Key.create('G', 'major');
+    expect(Key.create(original, 'major')).toBe(original);
+  });
+
+  it('throws TypeError when given a Key and a different mode', () => {
+    const original = Key.create('G', 'major');
+    expect(() => Key.create(original, 'minor')).toThrow(TypeError);
+  });
+
   it('throws TypeError when called without a mode and without a SerializedKey', () => {
     expect(() => Key.create('G' as never)).toThrow(TypeError);
   });
 
   it('throws TypeError for a tonic+mode combination not in the catalog', () => {
     expect(() => Key.create('E#', 'major')).toThrow(TypeError);
+  });
+
+  it('throws TypeError for theoretical keys (G# major, Fb major, etc.)', () => {
+    // Theoretical keys live in the catalog but are not constructible as
+    // `Key` instances — their relationship getters would target tonics
+    // outside the catalog. Use the enharmonic standard key instead.
+    expect(() => Key.create('G#', 'major')).toThrow(TypeError);
+    expect(() => Key.create('Fb', 'major')).toThrow(TypeError);
   });
 });
 
@@ -195,6 +214,16 @@ describe('key.contains', () => {
     expect(cMajor.contains(Note.create('Eb4'))).toBe(false);
   });
 
+  it('treats enharmonic spellings as members by pitch class', () => {
+    // Membership is by chromatic index, not spelling. Cb (pc=11) matches
+    // B (pc=11), so C major (which contains B) reports Cb as a member.
+    // E# (pc=5) matches F. Documented behavior — change `Scale.has` if the
+    // semantic ever shifts to spelling-based membership.
+    const cMajor = Key.create('C', 'major');
+    expect(cMajor.contains(Note.create('Cb4'))).toBe(true);
+    expect(cMajor.contains(Note.create('E#4'))).toBe(true);
+  });
+
   it('returns true for diatonic chords', () => {
     const cMajor = Key.create('C', 'major');
     expect(cMajor.contains(Chord.create('C4', 'major'))).toBe(true);
@@ -206,6 +235,76 @@ describe('key.contains', () => {
     const cMajor = Key.create('C', 'major');
     expect(cMajor.contains(Chord.create('D4', 'major'))).toBe(false);
     expect(cMajor.contains(Chord.create('A4', 'major'))).toBe(false);
+  });
+});
+
+describe('Key relationship invariants — exhaustive sweep', () => {
+  // Build the full set of standard, Key.create-able tonics for sweeps.
+  const STANDARD_MAJOR_TONICS: readonly NoteName[] = [
+    'C',
+    'G',
+    'D',
+    'A',
+    'E',
+    'B',
+    'F#',
+    'C#',
+    'F',
+    'Bb',
+    'Eb',
+    'Ab',
+    'Db',
+    'Gb',
+    'Cb',
+  ];
+  const STANDARD_MINOR_TONICS: readonly NoteName[] = [
+    'A',
+    'E',
+    'B',
+    'F#',
+    'C#',
+    'G#',
+    'D#',
+    'A#',
+    'D',
+    'G',
+    'C',
+    'F',
+    'Bb',
+    'Eb',
+    'Ab',
+  ];
+
+  it('relativeKey is an involution (up to enharmonic equivalence) for every standard major key', () => {
+    // Some keys (e.g., Cb-major) have a relative minor whose direct
+    // spelling isn't in the catalog (Ab-minor → resolved). Going back
+    // takes the catalog spelling, which may differ from the original.
+    // The pitch-class identity holds (`isEnharmonicTo`).
+    for (const tonic of STANDARD_MAJOR_TONICS) {
+      const key = Key.create(tonic, 'major');
+      expect(key.relativeKey.relativeKey.isEnharmonicTo(key)).toBe(true);
+    }
+  });
+
+  it('relativeKey is an involution (up to enharmonic equivalence) for every standard minor key', () => {
+    for (const tonic of STANDARD_MINOR_TONICS) {
+      const key = Key.create(tonic, 'minor');
+      expect(key.relativeKey.relativeKey.isEnharmonicTo(key)).toBe(true);
+    }
+  });
+
+  it('parallelKey is an involution (up to enharmonic equivalence) for every standard key', () => {
+    // Same caveat: Db-major.parallelKey resolves to C#-minor (Db-minor
+    // isn't catalogued); going back lands on C#-major, not Db-major.
+    // Pitch-class identity holds.
+    for (const tonic of STANDARD_MAJOR_TONICS) {
+      const key = Key.create(tonic, 'major');
+      expect(key.parallelKey.parallelKey.isEnharmonicTo(key)).toBe(true);
+    }
+    for (const tonic of STANDARD_MINOR_TONICS) {
+      const key = Key.create(tonic, 'minor');
+      expect(key.parallelKey.parallelKey.isEnharmonicTo(key)).toBe(true);
+    }
   });
 });
 
@@ -247,12 +346,22 @@ describe('key.toString', () => {
 });
 
 describe('isKnownKey', () => {
-  it('returns true for catalog members', () => {
+  it('returns true for standard catalog members', () => {
     expect(isKnownKey('C', 'major')).toBe(true);
-    expect(isKnownKey('G#', 'major')).toBe(true); // theoretical
+    expect(isKnownKey('Bb', 'major')).toBe(true);
+    expect(isKnownKey('F#', 'major')).toBe(true);
+    expect(isKnownKey('A', 'minor')).toBe(true);
   });
 
-  it('returns false for tonic+mode combinations not in the catalog', () => {
+  it('returns false for theoretical keys (catalog has them, Key.create rejects them)', () => {
+    // G#-major is in KEY_SIGNATURES with accidentalPreference 'theoretical',
+    // but isKnownKey reports the Key.create-constructible set, not the
+    // catalog set. Use keySignatureFor for catalog-only access.
+    expect(isKnownKey('G#', 'major')).toBe(false);
+    expect(isKnownKey('Fb', 'major')).toBe(false);
+  });
+
+  it('returns false for tonic+mode combinations not in the catalog at all', () => {
     expect(isKnownKey('E#', 'major')).toBe(false);
   });
 });
