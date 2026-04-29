@@ -306,6 +306,43 @@ describe('Key relationship invariants — exhaustive sweep', () => {
       expect(key.parallelKey.parallelKey.isEnharmonicTo(key)).toBe(true);
     }
   });
+
+  it('dominantKey and subdominantKey are constructible for every standard key', () => {
+    // Regression for round-2 finding: Cb-major.subdominantKey and
+    // C#-major.dominantKey previously threw TypeError because the
+    // spelling-preserving neighbor mapped to a theoretical key. With
+    // SPELLING_NEIGHBORS narrowed to standard-only targets and the
+    // cardinal-path fallback through resolveStandardKey, every standard
+    // key's adjacent-key getters now return constructible Key instances.
+    for (const tonic of STANDARD_MAJOR_TONICS) {
+      const key = Key.create(tonic, 'major');
+      expect(() => key.dominantKey).not.toThrow();
+      expect(() => key.subdominantKey).not.toThrow();
+    }
+    for (const tonic of STANDARD_MINOR_TONICS) {
+      const key = Key.create(tonic, 'minor');
+      expect(() => key.dominantKey).not.toThrow();
+      expect(() => key.subdominantKey).not.toThrow();
+    }
+  });
+
+  it('dominantKey.subdominantKey is enharmonically identity for every standard key', () => {
+    // Going one step clockwise then one step counter-clockwise lands on
+    // the original key (modulo enharmonic spelling at the seam).
+    for (const tonic of STANDARD_MAJOR_TONICS) {
+      const key = Key.create(tonic, 'major');
+      expect(key.dominantKey.subdominantKey.isEnharmonicTo(key)).toBe(true);
+    }
+    for (const tonic of STANDARD_MINOR_TONICS) {
+      const key = Key.create(tonic, 'minor');
+      expect(key.dominantKey.subdominantKey.isEnharmonicTo(key)).toBe(true);
+    }
+  });
+
+  it('Db major has spelling-preserving subdominant Gb major (not F# major)', () => {
+    expect(Key.create('Db', 'major').subdominantKey.tonic.note).toBe('Gb');
+    expect(Key.create('Db', 'major').dominantKey.tonic.note).toBe('Ab');
+  });
 });
 
 describe('key.transpose / transposeBy', () => {

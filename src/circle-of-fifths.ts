@@ -159,31 +159,33 @@ export function distanceInFifths(
 }
 
 /**
- * Spelling-preserving neighbors for keys that aren't on the cardinal
- * circle (theoretical or enharmonic alternates). Each entry maps a key
- * id to the dominant and subdominant id that match the key's spelling
- * family — e.g., the dominant of `C#-major` is `G#-major`, not `Ab-major`.
+ * Spelling-preserving neighbors for keys whose cardinal-circle neighbors
+ * have the wrong spelling family. For example, `Db-major`'s subdominant
+ * on the cardinal circle is at index 6 (`F#-major`), but musically it
+ * should be spelled `Gb-major`. Each entry overrides the cardinal lookup
+ * with spelling-correct ids.
  *
- * Cardinal-circle keys aren't in this map; their neighbors come from the
- * `CIRCLE_OF_FIFTHS_*` arrays directly. Keys whose spelling-preserving
- * neighbors fall outside the catalog (e.g., the dominant of A#-major
- * would be E#-major, which isn't catalogued) are also omitted —
- * `adjacentKeys` falls through to the cardinal-circle path and throws
- * `RangeError` for those, indicating the relationship escapes the
- * library's coverage.
+ * Both ids in each entry are guaranteed to be standard (non-theoretical)
+ * catalog members. Keys whose spelling-preserving neighbors would land
+ * on a theoretical key (e.g., the dominant of `C#-major` would be the
+ * theoretical `G#-major`) are NOT in this map — they fall through to
+ * the cardinal-circle path, which gives the standard enharmonic
+ * (e.g., `Ab-major`). This trade-off keeps `Key.adjacentKeys` total
+ * across all standard inputs without crossing into theoretical keys.
+ *
+ * Cardinal-circle keys whose neighbors are already correctly-spelled
+ * aren't in this map.
  */
 const SPELLING_NEIGHBORS: ReadonlyMap<
   string,
-  { readonly dominantId: string; readonly subdominantId: string }
-> = new Map([
-  // Sharp-side enharmonic alternates
-  ['C#-major', { dominantId: 'G#-major', subdominantId: 'F#-major' }],
-  ['G#-major', { dominantId: 'D#-major', subdominantId: 'C#-major' }],
-  ['D#-major', { dominantId: 'A#-major', subdominantId: 'G#-major' }],
-  // Flat-side enharmonic alternates
+  { readonly dominantId: KeySignatureKey; readonly subdominantId: KeySignatureKey }
+> = new Map<
+  string,
+  { readonly dominantId: KeySignatureKey; readonly subdominantId: KeySignatureKey }
+>([
+  // Flat-side seam keys: spelling-preserving neighbors are all standard.
+  ['Db-major', { dominantId: 'Ab-major', subdominantId: 'Gb-major' }],
   ['Gb-major', { dominantId: 'Db-major', subdominantId: 'Cb-major' }],
-  ['Cb-major', { dominantId: 'Gb-major', subdominantId: 'Fb-major' }],
-  // Flat-side minor enharmonic alternate
   ['Eb-minor', { dominantId: 'Bb-minor', subdominantId: 'Ab-minor' }],
 ]);
 

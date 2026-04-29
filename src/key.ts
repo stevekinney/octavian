@@ -135,12 +135,28 @@ export class Key {
   /**
    * Returns the dominant (clockwise) and subdominant (counter-clockwise)
    * neighbors of `key` on the circle of fifths.
+   *
+   * If a spelling-preserving neighbor is theoretical (e.g., the
+   * subdominant of `Cb major` is spelled `Fb major`, which is in the
+   * catalog as theoretical), the result resolves through the tonic's
+   * enharmonics to the standard catalog spelling — the same
+   * `resolveStandardKey` policy used by `relativeKey` and `parallelKey`.
    */
   public static adjacentKeys(key: Key): { readonly dominant: Key; readonly subdominant: Key } {
     const adjacent = adjacentKeys(key.signature);
+    const dominantTonic = Note.create(adjacent.dominant.tonic);
+    const subdominantTonic = Note.create(adjacent.subdominant.tonic);
     return {
-      dominant: Key.create(adjacent.dominant.tonic, adjacent.dominant.mode),
-      subdominant: Key.create(adjacent.subdominant.tonic, adjacent.subdominant.mode),
+      dominant: resolveStandardKey(
+        dominantTonic,
+        adjacent.dominant.mode,
+        `${key.toString()}.dominantKey`,
+      ),
+      subdominant: resolveStandardKey(
+        subdominantTonic,
+        adjacent.subdominant.mode,
+        `${key.toString()}.subdominantKey`,
+      ),
     };
   }
 
