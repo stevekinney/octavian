@@ -1,19 +1,21 @@
 // Validates the package through exports-map resolution: packs a tarball, installs
-// it in a temp consumer project, and imports through the package name.
-// Assertions are inlined (not imported from smoke-checks.mjs) so the consumer
-// process resolves only through its own node_modules, not the repo's module graph.
-// Keep assertions in sync with scripts/smoke-checks.mjs.
+// it in a temp consumer project, and runs scripts/smoke-consumer-check.mjs via bun.
+// The consumer check is a separate file (not an inline string) so it can be linted
+// and formatted like any other source file.
+// Consumer-side bun resolves imports through the consumer's node_modules, not the
+// repo's module graph — the key invariant that makes this test meaningful.
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import {
+  copyFileSync,
+  mkdtempSync,
+  writeFileSync,
+  readFileSync,
+  rmSync,
+  existsSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-// The consumer-side smoke check runs via Bun (not Node) because when this script
-// runs inside `bun run`, Bun intercepts any execution of the 'node' binary —
-// even at absolute paths — via its Node compatibility shim. Using Bun directly
-// for the consumer check is valid: Bun resolves the installed package through
-// the consumer's node_modules just as Node would.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..');
@@ -77,32 +79,10 @@ try {
           process.stderr.write(`bun install failed:\n${install.stderr}\n`);
           exitCode = 1;
         } else {
-          const checkScript = `
-            import('${pkg.name}').then((octavian) => {
-              const expected = ['Note', 'Chord', 'Scale', 'Key', 'INTERVALS', 'CHORDS', 'SCALES'];
-              for (const name of expected) {
-                if (!(name in octavian)) throw new Error('missing export: ' + name);
-              }
-              const c4 = octavian.Note.create('C4');
-              if (c4.toString() !== 'C4') throw new Error('Note.create broken');
-              if (c4.midi !== 60) throw new Error('Note.midi broken');
-              const cMaj7 = octavian.Chord.create('C4', 'maj7');
-              if (cMaj7.notes.length !== 4) throw new Error('Chord.create broken');
-              const cMajor = octavian.Scale.create('C4', 'major');
-              if (cMajor.notes.length !== 7) throw new Error('Scale.create broken');
-              const key = octavian.Key.create('C', 'major');
-              if (key.toString() !== 'C major') throw new Error('Key.create broken');
-              if (typeof octavian.INTERVALS.majorThird?.semitones !== 'number')
-                throw new Error('INTERVALS catalog broken');
-              process.stdout.write('tarball smoke test passed\\n');
-            }).catch((err) => {
-              process.stderr.write('tarball smoke test failed: ' + (err.stack ?? err.message) + '\\n');
-              process.exit(1);
-            });
-          `;
-          // Write the check script to a temp file so bun can execute it directly.
-          const checkFile = join(installDir, '_smoke-check.mjs');
-          writeFileSync(checkFile, checkScript);
+          // Copy the consumer check script into the install dir so bun resolves
+          // 'octavian' through the consumer's node_modules, not the repo's.
+          const checkFile = join(installDir, '_smoke-consumer-check.mjs');
+          copyFileSync(join(here, 'smoke-consumer-check.mjs'), checkFile);
           const run = spawnSync('bun', [checkFile], {
             cwd: installDir,
             stdio: 'inherit',
