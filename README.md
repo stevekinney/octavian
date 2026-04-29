@@ -54,6 +54,7 @@ import type {
   Semitones,
   Octave,
   Tuning,
+  CadenceType,
 } from 'octavian';
 ```
 
@@ -68,6 +69,7 @@ Key exported type names:
 - **`Semitones`**: A branded integer semitone distance.
 - **`Octave`**: A branded octave value in the range `-1..9`. Use `createOctave(n)` to produce one.
 - **`Tuning`**: A tuning reference, e.g. `{ reference: 'A4', frequency: createFrequency(440) }`.
+- **`CadenceType`**: A cadence label such as `'authentic-perfect'`, `'half'`, or `'phrygian'`.
 
 ## Core Types
 
@@ -447,6 +449,36 @@ import { CHORD_SYMBOLS, resolveChordSuffix } from 'octavian';
 CHORD_SYMBOLS; // ["m", "m7", "maj7", "dim", ...] — short display symbols
 resolveChordSuffix('m7'); // "minorSeventh"
 resolveChordSuffix('Δ7'); // "majorSeventh"
+```
+
+## Cadences
+
+Use a `Key` to identify two-chord cadences from either Roman numerals or concrete chords. Roman
+numerals are convenient for analysis; chords are useful when you already have parsed harmonic
+objects. If you provide an explicit final voicing, authentic cadences use the soprano note to
+distinguish perfect from imperfect.
+
+```ts
+import { Chord, Key, identifyCadence } from 'octavian';
+
+const cMajor = Key.create('C', 'major');
+
+cMajor.identifyCadence('V', 'I'); // "authentic-perfect"
+cMajor.identifyCadence('V', 'I6'); // "authentic-imperfect"
+cMajor.identifyCadence('ii', 'V'); // "half"
+cMajor.identifyCadence('IV', 'I'); // "plagal"
+cMajor.identifyCadence('V', 'vi'); // "deceptive"
+
+const aMinor = Key.create('A', 'minor');
+aMinor.identifyCadence('iv6', 'V'); // "phrygian"
+
+identifyCadence(cMajor, Chord.create('G4', 'dominantSeventh'), {
+  chord: Chord.create('C4', 'major'),
+  voicing: ['E4', 'G4', 'C5'],
+}); // "authentic-perfect"
+
+cMajor.identifyCadenceSequence(['I', 'IV', 'I', 'ii', 'V']).map((cadence) => cadence.type);
+// ["plagal", "half"]
 ```
 
 ## Development

@@ -1,4 +1,11 @@
 import {
+  identifyCadence as identifyCadenceForKey,
+  identifyCadenceSequence as identifyCadenceSequenceForKey,
+  type CadenceInput,
+  type CadenceOccurrence,
+  type CadenceType,
+} from './cadence.js';
+import {
   adjacentKeys,
   distanceInFifths as distanceInFifthsForSignatures,
   enharmonicEquivalent as enharmonicEquivalentSignature,
@@ -271,6 +278,21 @@ export class Key {
       }
     }
     return true;
+  }
+
+  /**
+   * Identifies the cadence formed by two adjacent chords or Roman
+   * numerals in this key.
+   */
+  public identifyCadence(first: CadenceInput, second: CadenceInput): CadenceType | null {
+    return identifyCadenceForKey(this, first, second);
+  }
+
+  /**
+   * Scans a progression for cadences between adjacent entries.
+   */
+  public identifyCadenceSequence(inputs: readonly CadenceInput[]): readonly CadenceOccurrence[] {
+    return identifyCadenceSequenceForKey(this, inputs);
   }
 
   /**

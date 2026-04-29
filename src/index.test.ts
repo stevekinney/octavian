@@ -63,6 +63,8 @@ const EXPECTED_EXPORTS = [
   'harmonicFunctionFor',
   'harmonicFunctionForAsAlias',
   'harmonicFunctionForNumeral',
+  'identifyCadence',
+  'identifyCadenceSequence',
   'compoundInterval',
   'consonanceOf',
   'createChordName',
