@@ -104,14 +104,16 @@ Wave 1.B.
 
 **Depends on:** 1.1 (Key signature catalog)
 
-- [ ] `CIRCLE_OF_FIFTHS` array in canonical clockwise order starting from C major
-- [ ] `circleOfFifths()` accessor returning the full ordering
-- [ ] `Key.distanceInFifths(from, to)` returns signed integer (positive clockwise)
-- [ ] `Key.adjacentKeys(key)` returns dominant and subdominant neighbors
-- [ ] `Key.enharmonicEquivalent(key)` returns the other spelling at the bottom of the circle (F♯ ↔
+- [x] `CIRCLE_OF_FIFTHS_MAJOR` and `CIRCLE_OF_FIFTHS_MINOR` arrays in canonical clockwise order
+      starting from C major / A minor
+- [x] `circleOfFifths(mode?)` accessor returning the full ordering
+- [x] `Key.distanceInFifths(from, to)` returns signed integer (positive clockwise)
+- [x] `Key.adjacentKeys(key)` returns dominant and subdominant neighbors (with per-direction
+      spelling overrides at the F♯/G♭ seam)
+- [x] `Key.enharmonicEquivalent(key)` returns the other spelling at the bottom of the circle (F♯ ↔
       G♭, etc.)
-- [ ] Renders correctly for both major and minor positions on the circle
-- [ ] Tests cover wrap-around behavior and enharmonic equivalence
+- [x] Renders correctly for both major and minor positions on the circle
+- [x] Tests cover wrap-around behavior and enharmonic equivalence
 
 ### 1.6 The `Key` class — central abstraction
 
@@ -119,18 +121,20 @@ Wave 1.B.
 
 This is the keystone abstraction. Once this lands, much of Phase 1 and Phase 2 builds on it.
 
-- [ ] `Key.create(tonic, mode)` static factory
-- [ ] `Key.fromJSON()` round-trip
-- [ ] Properties: `tonic`, `mode`, `signature` (KeySignature), `scale` (Scale), `relativeKey`,
-      `parallelKey`, `dominantKey`, `subdominantKey`
-- [ ] `key.diatonicChords()` returns all seven diatonic triads with Roman numerals
-- [ ] `key.diatonicSeventhChords()` likewise for sevenths
-- [ ] `key.contains(chord)` membership test
-- [ ] `key.contains(note)` membership test (pitch class)
-- [ ] `key.transpose(interval)` and `key.transposeBy(semitones)` return a new `Key`
-- [ ] `key.equals(other)`, `key.isEnharmonicTo(other)`
-- [ ] Immutable with private `#fields`, matches existing `Note`/`Chord`/`Scale` conventions
-- [ ] Exported from `src/index.ts`
+- [x] `Key.create(tonic, mode)` static factory (rejects theoretical keys; use `keySignatureFor` for
+      catalog-only access)
+- [x] `Key.fromJSON()` round-trip
+- [x] Properties: `tonic`, `mode`, `signature` (KeySignatureInformation), `scale` (Scale),
+      `relativeKey`, `parallelKey`, `dominantKey`, `subdominantKey`
+- [x] `key.diatonicChords()` returns all seven diatonic triads (Roman-numeral integration in 1.7)
+- [x] `key.diatonicSeventhChords()` likewise for sevenths
+- [x] `key.contains(chord)` membership test
+- [x] `key.contains(note)` membership test (pitch class)
+- [x] `key.transpose(interval)` and `key.transposeBy(semitones)` return a new `Key` (with
+      enharmonic-fallback through `resolveStandardKey`)
+- [x] `key.equals(other)`, `key.isEnharmonicTo(other)`
+- [x] Immutable with private `#fields`, matches existing `Note`/`Chord`/`Scale` conventions
+- [x] Exported from `src/index.ts`
 
 ## Wave 1.C — Depends on `Key`
 
@@ -138,16 +142,19 @@ This is the keystone abstraction. Once this lands, much of Phase 1 and Phase 2 b
 
 **Depends on:** 1.6 (Key)
 
-- [ ] `RomanNumeral` value type with `{ degree, quality, inversion, applied?, alterations? }`
-- [ ] `key.romanNumeralFor(chord)` → `'V7'`, `'ii°'`, `'bVII'`, etc.
-- [ ] `key.chordFromRomanNumeral('V7')` → `Chord`
-- [ ] Quality follows scale-degree convention (uppercase = major/augmented, lowercase =
+- [x] `RomanNumeral` value type with `{ degree, quality, inversion, applied?, alteration? }`
+- [x] `romanNumeralFor(key, chord)` → `'V7'`, `'ii°'`, etc. (returns `null` for non-diatonic chords;
+      v1 doesn't yet recognize chromatic mediants — extended in 2.11/2.12). Free function rather
+      than `key.romanNumeralFor` to avoid a static circular import between `key.ts` and the
+      Roman-numeral module.
+- [x] `chordFromRomanNumeral(key, 'V7')` → `Chord` (free function for the same reason)
+- [x] Quality follows scale-degree convention (uppercase = major/augmented, lowercase =
       minor/diminished, ° = diminished, ⁺ = augmented)
-- [ ] Supports flat/sharp prefixes for chromatic degrees (♭III, ♯iv°)
-- [ ] Supports inversion figures (V⁶, V⁶₅, V⁴₃, V⁴₂) — coordinate with item 1.9
-- [ ] Parser tolerates Unicode and ASCII forms (`bVII`, `♭VII`, `b7`)
-- [ ] Round-trip test: parse → render → parse yields the same value
-- [ ] Handles all major-key and minor-key conventions (i, ii°, III, iv, v/V, VI, VII/vii°)
+- [x] Supports flat/sharp prefixes for chromatic degrees (♭III, ♯iv°) on chord construction
+- [x] Supports inversion figures (V⁶, V⁶₅, V⁴₃, V⁴₂) — coordinate with item 1.9
+- [x] Parser tolerates Unicode and ASCII forms (`bVII`, `♭VII`, `V7`, `V⁷`)
+- [x] Round-trip test: parse → render → parse yields the same value
+- [x] Handles all major-key and minor-key conventions (i, ii°, III, iv, v/V, VI, VII/vii°)
 
 ### 1.8 Harmonic function classification
 
