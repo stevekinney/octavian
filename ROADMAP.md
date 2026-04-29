@@ -196,17 +196,17 @@ This is the keystone abstraction. Once this lands, much of Phase 1 and Phase 2 b
 
 **Depends on:** 1.6, 1.7, 1.8
 
-- [ ] `CadenceType`:
+- [x] `CadenceType`:
       `'authentic-perfect' | 'authentic-imperfect' | 'half' | 'plagal' | 'deceptive' | 'phrygian'`
-- [ ] `key.identifyCadence(chordA, chordB)` returns `CadenceType | null`
-- [ ] PAC vs IAC distinguished by soprano position (requires voicing context — accept either
+- [x] `key.identifyCadence(chordA, chordB)` returns `CadenceType | null`
+- [x] PAC vs IAC distinguished by soprano position (requires voicing context — accept either
       explicit voicing or chord-symbol-only "best effort" mode)
-- [ ] Half cadence: anything → V
-- [ ] Plagal: IV → I
-- [ ] Deceptive: V → vi (major) or V → VI (minor)
-- [ ] Phrygian: iv⁶ → V in minor
-- [ ] `key.identifyCadenceSequence(chords)` finds cadences in a longer progression
-- [ ] Tests cover all cadence types with both Roman-numeral input and `Chord` input
+- [x] Half cadence: anything → V
+- [x] Plagal: IV → I
+- [x] Deceptive: V → vi (major) or V → VI (minor)
+- [x] Phrygian: iv⁶ → V in minor
+- [x] `key.identifyCadenceSequence(chords)` finds cadences in a longer progression
+- [x] Tests cover all cadence types with both Roman-numeral input and `Chord` input
 
 ---
 
