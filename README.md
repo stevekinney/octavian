@@ -12,9 +12,8 @@ yarn add octavian
 bun add octavian
 ```
 
-> [!NOTE]
-> Works in Node 22+ (ESM), Bun 1.3+, and any browser bundler (Vite, webpack, Rollup). A single
-> browser-safe ESM bundle is published — resolution is automatic via the `exports` map.
+> [!NOTE] Works in Node 22+ (ESM), Bun 1.3+, and any browser bundler (Vite, webpack, Rollup). A
+> single browser-safe ESM bundle is published — resolution is automatic via the `exports` map.
 
 ## Design Goals
 
@@ -78,7 +77,8 @@ Key exported type names:
 - **`CadenceType`**: A cadence label such as `'authentic-perfect'`, `'half'`, or `'phrygian'`.
 - **`HarmonicFunction`**: `'tonic' | 'predominant' | 'dominant'`.
 - **`KeySignatureMode`**: `'major' | 'minor'`.
-- **`IntervalConsonance`**: `'perfect-consonance' | 'imperfect-consonance' | 'mild-dissonance' | 'sharp-dissonance'`.
+- **`IntervalConsonance`**:
+  `'perfect-consonance' | 'imperfect-consonance' | 'mild-dissonance' | 'sharp-dissonance'`.
 - **`FiguredBass`**: An array of `FiguredBassFigure` objects representing a figured-bass stack.
 
 ## Core Types
@@ -464,11 +464,7 @@ resolveChordSuffix('Δ7'); // "majorSeventh"
 ## Key Signatures
 
 ```ts
-import {
-  KEY_SIGNATURES,
-  keySignatureFor,
-  keySignatureFromAccidentals,
-} from 'octavian';
+import { KEY_SIGNATURES, keySignatureFor, keySignatureFromAccidentals } from 'octavian';
 
 keySignatureFor('C', 'major');
 // { tonic: 'C', mode: 'major', accidentalCount: 0, accidentals: [], order: 'none', ... }
@@ -480,14 +476,17 @@ keySignatureFromAccidentals(3, 'flats');
 // { tonic: 'Eb', mode: 'major', ... }
 
 KEY_SIGNATURES['C major'].accidentalCount; // 0
-KEY_SIGNATURES['G major'].accidentals;     // ['F#']
+KEY_SIGNATURES['G major'].accidentals; // ['F#']
 ```
 
-The catalog covers all 30 standard keys (15 major + 15 minor), including enharmonic pairs like C♯/D♭ major and A♯/B♭ minor. Theoretical keys (G♯ major, F♭ major, etc.) are present in `KEY_SIGNATURES` for reference but are not constructible as `Key` instances.
+The catalog covers all 30 standard keys (15 major + 15 minor), including enharmonic pairs like C♯/D♭
+major and A♯/B♭ minor. Theoretical keys (G♯ major, F♭ major, etc.) are present in `KEY_SIGNATURES`
+for reference but are not constructible as `Key` instances.
 
 ## Key
 
-`Key` models a tonal center with its diatonic scale, key signature, and relationships to neighboring keys.
+`Key` models a tonal center with its diatonic scale, key signature, and relationships to neighboring
+keys.
 
 ```ts
 import { Key } from 'octavian';
@@ -495,17 +494,17 @@ import { Key } from 'octavian';
 const cMajor = Key.create('C', 'major');
 
 cMajor.tonic.toString(); // "C4"
-cMajor.mode;             // "major"
-cMajor.toString();       // "C major"
-cMajor.toJSON();         // { tonic: 'C', mode: 'major' }
+cMajor.mode; // "major"
+cMajor.toString(); // "C major"
+cMajor.toJSON(); // { tonic: 'C', mode: 'major' }
 ```
 
 #### Relationships
 
 ```ts
-cMajor.relativeKey.toString();    // "A minor"
-cMajor.parallelKey.toString();    // "C minor"
-cMajor.dominantKey.toString();    // "G major"
+cMajor.relativeKey.toString(); // "A minor"
+cMajor.parallelKey.toString(); // "C minor"
+cMajor.dominantKey.toString(); // "G major"
 cMajor.subdominantKey.toString(); // "F major"
 
 Key.adjacentKeys(cMajor);
@@ -531,8 +530,8 @@ cMajor.contains(Chord.create('G4', 'dominant7')); // true
 #### Transposition
 
 ```ts
-cMajor.transpose('majorSecond').toString();  // "D major"
-cMajor.transposeBy(7).toString();            // "G major"
+cMajor.transpose('majorSecond').toString(); // "D major"
+cMajor.transposeBy(7).toString(); // "G major"
 ```
 
 ## Circle of Fifths
@@ -558,7 +557,8 @@ isOnCircleOfFifths('F#', 'major'); // true
 isOnCircleOfFifths('G#', 'major'); // false (theoretical key)
 ```
 
-`Key.adjacentKeys` and `Key.enharmonicEquivalent` are the ergonomic wrappers for most use cases; the free functions above operate on raw `KeySignatureInformation` objects for catalog-level work.
+`Key.adjacentKeys` and `Key.enharmonicEquivalent` are the ergonomic wrappers for most use cases; the
+free functions above operate on raw `KeySignatureInformation` objects for catalog-level work.
 
 ## Roman Numerals
 
@@ -566,8 +566,8 @@ isOnCircleOfFifths('G#', 'major'); // false (theoretical key)
 import { RomanNumeral, romanNumeralFor, chordFromRomanNumeral } from 'octavian';
 
 const rn = RomanNumeral.create('V7');
-rn.degree;    // 5
-rn.quality;   // "major"
+rn.degree; // 5
+rn.quality; // "major"
 rn.inversion; // "7"
 rn.toString(); // "V7"
 
@@ -576,11 +576,11 @@ RomanNumeral.create('bVII').alteration; // "flat"
 // Analysis: chord → Roman numeral
 const cMajor = Key.create('C', 'major');
 romanNumeralFor(cMajor, Chord.create('G4', 'dominant7')).toString(); // "V7"
-romanNumeralFor(cMajor, Chord.create('E4', 'minor')).toString();     // "iii"
+romanNumeralFor(cMajor, Chord.create('E4', 'minor')).toString(); // "iii"
 
 // Synthesis: Roman numeral → chord
-chordFromRomanNumeral(cMajor, 'IV').name;  // "F"
-chordFromRomanNumeral(cMajor, 'V7').name;  // "G7"
+chordFromRomanNumeral(cMajor, 'IV').name; // "F"
+chordFromRomanNumeral(cMajor, 'V7').name; // "G7"
 ```
 
 ## Harmonic Function
@@ -588,14 +588,18 @@ chordFromRomanNumeral(cMajor, 'V7').name;  // "G7"
 Classifies a chord's role within a key as tonic, predominant, or dominant.
 
 ```ts
-import { harmonicFunctionFor, harmonicFunctionForNumeral, harmonicFunctionForAsAlias } from 'octavian';
+import {
+  harmonicFunctionFor,
+  harmonicFunctionForNumeral,
+  harmonicFunctionForAsAlias,
+} from 'octavian';
 
 const cMajor = Key.create('C', 'major');
 
-harmonicFunctionFor(cMajor, Chord.create('C4', 'major'));       // "tonic"
-harmonicFunctionFor(cMajor, Chord.create('F4', 'major'));       // "predominant"
-harmonicFunctionFor(cMajor, Chord.create('G4', 'dominant7'));   // "dominant"
-harmonicFunctionFor(cMajor, Chord.create('D4', 'minor'));       // "predominant"
+harmonicFunctionFor(cMajor, Chord.create('C4', 'major')); // "tonic"
+harmonicFunctionFor(cMajor, Chord.create('F4', 'major')); // "predominant"
+harmonicFunctionFor(cMajor, Chord.create('G4', 'dominant7')); // "dominant"
+harmonicFunctionFor(cMajor, Chord.create('D4', 'minor')); // "predominant"
 
 // From a RomanNumeral directly (avoids re-parsing the chord)
 harmonicFunctionForNumeral(RomanNumeral.create('ii'), 'major'); // "predominant"
@@ -620,19 +624,19 @@ import {
 const cMaj = Chord.create('C4', 'major');
 const cMajFirstInv = cMaj.invert();
 
-figuredBassForChord(cMaj).length;           // 0 (root position — empty stack)
-figuredBassInversionFor(cMaj);              // "5/3"
-figuredBassInversionFor(cMajFirstInv);      // "6"
+figuredBassForChord(cMaj).length; // 0 (root position — empty stack)
+figuredBassInversionFor(cMaj); // "5/3"
+figuredBassInversionFor(cMajFirstInv); // "6"
 
 const g7 = Chord.create('G4', 'dominant7');
-figuredBassInversionFor(g7.invert());       // "6/5"
-figuredBassInversionFor(g7.invert(2));      // "4/3"
-figuredBassInversionFor(g7.invert(3));      // "4/2"
+figuredBassInversionFor(g7.invert()); // "6/5"
+figuredBassInversionFor(g7.invert(2)); // "4/3"
+figuredBassInversionFor(g7.invert(3)); // "4/2"
 
 // Parse a figured-bass string into a figure stack
 parseFiguredBass('6/4'); // [{ digit: 6 }, { digit: 4 }]
-parseFiguredBass('♭7');  // [{ digit: 7, accidental: 'flat' }]
-parseFiguredBass('6#');  // [{ digit: 6, accidental: 'sharp' }]
+parseFiguredBass('♭7'); // [{ digit: 7, accidental: 'flat' }]
+parseFiguredBass('6#'); // [{ digit: 6, accidental: 'sharp' }]
 
 // Format a figure stack back to strings
 formatFiguredBass([{ digit: 6 }, { digit: 4 }]);
@@ -640,7 +644,7 @@ formatFiguredBass([{ digit: 6 }, { digit: 4 }]);
 
 // Reconstruct a chord from a bass note, figures, and key context
 const cMajor = Key.create('C', 'major');
-figuredBassToChord('E4', '6', cMajor).name;   // "C/E" (C major, first inversion)
+figuredBassToChord('E4', '6', cMajor).name; // "C/E" (C major, first inversion)
 figuredBassToChord('G4', '6/4', cMajor).name; // "C/G" (C major, second inversion)
 ```
 
@@ -656,28 +660,29 @@ import {
   isDissonant,
 } from 'octavian';
 
-invertInterval('perfectFifth');   // "perfectFourth"
-invertInterval('majorThird');     // "minorSixth"
+invertInterval('perfectFifth'); // "perfectFourth"
+invertInterval('majorThird'); // "minorSixth"
 invertInterval('augmentedFourth'); // "diminishedFifth"
 
 simplifyInterval('perfectEleventh'); // "perfectFourth"  (P11 → P4)
-simplifyInterval('majorNinth');      // "majorSecond"    (M9 → M2)
+simplifyInterval('majorNinth'); // "majorSecond"    (M9 → M2)
 
 compoundInterval('perfectFourth', 1); // "perfectEleventh"
-compoundInterval('majorSecond', 1);   // "majorNinth"
+compoundInterval('majorSecond', 1); // "majorNinth"
 
-consonanceOf('perfectFifth');   // "perfect-consonance"
-consonanceOf('majorThird');     // "imperfect-consonance"
-consonanceOf('majorSecond');    // "mild-dissonance"
-consonanceOf('minorSecond');    // "sharp-dissonance"
+consonanceOf('perfectFifth'); // "perfect-consonance"
+consonanceOf('majorThird'); // "imperfect-consonance"
+consonanceOf('majorSecond'); // "mild-dissonance"
+consonanceOf('minorSecond'); // "sharp-dissonance"
 
-isConsonant('perfectFifth');    // true
+isConsonant('perfectFifth'); // true
 isDissonant('augmentedFourth'); // true
 ```
 
 ## Cadences
 
-`CadenceInput` accepts a Roman numeral string (`'V'`, `'iv6'`), a `RomanNumeral` object, or a `Chord`.
+`CadenceInput` accepts a Roman numeral string (`'V'`, `'iv6'`), a `RomanNumeral` object, or a
+`Chord`.
 
 ```ts
 import { Key, identifyCadence, identifyCadenceSequence } from 'octavian';
@@ -685,25 +690,26 @@ import { Key, identifyCadence, identifyCadenceSequence } from 'octavian';
 const cMajor = Key.create('C', 'major');
 
 // Via Key methods
-cMajor.identifyCadence('V', 'I');   // "authentic-perfect"
-cMajor.identifyCadence('V', 'I6');  // "authentic-imperfect"
-cMajor.identifyCadence('ii', 'V');  // "half"
-cMajor.identifyCadence('IV', 'I');  // "plagal"
-cMajor.identifyCadence('V', 'vi');  // "deceptive"
+cMajor.identifyCadence('V', 'I'); // "authentic-perfect"
+cMajor.identifyCadence('V', 'I6'); // "authentic-imperfect"
+cMajor.identifyCadence('ii', 'V'); // "half"
+cMajor.identifyCadence('IV', 'I'); // "plagal"
+cMajor.identifyCadence('V', 'vi'); // "deceptive"
 
 const aMinor = Key.create('A', 'minor');
 aMinor.identifyCadence('iv6', 'V'); // "phrygian"
 
 // Non-cadential pair
-cMajor.identifyCadence('I', 'IV');  // null
+cMajor.identifyCadence('I', 'IV'); // null
 
 // Via free functions (same Key as first argument)
-identifyCadence(cMajor, 'V', 'I');  // "authentic-perfect"
+identifyCadence(cMajor, 'V', 'I'); // "authentic-perfect"
 identifyCadence(cMajor, Chord.create('G4', 'dominant7'), Chord.create('C4', 'major'));
 // "authentic-perfect"
 
 // Scan a full progression for cadences
-cMajor.identifyCadenceSequence(['I', 'IV', 'I', 'ii', 'V'])
+cMajor
+  .identifyCadenceSequence(['I', 'IV', 'I', 'ii', 'V'])
   .map((c) => `index ${c.index}: ${c.type}`);
 // ["index 0: plagal", "index 3: half"]
 
