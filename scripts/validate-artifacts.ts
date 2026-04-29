@@ -31,7 +31,8 @@ const packageJson: PackageJson = rawPackageJson;
 const failures: string[] = [];
 
 const browserGlobalPatterns: PatternCheck[] = [
-  { description: 'process global', expression: /\bprocess\b/g },
+  // Match process.x and process[x] but not words like "post-process" in comments.
+  { description: 'process global', expression: /\bprocess[.[]/g },
   { description: 'Buffer global', expression: /\bBuffer\b/g },
   { description: '__dirname', expression: /__dirname/g },
   { description: '__filename', expression: /__filename/g },

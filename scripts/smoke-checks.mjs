@@ -1,7 +1,8 @@
 // Single source of truth for "does this build of octavian work?"
 // Accepts an already-imported module object — callers do the import(),
 // so this file never resolves module specifiers itself.
-// Keep in sync with the inlined assertions in smoke-tarball.mjs.
+// Used by smoke-artifact.mjs (direct import) and smoke-tarball.mjs
+// (copied into consumer dir as _smoke-checks.mjs alongside smoke-consumer-check.mjs).
 
 export function assertSmokeChecks(octavian) {
   const expected = ['Note', 'Chord', 'Scale', 'Key', 'INTERVALS', 'CHORDS', 'SCALES'];
