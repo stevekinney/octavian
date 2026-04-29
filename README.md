@@ -204,7 +204,7 @@ Use `Chord.create(root, suffix)` to construct a chord. To recreate a chord from 
 ```ts
 import { Chord, Note } from 'octavian';
 
-const chord = Chord.create(Note.create('C4'), 'maj7');
+const chord = Chord.create('C4', 'maj7');
 
 chord.name; // "Cmaj7"
 chord.symbol; // "maj7"
@@ -230,10 +230,10 @@ chord.closeVoicing().notes.map(String); // close-position voicing
 Chord editing stays catalog-backed:
 
 ```ts
-Chord.create(Note.create('C4'), 'maj7').omit('majorSeventh').name; // "C"
-Chord.create(Note.create('C4'), 'major').add('majorSeventh').name; // "Cmaj7"
-Chord.create(Note.create('C4'), 'major').alter('perfectFifth', 'augmentedFifth').name; // "Caug"
-Chord.create(Note.create('C4'), 'major').slash(Note.create('G3')).name; // "C/G"
+Chord.create('C4', 'maj7').omit('majorSeventh').name; // "C"
+Chord.create('C4', 'major').add('majorSeventh').name; // "Cmaj7"
+Chord.create('C4', 'major').alter('perfectFifth', 'augmentedFifth').name; // "Caug"
+Chord.create('C4', 'major').slash(Note.create('G3')).name; // "C/G"
 ```
 
 Chord catalog helpers:
