@@ -4,15 +4,13 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const expectedExports = JSON.parse(
-  readFileSync(join(__dirname, 'expected-exports.json'), 'utf8')
-);
+const expectedExports = JSON.parse(readFileSync(join(__dirname, 'expected-exports.json'), 'utf8'));
 
 const compare = (a, b) => a.localeCompare(b);
 
 // Verify export surface
 const actualExports = Object.keys(
-  await import('octavian').then(m => Object.fromEntries(Object.entries(m)))
+  await import('octavian').then((m) => Object.fromEntries(Object.entries(m))),
 ).toSorted(compare);
 
 const expectedSorted = [...expectedExports].toSorted(compare);
@@ -32,7 +30,7 @@ const cMajorSeven = Chord.create('C4', 'maj7');
 const noteStrings = cMajorSeven.notes.map(String);
 console.assert(
   JSON.stringify(noteStrings) === JSON.stringify(['C4', 'E4', 'G4', 'B4']),
-  `Chord notes mismatch: ${JSON.stringify(noteStrings)}`
+  `Chord notes mismatch: ${JSON.stringify(noteStrings)}`,
 );
 
 const cMajor = Scale.create('C4', 'major');

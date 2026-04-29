@@ -12,6 +12,8 @@ try {
   assertSmokeChecks(octavian);
   process.stdout.write('artifact smoke test passed\n');
 } catch (err) {
-  process.stderr.write(`artifact smoke test failed: ${err.stack ?? `${err.name}: ${err.message}`}\n`);
+  process.stderr.write(
+    `artifact smoke test failed: ${err.stack ?? `${err.name}: ${err.message}`}\n`,
+  );
   process.exit(1);
 }
