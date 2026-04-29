@@ -179,14 +179,18 @@ This is the keystone abstraction. Once this lands, much of Phase 1 and Phase 2 b
 
 **Depends on:** 1.6 (for context); can run parallel to 1.7 once 1.6 lands
 
-- [ ] `FiguredBass` type with stacked figures (`['6', '4']` for second inversion)
-- [ ] `Chord.figuredBass(inversion)` → standard figure (5/3, 6, 6/4, 6/5, 4/3, 4/2)
-- [ ] `chord.fromFiguredBass(bass, figures, key)` resolves a figured bass to a chord
-- [ ] Renders both stacked notation (for display) and inline (`6/4`)
-- [ ] Supports accidentals on figures (`6♯`, `♭7`)
-- [ ] Coordinates with Roman numeral inversion figures (item 1.7)
-- [ ] Tests cover all standard inversions for triads and seventh chords
-- [ ] Property test: figure → chord → figure round-trips
+- [x] `FiguredBass` type with stacked figures (`['6', '4']` for second inversion)
+- [x] `Chord.figuredBass()` and `Chord.figuredBassInversion()` → standard figure (5/3, 6, 6/4, 7,
+      6/5, 4/3, 4/2)
+- [x] `figuredBassToChord(bass, figures, key)` free function (per plan revision: figured bass is
+      context-sensitive, no `Chord.fromFiguredBass`)
+- [x] Renders both stacked notation (for display) and inline (`6/4`) via `formatFiguredBass`
+- [x] Parser accepts accidentals on figures (`6♯`, `♭7`); `figuredBassToChord` defers their semantic
+      interpretation to a future roadmap item
+- [x] Coordinates with Roman numeral inversion figures (item 1.7) via the shared shorthand union
+- [x] Tests cover all standard inversions for triads and seventh chords (round-trip on every
+      diatonic chord in C major)
+- [x] Property test: figure → chord → figure round-trips (parse → format and chord → figure → chord)
 
 ### 1.10 Cadence detection
 

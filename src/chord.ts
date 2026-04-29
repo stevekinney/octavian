@@ -14,6 +14,14 @@ import {
   type ChordSymbol,
   type InversionCount,
 } from './chords.js';
+import {
+  figuredBassForCardinality,
+  figuredBassInversionForCardinality,
+  type FiguredBass,
+  type FiguredBassChordKind,
+  type FiguredBassInversion,
+  type FiguredBassInversionIndex,
+} from './figured-bass-figures.js';
 import { INTERVALS, resolveInterval, type Interval } from './intervals.js';
 import { isInterval } from './music-utilities.js';
 import { Note, type NoteLike, type SerializedNote } from './note.js';
@@ -377,6 +385,62 @@ export class Chord {
    */
   public get isRootPosition(): boolean {
     return this.inversionIndex === 0;
+  }
+
+  /**
+   * Returns the figured-bass figure stack for the chord's current
+   * inversion. The result is the *short* common-practice form — for a
+   * root-position triad it is the empty stack `[]` (the implicit
+   * `5/3`); for a first-inversion triad it is `[{ digit: 6 }]`.
+   *
+   * Defined only for triads (3 chord tones) and seventh chords (4
+   * chord tones); throws on other cardinalities. Accidentals on
+   * figures are not produced by this method (see
+   * `figuredBassForChord` in `./figured-bass.js` for accidental
+   * support in a future roadmap item).
+   *
+   * @throws RangeError when the chord is not a triad or seventh chord.
+   */
+  public figuredBass(): FiguredBass {
+    const { kind, inversion } = this.figuredBassCardinality();
+    return figuredBassForCardinality(kind, inversion);
+  }
+
+  /**
+   * Returns the figured-bass inversion shorthand (`'5/3'`, `'6'`,
+   * `'6/4'`, `'7'`, `'6/5'`, `'4/3'`, `'4/2'`) for the chord's
+   * current inversion.
+   *
+   * @throws RangeError under the same conditions as
+   *         {@link Chord.figuredBass}.
+   */
+  public figuredBassInversion(): FiguredBassInversion {
+    const { kind, inversion } = this.figuredBassCardinality();
+    return figuredBassInversionForCardinality(kind, inversion);
+  }
+
+  private figuredBassCardinality(): {
+    readonly kind: FiguredBassChordKind;
+    readonly inversion: FiguredBassInversionIndex;
+  } {
+    const noteCount = this.#intervals.length;
+    const inversion = this.#inversionIndex;
+    // `Chord.inversion` rejects `inversion >= notes.length` at
+    // construction, so for a 3-note chord the index is 0..2 and for
+    // a 4-note chord the index is 0..3 — always within
+    // `FiguredBassInversionIndex`.
+    if (noteCount === 3 && (inversion === 0 || inversion === 1 || inversion === 2)) {
+      return { kind: 'triad', inversion };
+    }
+    if (
+      noteCount === 4 &&
+      (inversion === 0 || inversion === 1 || inversion === 2 || inversion === 3)
+    ) {
+      return { kind: 'seventh', inversion };
+    }
+    throw new RangeError(
+      `Figured-bass figures are defined for triads and seventh chords; this chord has ${noteCount} notes.`,
+    );
   }
 
   /**
