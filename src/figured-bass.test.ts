@@ -324,7 +324,7 @@ describe('figuredBassToChord', () => {
 
 describe('figuredBass round-trip', () => {
   it('parse → format round-trips on standard inversions', () => {
-    for (const inline of ['', '6', '6/4', '7', '6/5', '4/3', '4/2']) {
+    for (const inline of ['', '5/3', '6', '6/4', '7', '6/5', '4/3', '4/2']) {
       expect(formatFiguredBass(parseFiguredBass(inline)).inline).toBe(inline);
     }
   });
