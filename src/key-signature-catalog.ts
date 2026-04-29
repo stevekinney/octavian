@@ -19,8 +19,20 @@ export type KeySignatureMode = 'major' | 'minor';
 export type AccidentalOrder = 'sharps' | 'flats' | 'none';
 
 /**
- * A complete key signature record, including the accidentals that decorate
- * the staff and the order in which they appear.
+ * A complete key signature record.
+ *
+ * - `accidentalCount`: the number of accidental symbols that appear on the
+ *   staff (8 for G♯ major, 10 for A♯ major, etc.).
+ * - `accidentals`: one entry per affected letter, written in the standard
+ *   F♯-C♯-G♯-… or B♭-E♭-A♭-… order. For theoretical keys with > 7
+ *   symbols on the staff, the early letters are upgraded to their
+ *   double-accidental form (G♯ major's F-letter becomes `F##`); the
+ *   array therefore always has at most 7 entries.
+ *
+ * This means `accidentals.length` is the number of *letters affected* by
+ * the key signature, while `accidentalCount` is the number of *symbols*
+ * the engraver writes. They are equal for standard keys (1–7) and
+ * diverge for theoretical keys.
  */
 export type KeySignatureInformation = {
   readonly tonic: NoteName;
@@ -31,18 +43,12 @@ export type KeySignatureInformation = {
   readonly accidentalPreference: AccidentalPreference;
 };
 
-// Standard order of sharps (positions 1–7) plus the double-sharp
-// continuation (positions 8–14) used in theoretical keys with > 7 sharps.
-// Each step past the seventh re-walks the letter sequence with one more
-// sharp added: G♯ major (8 sharps) ends with F##.
-const SHARP_ORDER: readonly NoteName[] = [
-  'F#',
-  'C#',
-  'G#',
-  'D#',
-  'A#',
-  'E#',
-  'B#',
+// Standard order of sharps as they appear on the staff: F♯, C♯, G♯, D♯,
+// A♯, E♯, B♯. The same letter sequence is used to compute double-sharps in
+// theoretical keys: G♯ major (8 sharps) replaces position 1's `F#` with
+// `F##` because the scale's F-letter is now double-sharped.
+const SHARP_LETTER_ORDER: readonly NoteName[] = ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'];
+const SHARP_DOUBLE_LETTER_ORDER: readonly NoteName[] = [
   'F##',
   'C##',
   'G##',
@@ -52,16 +58,10 @@ const SHARP_ORDER: readonly NoteName[] = [
   'B##',
 ];
 
-// Standard order of flats (1–7) plus the double-flat continuation used in
-// theoretical keys with > 7 flats.
-const FLAT_ORDER: readonly NoteName[] = [
-  'Bb',
-  'Eb',
-  'Ab',
-  'Db',
-  'Gb',
-  'Cb',
-  'Fb',
+// Standard order of flats: B♭, E♭, A♭, D♭, G♭, C♭, F♭. Theoretical keys
+// with > 7 flats apply double-flats to the early letters in the same order.
+const FLAT_LETTER_ORDER: readonly NoteName[] = ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'];
+const FLAT_DOUBLE_LETTER_ORDER: readonly NoteName[] = [
   'Bbb',
   'Ebb',
   'Abb',
@@ -70,6 +70,25 @@ const FLAT_ORDER: readonly NoteName[] = [
   'Cbb',
   'Fbb',
 ];
+
+function buildAccidentalsForCount(
+  count: number,
+  singles: readonly NoteName[],
+  doubles: readonly NoteName[],
+): readonly NoteName[] {
+  // Up to 7: take the first `count` single-accidentals.
+  // Above 7: every letter gets its single-accidental, and the first
+  // `count - 7` letters are upgraded to their double-accidental form.
+  if (count <= 7) {
+    return singles.slice(0, count);
+  }
+  const result: NoteName[] = [];
+  const doubled = count - 7;
+  for (let i = 0; i < 7; i++) {
+    result.push(i < doubled ? doubles[i]! : singles[i]!);
+  }
+  return result;
+}
 
 function buildSharpKey(
   tonic: NoteName,
@@ -81,7 +100,7 @@ function buildSharpKey(
     tonic,
     mode,
     accidentalCount: count,
-    accidentals: SHARP_ORDER.slice(0, count),
+    accidentals: buildAccidentalsForCount(count, SHARP_LETTER_ORDER, SHARP_DOUBLE_LETTER_ORDER),
     order: count === 0 ? 'none' : 'sharps',
     accidentalPreference,
   };
@@ -97,7 +116,7 @@ function buildFlatKey(
     tonic,
     mode,
     accidentalCount: count,
-    accidentals: FLAT_ORDER.slice(0, count),
+    accidentals: buildAccidentalsForCount(count, FLAT_LETTER_ORDER, FLAT_DOUBLE_LETTER_ORDER),
     order: count === 0 ? 'none' : 'flats',
     accidentalPreference,
   };

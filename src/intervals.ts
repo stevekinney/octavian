@@ -48,7 +48,7 @@ type BaseIntervalInformation = {
  */
 export type IntervalInformation = BaseIntervalInformation & {
   /** Canonical interval after octave-removal (P11 → P4, M9 → M2). */
-  readonly simpleInterval: CanonicalInterval;
+  readonly simpleInterval: SimpleCanonicalInterval;
   /** Number of octaves above the simple form (0 for simple, 1+ for compound). */
   readonly octaveOffset: number;
 };
@@ -283,8 +283,13 @@ function enrichIntervalInformation(
   base: BaseIntervalInformation,
 ): IntervalInformation {
   const octaveOffset = base.degree <= 8 ? 0 : Math.floor((base.degree - 1) / 7);
-  const simpleInterval =
-    octaveOffset === 0 ? canonical : computeSimpleForm(base.degree, base.semitones);
+  // When octaveOffset === 0, base.degree <= 8 so canonical is in the simple
+  // set; otherwise computeSimpleForm always returns a SimpleCanonicalInterval.
+  const simpleInterval: SimpleCanonicalInterval =
+    octaveOffset === 0
+      ? // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+        (canonical as SimpleCanonicalInterval)
+      : computeSimpleForm(base.degree, base.semitones);
   return {
     ...base,
     simpleInterval,

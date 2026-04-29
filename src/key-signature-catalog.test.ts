@@ -70,22 +70,23 @@ describe('KEY_SIGNATURES catalog', () => {
     expect(KEY_SIGNATURES['Fb-major'].accidentalPreference).toBe('theoretical');
   });
 
-  it('theoretical keys with >7 accidentals store the full set including double accidentals', () => {
+  it('theoretical keys upgrade per-letter accidentals to doubles instead of stacking 8 entries', () => {
+    // accidentalCount counts the symbols on the staff (8, 9, 10), but the
+    // accidentals array carries one entry per letter — so it has exactly
+    // 7 entries in every key. For G# major the F-letter is double-sharped.
     const gSharpMajor = KEY_SIGNATURES['G#-major'];
     expect(gSharpMajor.accidentalCount).toBe(8);
-    expect(gSharpMajor.accidentals).toHaveLength(8);
-    expect(gSharpMajor.accidentals[7]).toBe('F##');
+    expect(gSharpMajor.accidentals).toEqual(['F##', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#']);
 
+    // Fb major: B-letter is double-flatted; the rest stay single-flatted.
     const fFlatMajor = KEY_SIGNATURES['Fb-major'];
     expect(fFlatMajor.accidentalCount).toBe(8);
-    expect(fFlatMajor.accidentals).toHaveLength(8);
-    expect(fFlatMajor.accidentals[7]).toBe('Bbb');
+    expect(fFlatMajor.accidentals).toEqual(['Bbb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb']);
 
-    // The most-extreme theoretical key in the catalog: A# major has 10 sharps.
+    // A# major (10 sharps): F, C, G letters are double-sharped.
     const aSharpMajor = KEY_SIGNATURES['A#-major'];
     expect(aSharpMajor.accidentalCount).toBe(10);
-    expect(aSharpMajor.accidentals).toHaveLength(10);
-    expect(aSharpMajor.accidentals).toContain('G##');
+    expect(aSharpMajor.accidentals).toEqual(['F##', 'C##', 'G##', 'D#', 'A#', 'E#', 'B#']);
   });
 
   it('parallels minor keys to their relative major (both have same accidental count)', () => {
@@ -175,11 +176,9 @@ describe('keySignatureFromAccidentals', () => {
 describe('round-trip — every entry spells its scale correctly', () => {
   // Property-style: the accidentals listed in each key signature must be
   // exactly the accidentals that appear in the corresponding scale's notes.
-  it.each(
-    Object.entries(KEY_SIGNATURES).filter(
-      ([, signature]) => signature.accidentalPreference !== 'theoretical',
-    ),
-  )(
+  // Theoretical keys are included — the per-letter accidentals
+  // representation aligns with what `Scale.create` actually produces.
+  it.each(Object.entries(KEY_SIGNATURES))(
     '%s spells its scale with the catalog accidentals',
     (_label, signature: KeySignatureInformation) => {
       const scaleType = signature.mode === 'major' ? 'major' : 'naturalMinor';
