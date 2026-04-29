@@ -83,12 +83,14 @@ function parseSingleFigure(rawFigure: string): FiguredBassFigure {
   let digitText = '';
 
   for (const character of trimmed) {
-    if (SHARP_CHARACTERS.has(character)) {
-      accidental = 'sharp';
-    } else if (FLAT_CHARACTERS.has(character)) {
-      accidental = 'flat';
-    } else if (NATURAL_CHARACTERS.has(character)) {
-      accidental = 'natural';
+    const next = accidentalForCharacter(character);
+    if (next !== null) {
+      if (accidental !== undefined) {
+        throw new TypeError(
+          `Figured-bass figure ${trimmed} has multiple accidentals; at most one is permitted.`,
+        );
+      }
+      accidental = next;
     } else if (/\d/.test(character)) {
       digitText += character;
     } else {
@@ -107,6 +109,13 @@ function parseSingleFigure(rawFigure: string): FiguredBassFigure {
   return accidental === undefined ? { digit } : { digit, accidental };
 }
 
+function accidentalForCharacter(character: string): FiguredBassAccidental | null {
+  if (SHARP_CHARACTERS.has(character)) return 'sharp';
+  if (FLAT_CHARACTERS.has(character)) return 'flat';
+  if (NATURAL_CHARACTERS.has(character)) return 'natural';
+  return null;
+}
+
 function isFiguredBassDigit(value: number): value is FiguredBassDigit {
   return Number.isInteger(value) && value >= 1 && value <= 9;
 }
@@ -118,10 +127,13 @@ function isFiguredBassDigit(value: number): value is FiguredBassDigit {
  *   for vertical typesetting (`['6', '4']`).
  * - `inline` — slash-separated string for prose (`'6/4'`).
  *
- * Accidentals render Unicode by default (`♯`, `♭`, `♮`). Sharps and
- * naturals are placed before the digit; flats are placed after the
- * digit, per Aldwell & Schachter conventions for common-practice
- * figured-bass typography.
+ * Accidentals render Unicode by default (`♯`, `♭`, `♮`) and are placed
+ * *before* the digit. This normalizes on the parser's canonical
+ * input form so that
+ * `formatFiguredBass(parseFiguredBass('♭7')).inline === '♭7'`
+ * round-trips. (Aldwell & Schachter print flats after the digit for
+ * typesetting reasons; consumers rendering for engraving should
+ * post-process if they need the suffix-flat convention.)
  */
 export function formatFiguredBass(figures: FiguredBass): {
   readonly stacked: readonly string[];
@@ -136,13 +148,18 @@ function formatSingleFigure(figure: FiguredBassFigure): string {
   if (figure.accidental === undefined) {
     return digit;
   }
-  if (figure.accidental === 'flat') {
-    return `${digit}♭`;
-  }
-  if (figure.accidental === 'sharp') {
-    return `♯${digit}`;
-  }
-  return `♮${digit}`;
+  // All accidentals render before the digit so that
+  // `formatFiguredBass(parseFiguredBass('♭7')).inline === '♭7'`
+  // round-trips. (Aldwell & Schachter print flats after the digit
+  // for typesetting reasons; this library normalizes on the
+  // prefix form to match the canonical parser examples.)
+  if (figure.accidental === 'sharp') return `♯${digit}`;
+  if (figure.accidental === 'flat') return `♭${digit}`;
+  if (figure.accidental === 'natural') return `♮${digit}`;
+  // Defensive: the type system constrains `accidental` to the three
+  // values above. If a future variant is added, this branch flags it
+  // rather than silently rendering as natural.
+  throw new TypeError(`Unknown figured-bass accidental ${String(figure.accidental as never)}.`);
 }
 
 /**
@@ -200,7 +217,8 @@ function chordCardinality(chord: Chord): {
  * intervals above `bass` within the prevailing key, so the same
  * `(bass, figures)` pair resolves to different chords in different
  * keys. The returned chord is in the inversion that places `bass` at
- * the bottom.
+ * the bottom, transposed so its bass note matches the requested
+ * `bass` exactly (octave included).
  *
  * Recognized inversion patterns (in addition to the empty stack which
  * is the implicit root-position triad):
@@ -236,8 +254,13 @@ export function figuredBassToChord(bass: NoteLike, figures: FiguredBassLike, key
   return resolveChordForBass(bassNote, key, inversion, cardinality);
 }
 
+// Both the empty stack (the implicit `5/3`) and the explicit `5/3`
+// digit pair name root-position triads. Parsers that round-trip
+// `'5/3'` through `parseFiguredBass` need the explicit form to
+// resolve too, not only the empty stack.
 const INVERSION_BY_DIGIT_KEY: Readonly<Record<string, FiguredBassInversion>> = {
   '': '5/3',
+  '5,3': '5/3',
   '6': '6',
   '7': '7',
   '6,4': '6/4',
@@ -269,7 +292,11 @@ function resolveChordForBass(
   for (const candidate of candidates) {
     const inverted = candidate.inversion(inversionIndex);
     if (bassPitchClassOf(inverted.bass) === bassPitchClass) {
-      return inverted;
+      // Match by pitch class, then transpose to the caller's exact
+      // octave so the returned chord's bass equals the requested
+      // bass note rather than the diatonic-default register.
+      const octaveOffset = bassOctaveOffset(bass, inverted.bass);
+      return octaveOffset === 0 ? inverted : inverted.transposeBy(octaveOffset * 12);
     }
   }
   throw new TypeError(
@@ -279,6 +306,12 @@ function resolveChordForBass(
 
 function bassPitchClassOf(note: Note): number {
   return Number(note.midi) % 12;
+}
+
+function bassOctaveOffset(requested: Note, found: Note): number {
+  const requestedMidi = Number(requested.midi);
+  const foundMidi = Number(found.midi);
+  return Math.round((requestedMidi - foundMidi) / 12);
 }
 
 function inversionIndexFor(inversion: FiguredBassInversion): 0 | 1 | 2 | 3 {

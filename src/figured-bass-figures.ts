@@ -45,18 +45,23 @@ export type FiguredBassChordKind = 'triad' | 'seventh';
  */
 export type FiguredBassInversionIndex = 0 | 1 | 2 | 3;
 
-const TRIAD_FIGURES_BY_INVERSION: Readonly<Record<0 | 1 | 2, FiguredBass>> = {
-  0: [], // 5/3 is implicit; the conventional notation is to omit it.
-  1: [{ digit: 6 }], // 6 (over an implicit 3).
-  2: [{ digit: 6 }, { digit: 4 }],
-};
+// The lookup tables are deep-frozen so callers can't mutate the
+// shared module-level data through the `readonly` arrays returned
+// from `figuredBassForCardinality`. The `readonly` modifier is a
+// compile-time-only constraint; freezing makes the immutability
+// stick at runtime.
+const TRIAD_FIGURES_BY_INVERSION: Readonly<Record<0 | 1 | 2, FiguredBass>> = Object.freeze({
+  0: Object.freeze([]) as FiguredBass, // 5/3 is implicit; the conventional notation is to omit it.
+  1: Object.freeze([Object.freeze({ digit: 6 } as const)]),
+  2: Object.freeze([Object.freeze({ digit: 6 } as const), Object.freeze({ digit: 4 } as const)]),
+});
 
-const SEVENTH_FIGURES_BY_INVERSION: Readonly<Record<0 | 1 | 2 | 3, FiguredBass>> = {
-  0: [{ digit: 7 }],
-  1: [{ digit: 6 }, { digit: 5 }],
-  2: [{ digit: 4 }, { digit: 3 }],
-  3: [{ digit: 4 }, { digit: 2 }],
-};
+const SEVENTH_FIGURES_BY_INVERSION: Readonly<Record<0 | 1 | 2 | 3, FiguredBass>> = Object.freeze({
+  0: Object.freeze([Object.freeze({ digit: 7 } as const)]),
+  1: Object.freeze([Object.freeze({ digit: 6 } as const), Object.freeze({ digit: 5 } as const)]),
+  2: Object.freeze([Object.freeze({ digit: 4 } as const), Object.freeze({ digit: 3 } as const)]),
+  3: Object.freeze([Object.freeze({ digit: 4 } as const), Object.freeze({ digit: 2 } as const)]),
+});
 
 /**
  * Returns the figured-bass figure stack for the given chord

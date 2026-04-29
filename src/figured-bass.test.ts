@@ -73,6 +73,13 @@ describe('parseFiguredBass — error paths', () => {
   it('rejects an empty figure inside a stack', () => {
     expect(() => parseFiguredBass('6/')).toThrow(TypeError);
   });
+
+  it.each(['#♭7', '♭#7', '♮♭6', 'b#7', 'bn3'])(
+    'rejects multiple accidentals on a single figure (%p)',
+    (input: string) => {
+      expect(() => parseFiguredBass(input)).toThrow(TypeError);
+    },
+  );
 });
 
 describe('formatFiguredBass', () => {
@@ -92,10 +99,10 @@ describe('formatFiguredBass', () => {
     });
   });
 
-  it('places flats after the digit', () => {
+  it('places flats before the digit (matches the canonical parser input form)', () => {
     expect(formatFiguredBass([{ digit: 7, accidental: 'flat' }])).toEqual({
-      stacked: ['7♭'],
-      inline: '7♭',
+      stacked: ['♭7'],
+      inline: '♭7',
     });
   });
 
@@ -104,6 +111,13 @@ describe('formatFiguredBass', () => {
       stacked: ['♮3'],
       inline: '♮3',
     });
+  });
+
+  it('throws on an unknown accidental value (defensive, type-system bypass)', () => {
+    expect(() =>
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+      formatFiguredBass([{ digit: 6, accidental: 'bogus' as never }]),
+    ).toThrow(TypeError);
   });
 });
 
@@ -159,6 +173,19 @@ describe('figured-bass-figures direct API', () => {
     // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
     expect(() => figuredBassInversionForCardinality('triad', 3 as never)).toThrow(RangeError);
   });
+
+  it('returns frozen arrays so callers cannot mutate the shared lookup data', () => {
+    const figures = figuredBassForCardinality('triad', 1);
+    expect(Object.isFrozen(figures)).toBe(true);
+    // The inner figure objects are also frozen. Attempting to mutate
+    // them throws in strict mode, which `bun:test` runs by default.
+    if (figures.length > 0) {
+      const first = figures[0];
+      if (first !== undefined) {
+        expect(Object.isFrozen(first)).toBe(true);
+      }
+    }
+  });
 });
 
 describe('Chord.figuredBass and Chord.figuredBassInversion (delegators)', () => {
@@ -187,6 +214,27 @@ describe('figuredBassToChord', () => {
     expect(chord.bass.toString()).toBe('C4');
     expect(chord.inversionIndex).toBe(0);
     expect(chord.intervals).toHaveLength(3);
+  });
+
+  it('resolves the explicit 5/3 figure to the same chord as the empty figure', () => {
+    const explicit = figuredBassToChord('C4', '5/3', cMajor);
+    const implicit = figuredBassToChord('C4', '', cMajor);
+    expect(explicit.bass.toString()).toBe(implicit.bass.toString());
+    expect(explicit.inversionIndex).toBe(implicit.inversionIndex);
+    expect(explicit.root.note).toBe(implicit.root.note);
+  });
+
+  it('preserves the requested bass octave on the returned chord', () => {
+    // The diatonic-default register puts G4 first inversion at G4
+    // (B as bass). Asking for C2 must return a chord whose bass is
+    // C2, not C4 from the default register.
+    const lowChord = figuredBassToChord('C2', '', cMajor);
+    expect(lowChord.bass.toString()).toBe('C2');
+    expect(lowChord.inversionIndex).toBe(0);
+
+    const highChord = figuredBassToChord('E6', '6', cMajor);
+    expect(highChord.bass.toString()).toBe('E6');
+    expect(highChord.inversionIndex).toBe(1);
   });
 
   it('resolves 6 to the first-inversion diatonic triad', () => {
