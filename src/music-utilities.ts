@@ -24,7 +24,9 @@ import { SCALES, type ScaleType } from './scales.js';
 import { STANDARD_TUNING, type Tuning } from './tuning.js';
 import type { AccidentalPreference } from './key-signatures.js';
 
-const NOTE_WITH_OCTAVE_PATTERN = /^([A-G](?:##|bb|#|b)?)(-1|0|1|2|3|4|5|6|7|8|9)$/u;
+// Order matters in the alternation: triple accidentals must be tried before
+// doubles before singles, otherwise `##` matches the first two chars of `###`.
+const NOTE_WITH_OCTAVE_PATTERN = /^([A-G](?:###|bbb|##|bb|#|b)?)(-1|0|1|2|3|4|5|6|7|8|9)$/u;
 
 const NOTE_NAME_SET = new Set<string>(ALL_NOTE_NAMES);
 const INTERVAL_SET = new Set<string>(Object.keys(INTERVALS));

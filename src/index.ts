@@ -40,18 +40,38 @@ export type {
 
 export {
   INTERVALS,
+  compoundInterval,
+  consonanceOf,
   findCanonicalIntervalBySemitonesAndDegree,
+  invertInterval,
+  isConsonant,
+  isDissonant,
   resolveInterval,
+  simplifyInterval,
 } from './intervals.js';
 export type {
   CanonicalInterval,
   Interval,
+  IntervalConsonance,
   IntervalInformation,
   IntervalQuality,
   IntervalSymbol,
+  SimpleCanonicalInterval,
 } from './intervals.js';
 
 export type { AccidentalPreference, KeySignature } from './key-signatures.js';
+
+export {
+  KEY_SIGNATURES,
+  keySignatureFor,
+  keySignatureFromAccidentals,
+} from './key-signature-catalog.js';
+export type {
+  AccidentalOrder,
+  KeySignatureInformation,
+  KeySignatureKey,
+  KeySignatureMode,
+} from './key-signature-catalog.js';
 
 export {
   ACCIDENTALS,

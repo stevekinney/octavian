@@ -83,8 +83,10 @@ describe('foundation helpers', () => {
     expect(noteNameToChromaticIndex('Cb')).toBe(11);
     expect(normalizeChromaticIndex(-1)).toBe(11);
     expect(buildNoteName('F', 2)).toBe('F##');
-    expect(() => buildNoteName('C', 3)).toThrow(RangeError);
-    expect(() => buildNoteName('C', 3)).toThrow(/accidental offset/i);
+    expect(buildNoteName('C', 3)).toBe('C###');
+    expect(buildNoteName('C', -3)).toBe('Cbbb');
+    expect(() => buildNoteName('C', 4)).toThrow(RangeError);
+    expect(() => buildNoteName('C', 4)).toThrow(/accidental offset/i);
     expect(simplifyNoteName('B#')).toBe('C');
     expect(enharmonicsForNoteName('C#')).toEqual(expect.arrayContaining(['Db', 'B##']));
     expect(SHARP_PREFERRED_NOTE_NAMES[6]).toBe('F#');
