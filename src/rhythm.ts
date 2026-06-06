@@ -270,10 +270,9 @@ export class RhythmPattern {
       let offset: Rational = { numerator: 0, denominator: 1 };
 
       if (isSecondEighth) {
-        // straight position is 1/2 beat; swing position is (1 - ratio) × 1 beat
-        // offset = (1 - ratio) - 1/2 = subtractRationals(1 - ratio, 1/2)
-        const oneMinusRatio = subtractRationals(createRational(1, 1), ratio);
-        offset = subtractRationals(oneMinusRatio, createRational(1, 2));
+        // notated upbeat = 1/2 beat; swung upbeat onset = ratio; offset = ratio - 1/2
+        // Positive offset means the attack is delayed (later), matching standard swing feel.
+        offset = subtractRationals(ratio, createRational(1, 2));
       }
 
       offsets.push({ eventIndex: i, offset });

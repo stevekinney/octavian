@@ -198,11 +198,11 @@ describe('RhythmPattern.withSwing', () => {
     expect(swing.offsets[1]?.offset).toEqual({ numerator: 0, denominator: 1 });
   });
 
-  it('ratio 2/3 (triplet swing) gives -1/6 offset for the second eighth', () => {
-    // offset = (1 - 2/3) - 1/2 = 1/3 - 1/2 = -1/6
+  it('ratio 2/3 (triplet swing) gives +1/6 offset for the second eighth', () => {
+    // notated upbeat = 1/2 beat; swung onset = 2/3; offset = 2/3 - 1/2 = +1/6 (delayed)
     const p = RhythmPattern.create([e(), e()]);
     const swing = p.withSwing(createRational(2, 3));
-    expect(swing.offsets[1]?.offset).toEqual({ numerator: -1, denominator: 6 });
+    expect(swing.offsets[1]?.offset).toEqual({ numerator: 1, denominator: 6 });
   });
 });
 
