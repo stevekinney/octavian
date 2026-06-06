@@ -184,14 +184,41 @@ export function midiToNoteNameWithOctave(
 /**
  * Converts a MIDI key to a frequency using equal temperament.
  *
- * @param midi The MIDI key to convert.
+ * Accepts either a branded {@link MidiKey} or a plain `number` (validated internally).
+ *
+ * @param midi The MIDI key to convert. Plain numbers are validated against the 0..127 range.
  * @param tuning The tuning reference to use.
  * @returns The frequency in hertz.
+ * @throws {RangeError} When a plain number falls outside the MIDI range `0..127`.
  */
-export function midiToFrequency(midi: MidiKey, tuning: Tuning = STANDARD_TUNING): Frequency {
-  const numericFrequency = Number(tuning.frequency) * 2 ** ((Number(midi) - 69) / 12);
+export function midiToFrequency(
+  midi: number | MidiKey,
+  tuning: Tuning = STANDARD_TUNING,
+): Frequency {
+  const validatedMidi = createMidiKey(Number(midi));
+  const numericFrequency = Number(tuning.frequency) * 2 ** ((Number(validatedMidi) - 69) / 12);
 
   return createFrequency(numericFrequency);
+}
+
+/**
+ * Converts a pitch-class (0..11) and octave to a frequency using equal temperament.
+ *
+ * @param pitchClass The chromatic index in the range `0..11`.
+ * @param octave The octave in the range `-1..9`.
+ * @param tuning The tuning reference to use. Defaults to standard tuning (A4 = 440 Hz).
+ * @returns The frequency in hertz.
+ * @throws {RangeError} When `pitchClass` is not in `0..11` or `octave` is not in `-1..9`.
+ */
+export function chromaticIndexToFrequency(
+  pitchClass: number,
+  octave: number,
+  tuning: Tuning = STANDARD_TUNING,
+): Frequency {
+  createChromaticIndex(pitchClass);
+  const midi = createMidiKey((createOctave(octave) + 1) * 12 + pitchClass);
+
+  return midiToFrequency(midi, tuning);
 }
 
 /**
