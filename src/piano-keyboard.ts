@@ -51,7 +51,6 @@ export type PianoKey = {
   readonly chromaticIndex: ChromaticIndex;
   readonly octave: Octave;
   readonly color: 'white' | 'black';
-  readonly chromaticIndexInOctave: ChromaticIndex;
   readonly whiteKeyIndex?: number;
 };
 
@@ -129,7 +128,6 @@ function buildPianoKey(
     chromaticIndex: note.chromaticIndex,
     octave: note.octave,
     color,
-    chromaticIndexInOctave,
   } as const;
 
   if (color === 'white' && whiteKeyIndex !== undefined) {
@@ -172,37 +170,27 @@ function buildKeyboardRange(from: NoteLike | number, to: NoteLike | number): Key
 /**
  * Standard 88-key piano range: A0 (MIDI 21) to C8 (MIDI 108).
  */
-export const KEYBOARD_88: KeyboardRange = Object.freeze(
-  buildKeyboardRange(21, 108),
-) as KeyboardRange;
+export const KEYBOARD_88: KeyboardRange = Object.freeze(buildKeyboardRange(21, 108));
 
 /**
  * Standard 76-key keyboard range: E1 (MIDI 28) to G7 (MIDI 103).
  */
-export const KEYBOARD_76: KeyboardRange = Object.freeze(
-  buildKeyboardRange(28, 103),
-) as KeyboardRange;
+export const KEYBOARD_76: KeyboardRange = Object.freeze(buildKeyboardRange(28, 103));
 
 /**
  * Standard 61-key keyboard range: C2 (MIDI 36) to C7 (MIDI 96).
  */
-export const KEYBOARD_61: KeyboardRange = Object.freeze(
-  buildKeyboardRange(36, 96),
-) as KeyboardRange;
+export const KEYBOARD_61: KeyboardRange = Object.freeze(buildKeyboardRange(36, 96));
 
 /**
  * Standard 49-key keyboard range: C2 (MIDI 36) to C6 (MIDI 84).
  */
-export const KEYBOARD_49: KeyboardRange = Object.freeze(
-  buildKeyboardRange(36, 84),
-) as KeyboardRange;
+export const KEYBOARD_49: KeyboardRange = Object.freeze(buildKeyboardRange(36, 84));
 
 /**
  * Standard 25-key keyboard range: C3 (MIDI 48) to C5 (MIDI 72).
  */
-export const KEYBOARD_25: KeyboardRange = Object.freeze(
-  buildKeyboardRange(48, 72),
-) as KeyboardRange;
+export const KEYBOARD_25: KeyboardRange = Object.freeze(buildKeyboardRange(48, 72));
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -321,7 +309,7 @@ export function keyboardPositionFor(
 /**
  * A value that can be highlighted on the keyboard: a Note, a Scale, a Chord, or a raw pitch-class number.
  */
-export type HighlightTarget = Note | Scale | Chord | NoteLike | number;
+export type HighlightTarget = Scale | Chord | NoteLike | number;
 
 function chromaticIndexesForTarget(target: HighlightTarget): readonly ChromaticIndex[] {
   if (target instanceof Scale) {

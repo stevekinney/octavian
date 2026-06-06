@@ -177,7 +177,7 @@ describe('keyboardKeysForRange — structure', () => {
   it('midi, octave, and chromaticIndex are consistent', () => {
     const keys = keyboardKeysForRange(KEYBOARD_25);
     for (const key of keys) {
-      expect(Number(key.midi) % 12).toBe(key.chromaticIndexInOctave);
+      expect(Number(key.midi) % 12).toBe(key.chromaticIndex);
       expect(key.chromaticIndex).toBe(key.note.chromaticIndex);
     }
   });
@@ -370,7 +370,7 @@ describe('highlightGroupsForChordOrScale', () => {
     const groups = highlightGroupsForChordOrScale(chord, wideRange);
     // Each pitch class appears twice (one per octave) + C also at top
     const totalPositions = groups.reduce((acc, g) => acc + g.positions.length, 0);
-    expect(totalPositions).toBeGreaterThan(3);
+    expect(totalPositions).toBe(7);
   });
 
   it('returns groups in ascending chromaticIndex order', () => {
@@ -405,7 +405,7 @@ describe('property tests', () => {
           const keys = keyboardKeysForRange(range);
           return keys.every((k) => {
             const expectedPitchClass = Number(k.midi) % 12;
-            return k.chromaticIndexInOctave === expectedPitchClass;
+            return k.chromaticIndex === expectedPitchClass;
           });
         },
       ),
