@@ -61,7 +61,7 @@ export type RhythmComparison = {
   /** `true` when the patterns have the same sequence of written fractions. */
   readonly isIdentical: boolean;
   /**
-   * `true` when the patterns have the same total duration but differ in subdivision.
+   * `true` when the patterns have the same total duration.
    */
   readonly hasSameDuration: boolean;
   /** The total duration of pattern `a`. */
@@ -85,7 +85,7 @@ export type GridPosition = {
   /** The duration of this event. */
   readonly duration: Duration;
   /**
-   * The beat number (one-based) this onset falls on, measured in beat units of the meter.
+   * The beat number (zero-based) this onset falls on, measured in beat units of the meter.
    * Fractional when the onset is between beats.
    */
   readonly beatPosition: Rational;
@@ -198,11 +198,9 @@ export class RhythmPattern {
    * beat unit) AND either sustains across the next beat boundary or the next event is a rest.
    *
    * @param meter The meter to check against.
-   * @param options Reserved for future options.
    * @returns `true` when at least one event is syncopated.
    */
-  public isSyncopated(meter: Meter, options?: Record<string, never>): boolean {
-    void options;
+  public isSyncopated(meter: Meter): boolean {
     const grid = this.subdivisionGrid(meter);
     const beatUnit = meter.beatUnit;
 
@@ -223,6 +221,13 @@ export class RhythmPattern {
         if (compareRationals(eventEnd, nextBeat) > 0) {
           return true;
         }
+
+        // Off-beat attack immediately followed by a rest is also syncopated.
+        const nextEvent = grid[i + 1];
+
+        if (nextEvent !== undefined && nextEvent.duration.isRest) {
+          return true;
+        }
       }
     }
 
@@ -236,17 +241,22 @@ export class RhythmPattern {
    * Standard swing (ratio ≈ 2:1) can be expressed as `ratio = createRational(2, 3)`:
    * the first eighth of each pair lasts 2/3 of a beat, the second lasts 1/3.
    *
+   * **Assumption:** this method assumes a quarter-note beat unit and is not valid for compound
+   * meters (e.g. 6/8) until a `beatUnit`/`meter` parameter is added. The {@link SwingOffset.offset}
+   * values are dimensionless fractions of a beat — distinct from {@link GridPosition.onset},
+   * which is a whole-note fraction.
+   *
    * @param ratio The ratio of the long note to the full beat (e.g. `{numerator:2, denominator:3}` for standard triplet swing).
    * @returns A {@link SwingDescriptor} with the per-event timing offsets.
    */
   public withSwing(ratio: Rational): SwingDescriptor {
     const offsets: SwingOffset[] = [];
-    const beatUnit = { numerator: 1, denominator: 4 }; // default to quarter-note beat
+    const beatUnit = { numerator: 1, denominator: 4 }; // assumes quarter-note beat unit
 
     // For each event, compute how much its actual attack is offset from the notated position.
     // Standard swing pairs the 1st and 2nd eighth notes of each beat.
     // pair index 0 (down-beat eighth): offset = 0
-    // pair index 1 (up-beat eighth): offset = (ratio - 1/2) × beatUnit
+    // pair index 1 (up-beat eighth): offset = ratio − 1/2  (a dimensionless fraction of a beat)
     // This gives a tangible shift without altering the written fraction.
     let cursor: Rational = { numerator: 0, denominator: 1 };
 
@@ -315,15 +325,9 @@ export class RhythmPattern {
  *
  * @param a The first pattern.
  * @param b The second pattern.
- * @param options Reserved for future options.
  * @returns A {@link RhythmComparison} describing the relationship.
  */
-export function compareRhythm(
-  a: RhythmPattern,
-  b: RhythmPattern,
-  options?: Record<string, never>,
-): RhythmComparison {
-  void options;
+export function compareRhythm(a: RhythmPattern, b: RhythmPattern): RhythmComparison {
   const durationA = a.totalDuration();
   const durationB = b.totalDuration();
   const hasSameDuration = rationalsEqual(durationA, durationB);

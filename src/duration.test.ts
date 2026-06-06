@@ -231,6 +231,12 @@ describe('Duration.equals', () => {
     const b = Duration.create('quarter', { isRest: true });
     expect(a.equals(b)).toBe(false);
   });
+
+  it('same fraction but different isTied flag are not equal', () => {
+    const a = Duration.create('quarter');
+    const b = Duration.create('quarter', { isTied: true });
+    expect(a.equals(b)).toBe(false);
+  });
 });
 
 describe('Duration.toString and toStringTag', () => {

@@ -102,6 +102,10 @@ describe('divideRationals', () => {
     const result = divideRationals(createRational(3, 4), createRational(3, 8));
     expect(result).toEqual({ numerator: 2, denominator: 1 });
   });
+
+  it('throws RangeError when the divisor is zero', () => {
+    expect(() => divideRationals(createRational(1, 4), ZERO)).toThrow(RangeError);
+  });
 });
 
 describe('rationalsEqual', () => {

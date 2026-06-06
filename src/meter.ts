@@ -6,8 +6,9 @@ import { createRational, type Rational } from './rational.js';
 
 /**
  * Simple meters have a numerator of 2, 3, or 4.
- * Compound meters have a numerator that is a multiple of 3 greater than 3 (i.e. 6, 9, 12).
- * All other numerators are asymmetric (e.g. 5, 7, 11).
+ * Compound meters have a numerator of exactly 6, 9, or 12. Larger multiples of 3 (15, 18, …)
+ * are classified as asymmetric rather than compound.
+ * All other numerators are asymmetric (e.g. 5, 7, 11, 15).
  */
 export type MeterType = 'simple' | 'compound' | 'asymmetric';
 

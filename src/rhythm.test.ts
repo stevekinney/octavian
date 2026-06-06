@@ -159,6 +159,13 @@ describe('RhythmPattern.isSyncopated', () => {
     expect(tiedQ.isTied).toBe(true);
     expect(tiedQ.fraction()).toEqual({ numerator: 1, denominator: 4 });
   });
+
+  it('off-beat note immediately followed by a rest is syncopated', () => {
+    // [e, e, qr]: event[1] starts at 1/8 (off-beat in 4/4), ends exactly on beat 2 at 2/8=1/4
+    // (does not cross the boundary), but the next event is a rest → syncopated
+    const p = RhythmPattern.create([e(), e(), qr()]);
+    expect(p.isSyncopated(Meter.create('4/4'))).toBe(true);
+  });
 });
 
 describe('RhythmPattern.withSwing', () => {
