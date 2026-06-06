@@ -92,7 +92,9 @@ export class Key {
    *
    * @param name The key name string to parse.
    * @returns The parsed key.
-   * @throws {TypeError} When the tonic or mode is unrecognized.
+   * @throws {TypeError} When the tonic or mode is unrecognized, or the
+   *   tonic/mode combination is a theoretical key not supported by
+   *   {@link Key.create} (e.g., `"G# major"`).
    */
   public static parse(name: string): Key {
     const { root, mode } = parseKeyParts(name);

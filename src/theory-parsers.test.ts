@@ -174,6 +174,12 @@ describe('Chord.parse', () => {
   it('throws TypeError for unknown input', () => {
     expect(() => Chord.parse('Hm')).toThrow(TypeError);
   });
+
+  it('throws TypeError for non-chord-tone slash bass (Dm7/G)', () => {
+    // G is not a tone of Dm7 (D, F, A, C). Slash chords are inversion-only
+    // by design — pedal-point and polychord slashes are out of scope for #29.
+    expect(() => Chord.parse('Dm7/G')).toThrow(TypeError);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -193,6 +199,33 @@ describe('chord round-trip', () => {
       expect(reparsed.inversionIndex).toBe(original.inversionIndex);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Round-trip tests: parseScaleName(formatScale(scale)) produces equal scale
+// ---------------------------------------------------------------------------
+
+describe('scale round-trip', () => {
+  it('round-trips C naturalMinor', () => {
+    const original = Scale.create('C', 'naturalMinor');
+    const reparsed = parseScaleName(formatScale(original));
+    expect(reparsed.root.note).toBe(original.root.note);
+    expect(reparsed.type).toBe(original.type);
+  });
+
+  it('round-trips F# melodicMinor', () => {
+    const original = Scale.create('F#', 'melodicMinor');
+    const reparsed = parseScaleName(formatScale(original));
+    expect(reparsed.root.note).toBe(original.root.note);
+    expect(reparsed.type).toBe(original.type);
+  });
+
+  it('round-trips C diminished', () => {
+    const original = Scale.create('C', 'diminished');
+    const reparsed = parseScaleName(formatScale(original));
+    expect(reparsed.root.note).toBe(original.root.note);
+    expect(reparsed.type).toBe(original.type);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -169,11 +169,18 @@ export class Chord {
   /**
    * Parses a chord name string into a {@link Chord}.
    *
-   * Accepted formats include `"Cmaj7"`, `"Am"`, `"Cmaj7/E"`, and `"C7b9/G"`.
+   * Accepted formats include `"Cmaj7"`, `"Am"`, `"Cmaj7/E"` (first inversion
+   * — E is a chord tone of Cmaj7).
+   *
+   * Slash chords are parsed as inversions: the bass note must already be
+   * present as a chord tone. Non-chord-tone pedal-point and polychord slashes
+   * (e.g., `"Dm7/G"` where G is not in Dm7) are not supported and will throw.
    *
    * @param name The chord name string to parse.
    * @returns The parsed chord.
-   * @throws {TypeError} When the root, suffix, or slash bass note is unrecognized.
+   * @throws {TypeError} When the root or suffix is unrecognized, the slash bass
+   *   note is not a valid note name, or the slash bass note is not a chord tone
+   *   (slash chords are parsed as inversions only).
    */
   public static parse(name: string): Chord {
     const { root, suffix, symbol, bass } = parseChordParts(name);
@@ -183,7 +190,7 @@ export class Chord {
         return chord.slash(bass);
       } catch {
         throw new TypeError(
-          `Bass note "${bass}" is not a chord tone of ${root}${symbol}. In chord name "${name.trim()}".`,
+          `Bass note "${bass}" is not a chord tone of ${root}${symbol} — slash chords are parsed as inversions and the bass must be a chord tone. In chord name "${name.trim()}".`,
         );
       }
     }

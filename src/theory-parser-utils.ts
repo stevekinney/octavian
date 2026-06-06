@@ -106,7 +106,10 @@ export type ParsedChordParts = {
 
 function parseBassNote(bassString: string, context: string): NoteName {
   const bassResult = splitLeadingRoot(bassString.trim());
-  if (!bassResult || bassResult.rest !== '' || !isNoteName(bassResult.root)) {
+  // `splitLeadingRoot` already returns a typed `NoteName` for all A–G roots,
+  // so the `isNoteName` guard is unreachable: if `bassResult` is non-null and
+  // `rest` is empty, `bassResult.root` is always a valid `NoteName`.
+  if (!bassResult || bassResult.rest !== '') {
     throw new TypeError(`Unsupported bass note in slash chord: "${bassString}". ${context}`);
   }
   return bassResult.root;

@@ -1,7 +1,6 @@
 import { Chord } from './chord.js';
 import { Key } from './key.js';
 import { Scale } from './scale.js';
-import { parseChordParts, parseKeyParts, parseScaleParts } from './theory-parser-utils.js';
 
 // ---------------------------------------------------------------------------
 // Chord parsing
@@ -14,26 +13,20 @@ import { parseChordParts, parseKeyParts, parseScaleParts } from './theory-parser
  * - `"C"` — C major triad
  * - `"Am"` — A minor triad
  * - `"Cmaj7"` — C major seventh chord
- * - `"Cmaj7/E"` — C major seventh over E (first inversion)
- * - `"C7b9/G"` — C dominant-seventh flat-nine over G
+ * - `"Cmaj7/E"` — C major seventh over E (first inversion; E is a chord tone)
+ *
+ * Slash chords are parsed as inversions: the bass note must be a chord tone
+ * already present in the chord. Non-chord-tone pedal-point and polychord
+ * slashes (e.g., `"Dm7/G"`) are not supported and will throw.
  *
  * @param name The chord name string to parse.
  * @returns The parsed chord.
- * @throws {TypeError} When the root, suffix, or slash bass note is unrecognized.
+ * @throws {TypeError} When the root or suffix is unrecognized, the slash bass
+ *   note is not a valid note name, or the slash bass note is not a chord tone
+ *   (slash chords are parsed as inversions only).
  */
 export function parseChordName(name: string): Chord {
-  const { root, suffix, symbol, bass } = parseChordParts(name);
-  const chord = Chord.create(root, suffix);
-  if (bass !== null) {
-    try {
-      return chord.slash(bass);
-    } catch {
-      throw new TypeError(
-        `Bass note "${bass}" is not a chord tone of ${root}${symbol}. In chord name "${name.trim()}".`,
-      );
-    }
-  }
-  return chord;
+  return Chord.parse(name);
 }
 
 // ---------------------------------------------------------------------------
@@ -54,8 +47,7 @@ export function parseChordName(name: string): Chord {
  * @throws {TypeError} When the root or scale type is unrecognized.
  */
 export function parseScaleName(name: string): Scale {
-  const { root, type } = parseScaleParts(name);
-  return Scale.create(root, type);
+  return Scale.parse(name);
 }
 
 // ---------------------------------------------------------------------------
@@ -72,11 +64,12 @@ export function parseScaleName(name: string): Scale {
  *
  * @param name The key name string to parse.
  * @returns The parsed key.
- * @throws {TypeError} When the tonic or mode is unrecognized.
+ * @throws {TypeError} When the tonic or mode is unrecognized, or the
+ *   tonic/mode combination is a theoretical key not supported by
+ *   {@link Key.create} (e.g., `"G# major"`).
  */
 export function parseKeyName(name: string): Key {
-  const { root, mode } = parseKeyParts(name);
-  return Key.create(root, mode);
+  return Key.parse(name);
 }
 
 // ---------------------------------------------------------------------------
