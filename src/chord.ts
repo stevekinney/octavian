@@ -25,6 +25,7 @@ import {
 import { INTERVALS, resolveInterval, type Interval } from './intervals.js';
 import { isInterval } from './music-utilities.js';
 import { Note, type NoteLike, type SerializedNote } from './note.js';
+import { parseChordParts } from './theory-parser-utils.js';
 
 /**
  * A normalized voicing for a chord.
@@ -163,6 +164,30 @@ export class Chord {
    */
   public static create(note: NoteLike, chord: ChordSuffix | ChordSymbol): Chord {
     return new Chord(note, chord);
+  }
+
+  /**
+   * Parses a chord name string into a {@link Chord}.
+   *
+   * Accepted formats include `"Cmaj7"`, `"Am"`, `"Cmaj7/E"`, and `"C7b9/G"`.
+   *
+   * @param name The chord name string to parse.
+   * @returns The parsed chord.
+   * @throws {TypeError} When the root, suffix, or slash bass note is unrecognized.
+   */
+  public static parse(name: string): Chord {
+    const { root, suffix, symbol, bass } = parseChordParts(name);
+    const chord = new Chord(root, suffix);
+    if (bass !== null) {
+      try {
+        return chord.slash(bass);
+      } catch {
+        throw new TypeError(
+          `Bass note "${bass}" is not a chord tone of ${root}${symbol}. In chord name "${name.trim()}".`,
+        );
+      }
+    }
+    return chord;
   }
 
   /**

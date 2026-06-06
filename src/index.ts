@@ -184,3 +184,13 @@ export type {
 
 export { STANDARD_TUNING } from './tuning.js';
 export type { Tuning } from './tuning.js';
+
+export {
+  formatChord,
+  formatKey,
+  formatScale,
+  parseChordName,
+  parseKeyName,
+  parseScaleName,
+} from './theory-parsers.js';
+export type { FormatChordOptions } from './theory-parsers.js';
