@@ -184,3 +184,39 @@ export type {
 
 export { STANDARD_TUNING } from './tuning.js';
 export type { Tuning } from './tuning.js';
+
+export {
+  ZERO,
+  ONE,
+  addRationals,
+  subtractRationals,
+  multiplyRationals,
+  divideRationals,
+  rationalsEqual,
+  compareRationals,
+  createRational,
+  formatRational,
+  isZeroRational,
+  rationalToNumber,
+} from './rational.js';
+export type { Rational } from './rational.js';
+
+export { Duration, totalDurationFraction } from './duration.js';
+export type {
+  DurationOptions,
+  DurationValue,
+  SerializedDuration,
+  TupletRatio,
+} from './duration.js';
+
+export { Meter, metersEqual } from './meter.js';
+export type { MeterType, SerializedMeter } from './meter.js';
+
+export { RhythmPattern, compareRhythm } from './rhythm.js';
+export type {
+  GridPosition,
+  RhythmComparison,
+  RhythmEvent,
+  SwingDescriptor,
+  SwingOffset,
+} from './rhythm.js';
