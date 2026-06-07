@@ -356,8 +356,7 @@ describe('highlightGroupsForChordOrScale', () => {
   });
 
   it('normalizes out-of-range pitch-class numbers into 0..11', () => {
-    // Negative and >=12 inputs must wrap, not throw. JS `%` is sign-preserving,
-    // so -1 % 12 === -1; the implementation normalizes via ((n % 12) + 12) % 12.
+    // Negative and >=12 pitch-class numbers must wrap into 0..11, not throw.
     expect(highlightGroupsForChordOrScale(-1, range)[0]?.chromaticIndex).toBe(11); // -1 → B
     expect(highlightGroupsForChordOrScale(12, range)[0]?.chromaticIndex).toBe(0); // 12 → C
     expect(highlightGroupsForChordOrScale(13, range)[0]?.chromaticIndex).toBe(1); // 13 → C#
