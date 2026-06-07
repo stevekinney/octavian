@@ -334,3 +334,24 @@ export type {
   MotifOccurrence,
   SerializedMelody,
 } from './melody.js';
+
+export {
+  Progression,
+  analyzeProgression,
+  detectModulations,
+  normalizeJazzSuffix,
+  suggestContinuations,
+} from './progression.js';
+export type {
+  ModulationCandidate,
+  ProgressionAnalysis,
+  ProgressionContinuation,
+  ProgressionPattern,
+  ResolvedProgression,
+} from './progression.js';
+
+export {
+  commonProgressions,
+  commonProgressionName,
+  findCommonProgression,
+} from './common-progressions.js';

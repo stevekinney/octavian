@@ -182,6 +182,14 @@ const EXPECTED_EXPORTS = [
   'totalDurationFraction',
   'toWrittenPitch',
   'tunedScale',
+  'analyzeProgression',
+  'commonProgressionName',
+  'commonProgressions',
+  'detectModulations',
+  'findCommonProgression',
+  'normalizeJazzSuffix',
+  'Progression',
+  'suggestContinuations',
 ].toSorted((a, b) => a.localeCompare(b));
 
 describe('public API contract', () => {
