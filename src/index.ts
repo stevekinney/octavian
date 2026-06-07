@@ -208,8 +208,6 @@ export type {
 } from './piano-keyboard.js';
 
 export {
-  ZERO,
-  ONE,
   addRationals,
   subtractRationals,
   multiplyRationals,

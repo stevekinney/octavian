@@ -97,7 +97,6 @@
   "noteNameToMidi",
   "noteToFrequency",
   "OCTAVES",
-  "ONE",
   "parseChordName",
   "parseFiguredBass",
   "parseKeyName",
@@ -126,6 +125,5 @@
   "STANDARD_TUNING",
   "subtractRationals",
   "totalDurationFraction",
-  "tunedScale",
-  "ZERO"
+  "tunedScale"
 ]

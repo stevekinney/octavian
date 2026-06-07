@@ -131,7 +131,6 @@ const EXPECTED_EXPORTS = [
   'noteNameToMidi',
   'noteToFrequency',
   'OCTAVES',
-  'ONE',
   'parseChordName',
   'parseFiguredBass',
   'parseKeyName',
@@ -161,7 +160,6 @@ const EXPECTED_EXPORTS = [
   'subtractRationals',
   'totalDurationFraction',
   'tunedScale',
-  'ZERO',
 ].toSorted((a, b) => a.localeCompare(b));
 
 describe('public API contract', () => {
