@@ -279,3 +279,18 @@ export {
   parseScaleName,
 } from './theory-parsers.js';
 export type { FormatChordOptions } from './theory-parsers.js';
+
+export { degreeForNote, noteForDegree } from './scale-degree.js';
+export type {
+  DegreeToken,
+  KeyOrScale,
+  ScaleDegreeAlteration,
+  ScaleDegreeAnalysis,
+  ScaleDegreeNumber,
+} from './scale-degree.js';
+
+export { formatNoteName, parseNoteNameLabel } from './note-naming.js';
+export type { NoteNamingSystem } from './note-naming.js';
+
+export { formatSolfege, parseSolfege } from './solfege.js';
+export type { SolfegeSystem } from './solfege.js';
