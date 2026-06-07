@@ -279,3 +279,13 @@ export {
   parseScaleName,
 } from './theory-parsers.js';
 export type { FormatChordOptions } from './theory-parsers.js';
+
+export { Melody, compareMelodicContour, findMotifOccurrences } from './melody.js';
+export type {
+  CompareMelodicContourOptions,
+  ContourComparison,
+  FindMotifOptions,
+  MelodicDirection,
+  MotifOccurrence,
+  SerializedMelody,
+} from './melody.js';
