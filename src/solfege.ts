@@ -1,6 +1,8 @@
+import type { ChromaticIndex } from './branded-types.js';
 import { Key } from './key.js';
 import { Note } from './note.js';
 import type { NoteLike } from './note.js';
+import { normalizeChromaticIndex } from './note-spellings.js';
 import type { Scale } from './scale.js';
 import { degreeForNote, noteForDegree } from './scale-degree.js';
 import type { ScaleDegreeAnalysis, ScaleDegreeNumber } from './scale-degree.js';
@@ -128,25 +130,21 @@ const MAJOR_SCALE_SEMITONES: Record<ScaleDegreeNumber, number> = {
 
 /**
  * Computes the solfège alteration relative to the major-scale expected semitone.
- * Returns -1 (lowered), 0 (diatonic/major), or 1 (raised).
- * For double alterations, returns the offset as-is.
+ * Returns a signed offset in semitones: 0 (diatonic/major), positive for raised
+ * (♯, ×), negative for lowered (♭, ♭♭, ♭♭♭).
  */
 function majorRelativeOffset(degree: ScaleDegreeNumber, semitoneFromTonic: number): number {
   const majorSemitone = MAJOR_SCALE_SEMITONES[degree];
   const diff = (((semitoneFromTonic - majorSemitone) % 12) + 12) % 12;
-  // Handle wrap-around: diff 11 = -1 (flat), diff 10 = -2 (double flat)
-  if (diff === 0) return 0;
-  if (diff === 1) return 1;
-  if (diff === 11) return -1;
-  if (diff === 2) return 2;
-  if (diff === 10) return -2;
-  return diff;
+  // Map the 0..11 wrap into the signed range -6..+5 so lowered degrees read as
+  // negative offsets: diff 11 = -1 (♭), 10 = -2 (♭♭), 9 = -3 (♭♭♭), etc.
+  return diff > 6 ? diff - 12 : diff;
 }
 
-function semitoneForSyllableInfo(info: SyllableInfo): number {
+function semitoneForSyllableInfo(info: SyllableInfo): ChromaticIndex {
   const major = MAJOR_SCALE_SEMITONES[info.degree];
   const offset = info.alteration === '#' ? 1 : info.alteration === 'b' ? -1 : 0;
-  return (((major + offset) % 12) + 12) % 12;
+  return normalizeChromaticIndex(major + offset);
 }
 
 // ---------------------------------------------------------------------------

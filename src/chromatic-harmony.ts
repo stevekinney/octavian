@@ -251,7 +251,15 @@ function diatonicRomanNumeralForDegree(key: Key, i: number): RomanNumeral {
   const diatonicChord = diatonicChords[i]!;
   // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
   const quality = qualityForSuffix(diatonicChord.suffix)!;
-  return unsafeRomanNumeralFromParts(degree, quality, '5/3', undefined, undefined);
+  // The applied-target denominator names the *tonicized* chord. In a minor
+  // key the functional dominant is the raised-leading-tone MAJOR dominant
+  // (harmonic minor), so the dominant degree is tonicized toward V, not the
+  // natural-minor v. Render degree 5 as major in minor keys so the secondary
+  // dominant of the dominant reads "V/V", not "V/v". (V/iv, V/ii, etc. keep
+  // their genuine minor target quality.)
+  const targetQuality: RomanNumeralQuality =
+    key.mode === 'minor' && degree === 5 ? 'major' : quality;
+  return unsafeRomanNumeralFromParts(degree, targetQuality, '5/3', undefined, undefined);
 }
 
 const DEGREES_BY_INDEX: readonly RomanNumeralDegree[] = [1, 2, 3, 4, 5, 6, 7];

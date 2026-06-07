@@ -279,6 +279,17 @@ describe('formatSolfege — double alterations', () => {
     // G### = degree 5, semitone 10. Major[5]=7. offset = (10-7)%12 = 3.
     expect(formatSolfege('G###', 'movableDo', cMajor)).toBe('sol(+3)');
   });
+
+  it('Bbbb in C major → ti(-3) (triple-flat seventh — lowered, not +9)', () => {
+    // Regression: a triple-flat is -3 semitones. Raw (semitone - major) % 12
+    // = 9; the signed mapping must read that as -3, not +9.
+    // Bbbb = degree 7, semitone 8. Major[7]=11. (8-11+12)%12 = 9 → -3.
+    expect(formatSolfege('Bbbb', 'movableDo', cMajor)).toBe('ti(-3)');
+  });
+
+  it('fixedDo: Bbbb → ti(-3)', () => {
+    expect(formatSolfege('Bbbb', 'fixedDo')).toBe('ti(-3)');
+  });
 });
 
 // ---------------------------------------------------------------------------

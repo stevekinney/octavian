@@ -201,6 +201,3 @@ function parseFixedDoLabel(label: string): NoteName {
   }
   throw new TypeError(`Unrecognized fixed-do label: "${label}".`);
 }
-
-// Export for use in solfege.ts
-export { NATURAL_TO_FIXED_DO };

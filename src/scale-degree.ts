@@ -1,3 +1,4 @@
+import type { ChromaticIndex } from './branded-types.js';
 import type { Key } from './key.js';
 import { Note, type NoteLike } from './note.js';
 import type { Accidental, Natural } from './note-spellings.js';
@@ -7,6 +8,7 @@ import {
   accidentalFromNoteName,
   buildNoteName,
   naturalFromNoteName,
+  normalizeChromaticIndex,
 } from './note-spellings.js';
 import type { Scale } from './scale.js';
 
@@ -39,7 +41,7 @@ export type ScaleDegreeAlteration = Accidental;
 export type ScaleDegreeAnalysis = {
   readonly degree: ScaleDegreeNumber;
   readonly alteration: ScaleDegreeAlteration;
-  readonly semitoneFromTonic: number;
+  readonly semitoneFromTonic: ChromaticIndex;
 };
 
 /**
@@ -202,8 +204,8 @@ export function degreeForNote(context: KeyOrScale, value: NoteLike): ScaleDegree
       );
   }
 
-  // semitoneFromTonic: chromatic distance upward (mod 12)
-  const semitoneFromTonic = (((note.chromaticIndex - tonic.chromaticIndex) % 12) + 12) % 12;
+  // semitoneFromTonic: chromatic distance upward (mod 12), typed 0..11.
+  const semitoneFromTonic = normalizeChromaticIndex(note.chromaticIndex - tonic.chromaticIndex);
 
   return { degree, alteration, semitoneFromTonic };
 }

@@ -97,7 +97,9 @@ let createMelody: (notes: readonly Note[]) => Melody;
 
 // ---------------------------------------------------------------------------
 // Semitone-to-interval mapping
-// Covers 0..21 semitones; beyond 21 falls back to the simple (mod-12) form.
+// Covers 0..21 semitones (unison through major thirteenth, the widest named
+// interval in the INTERVALS catalog). Spans beyond 21 throw — callers needing
+// arbitrarily wide leaps use semitoneContour() (raw signed semitones) instead.
 // ---------------------------------------------------------------------------
 
 const SEMITONE_TO_INTERVAL: Readonly<Record<number, Interval>> = {
@@ -272,7 +274,14 @@ export class Melody {
    * Each name reflects the absolute (unsigned) distance regardless of direction.
    * Use {@link semitoneContour} for the signed directed view.
    *
+   * Named intervals span unison through a major thirteenth (0..21 semitones). A
+   * single consecutive leap wider than 21 semitones (e.g. a two-octave jump such
+   * as C4→C6) has no named interval and throws; use {@link semitoneContour} for
+   * melodies with leaps that wide. Octave-crossing melodies whose individual
+   * steps stay within a major thirteenth are fully supported.
+   *
    * @returns The consecutive interval names.
+   * @throws {RangeError} When a consecutive leap exceeds 21 semitones.
    */
   public intervals(): readonly Interval[] {
     if (this.#notes.length < 2) return [];

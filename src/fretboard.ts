@@ -6,14 +6,19 @@ import { Scale } from './scale.js';
 /**
  * A stringed-instrument tuning, defined by its open-string pitches.
  *
- * Strings are ordered **low-to-high pitch**: `strings[0]` is the lowest-pitched
- * string and `strings[strings.length - 1]` is the highest. This matches the
- * conventional tablature reading direction (left = lowest string).
+ * Strings are indexed from `strings[0]`. For standard instruments this is by
+ * convention low-to-high pitch (`strings[0]` lowest), matching tablature
+ * reading direction. The ordering is a convention, not an invariant — reentrant
+ * tunings (e.g. a high-G ukulele `['G4', 'C4', 'E4', 'A4']`) are supported, and
+ * `stringIndex` simply refers to position in this array regardless of pitch.
  *
  * Each element must be a value accepted by {@link Note.create}: a note name with
- * octave such as `'E2'`, a {@link Note} instance, or any other {@link NoteLike}.
- * The field is typed as `readonly string[]` so that string literals like `'E2'`
- * can be assigned directly; invalid entries are caught at runtime by `Note.create`.
+ * octave such as `'E2'`, a {@link Note} instance, or a serialized note. The field
+ * is typed `readonly string[]` rather than `readonly NoteLike[]` because
+ * `NoteLike`'s `` `${NoteName}${Octave}` `` member uses a *branded* `Octave`
+ * type, so a plain string literal like `'E2'` is not assignable to `NoteLike` at
+ * compile time. `string` lets callers write `['E2', 'A2', …]` directly; invalid
+ * entries are rejected at runtime by `Note.create`.
  *
  * The optional `name` field is a human-readable label for the tuning (e.g. `'Standard'`).
  */
