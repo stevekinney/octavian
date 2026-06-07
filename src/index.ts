@@ -167,6 +167,23 @@ export type { NoteLike, SerializedNote } from './note.js';
 export { randomNote, randomInterval } from './random.js';
 export type { RandomFunction, RandomNoteOptions, RandomIntervalOptions } from './random.js';
 
+export {
+  randomChord,
+  randomRomanNumeral,
+  randomRomanNumeralSequence,
+  randomScale,
+  randomScaleDegree,
+} from './random-theory.js';
+export type {
+  RandomChordOptions,
+  RandomRomanNumeralOptions,
+  RandomRomanNumeralSequenceOptions,
+  RandomScaleDegreeOptions,
+  RandomScaleOptions,
+} from './random-theory.js';
+
+export { createSeededRandom } from './seeded-random.js';
+
 export { Chord } from './chord.js';
 export type { ChordVoicing, SerializedChord } from './chord.js';
 
