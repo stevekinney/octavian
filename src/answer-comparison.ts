@@ -171,12 +171,13 @@ export function compareIntervals(target: Interval, answer: Interval): IntervalCo
     relationship = 'enharmonic-equivalent';
   } else if (inversionMatch) {
     relationship = 'inversion-differs';
-  } else if (Math.abs(semitoneDifference) <= 2) {
+  } else if (semitoneDifference <= 2) {
     relationship = 'near-miss';
-  } else if (qualityMatch) {
-    relationship = 'different';
-  } else {
+  } else if (degreeDifference === 0 && !qualityMatch) {
+    // Same diatonic degree but different quality (e.g. M3 vs A3)
     relationship = 'quality-differs';
+  } else {
+    relationship = 'different';
   }
 
   return {

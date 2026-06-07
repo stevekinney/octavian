@@ -132,18 +132,32 @@ describe('compareIntervals', () => {
     expect(result.relationship).toBe('different');
   });
 
-  it('minorThird vs majorSixth → quality differs, large semitone distance → quality-differs', () => {
-    // minorThird: 3 semitones, minor quality, degree 3
-    // majorSixth: 9 semitones, major quality, degree 6
-    // Not near-miss (diff 6), check inversion: 3+9=12 but 3+6=9 → IS an inversion → inversion-differs
-    // So use a non-inversion pair: minorThird vs majorSeventh
-    // minorThird: 3 sem, degree 3; majorSeventh: 11 sem, degree 7 → 3+11≠12 → not inversion
-    const result = compareIntervals('minorThird', 'majorSeventh');
+  it('diminishedThird vs augmentedThird → same degree, different quality → quality-differs', () => {
+    // diminishedThird: 2 semitones, degree 3, diminished quality
+    // augmentedThird: 5 semitones, degree 3, augmented quality
+    // Same degree, different quality, semitoneDiff = 3 > 2, not inversions
+    const result = compareIntervals('diminishedThird', 'augmentedThird');
     expect(result.qualityMatch).toBe(false);
-    expect(Math.abs(result.semitoneDifference)).toBeGreaterThan(2);
-    // Not inversion: 3+11=14≠12
+    expect(result.degreeDifference).toBe(0);
+    expect(result.semitoneDifference).toBe(3);
     expect(result.inversionMatch).toBe(false);
     expect(result.relationship).toBe('quality-differs');
+  });
+
+  it('minorThird vs majorSeventh → different degree and quality → different', () => {
+    // minorThird: 3 semitones, degree 3; majorSeventh: 11 semitones, degree 7
+    // Different degrees → not quality-differs, too far apart → different
+    const result = compareIntervals('minorThird', 'majorSeventh');
+    expect(result.qualityMatch).toBe(false);
+    expect(result.degreeDifference).toBe(4);
+    expect(result.inversionMatch).toBe(false);
+    expect(result.relationship).toBe('different');
+  });
+
+  it('diminishedSecond vs perfectUnison → invertInterval throws, inversionMatch is false', () => {
+    // diminishedSecond has no defined inversion in the catalog; the try/catch guard returns false
+    const result = compareIntervals('diminishedSecond', 'perfectUnison');
+    expect(result.inversionMatch).toBe(false);
   });
 
   it('property: same interval is always correct', () => {
