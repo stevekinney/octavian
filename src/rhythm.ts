@@ -85,8 +85,12 @@ export type GridPosition = {
   /** The duration of this event. */
   readonly duration: Duration;
   /**
-   * The beat number (zero-based) this onset falls on, measured in beat units of the meter.
-   * Fractional when the onset is between beats.
+   * The grid position (zero-based) this onset falls on, measured in the grid
+   * unit used to build it: `onset / subdivision`, where `subdivision` is the
+   * value passed to {@link RhythmPattern.subdivisionGrid} (defaulting to the
+   * meter's beat unit). With the default subdivision this is the beat number;
+   * with a custom subdivision it counts that subdivision instead. Fractional
+   * when the onset falls between grid positions.
    */
   readonly beatPosition: Rational;
 };

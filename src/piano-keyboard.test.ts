@@ -355,6 +355,15 @@ describe('highlightGroupsForChordOrScale', () => {
     expect(groups[0]?.chromaticIndex).toBe(0);
   });
 
+  it('normalizes out-of-range pitch-class numbers into 0..11', () => {
+    // Negative and >=12 inputs must wrap, not throw. JS `%` is sign-preserving,
+    // so -1 % 12 === -1; the implementation normalizes via ((n % 12) + 12) % 12.
+    expect(highlightGroupsForChordOrScale(-1, range)[0]?.chromaticIndex).toBe(11); // -1 → B
+    expect(highlightGroupsForChordOrScale(12, range)[0]?.chromaticIndex).toBe(0); // 12 → C
+    expect(highlightGroupsForChordOrScale(13, range)[0]?.chromaticIndex).toBe(1); // 13 → C#
+    expect(highlightGroupsForChordOrScale(-13, range)[0]?.chromaticIndex).toBe(11); // -13 → B
+  });
+
   it('omits groups whose pitch class is not in the range', () => {
     // Use a tiny range (C4 only) and a chord with notes outside the range
     const tinyRange = keyboardRange(60, 60); // only C4

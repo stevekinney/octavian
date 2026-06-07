@@ -321,8 +321,10 @@ function chromaticIndexesForTarget(target: HighlightTarget): readonly ChromaticI
   }
 
   if (typeof target === 'number') {
-    // treat as a pitch-class number (0..11)
-    return Object.freeze([createChromaticIndex(target % 12)]);
+    // Treat as a pitch-class number. Normalize into 0..11 first: JS `%` is
+    // sign-preserving (e.g. `-1 % 12 === -1`), so a bare modulo would throw
+    // for negative inputs. `((n % 12) + 12) % 12` maps any integer to 0..11.
+    return Object.freeze([createChromaticIndex(((target % 12) + 12) % 12)]);
   }
 
   // NoteLike / Note
