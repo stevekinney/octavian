@@ -154,7 +154,6 @@ const EXPECTED_EXPORTS = [
   'NATURAL_CHROMATIC_INDEXES',
   'NATURALS',
   'normalizeChromaticIndex',
-  'normalizeJazzSuffix',
   'Note',
   'noteAtFret',
   'noteForDegree',

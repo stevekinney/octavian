@@ -33,12 +33,19 @@ describe('createSeededRandom', () => {
       }
     });
 
-    it('produces a fixed known value for seed 42', () => {
+    it('produces a fixed known first value for seed 0 (mulberry32 golden output)', () => {
+      // These are the exact outputs of mulberry32(0) — any algorithm regression breaks this.
+      const rng = createSeededRandom(0);
+      expect(rng()).toBe(0.26642920868471265);
+      expect(rng()).toBe(0.0003297457005828619);
+      expect(rng()).toBe(0.2232720274478197);
+    });
+
+    it('produces a fixed known first value for seed 42 (mulberry32 golden output)', () => {
       const rng = createSeededRandom(42);
-      const first = rng();
-      // The value should be deterministic — re-creating from the same seed returns the same first value.
-      const rng2 = createSeededRandom(42);
-      expect(rng2()).toBe(first);
+      expect(rng()).toBe(0.6011037519201636);
+      expect(rng()).toBe(0.44829055899754167);
+      expect(rng()).toBe(0.8524657934904099);
     });
   });
 

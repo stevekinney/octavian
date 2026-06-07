@@ -433,32 +433,56 @@ describe('compareRomanNumerals', () => {
 // ---------------------------------------------------------------------------
 
 describe('compareMusicAnswer', () => {
-  it('dispatches Note comparison', () => {
+  it('dispatches Note comparison and returns kind:"note"', () => {
     const result = compareMusicAnswer(Note.create('C4'), Note.create('C4'));
     expect(result.correct).toBe(true);
+    expect((result as { kind: string }).kind).toBe('note');
+    // Note-distinctive field
+    expect('enharmonicMatch' in result).toBe(true);
   });
 
-  it('dispatches Chord comparison', () => {
+  it('dispatches Note instance — does NOT treat a note-name string as a Note', () => {
+    // The dispatcher only accepts Note instances; bare strings route to compareIntervals.
+    // This regression test ensures note-name strings won't silently dispatch as notes.
+    const note = Note.create('C4');
+    const result = compareMusicAnswer(note, Note.create('G4'));
+    expect((result as { kind: string }).kind).toBe('note');
+    expect(result.correct).toBe(false);
+  });
+
+  it('dispatches Chord comparison and returns kind:"chord"', () => {
     const result = compareMusicAnswer(Chord.create('C', 'major'), Chord.create('C', 'major'));
     expect(result.correct).toBe(true);
+    expect((result as { kind: string }).kind).toBe('chord');
+    // Chord-distinctive field
+    expect('suffixMatch' in result).toBe(true);
   });
 
-  it('dispatches Interval comparison (strings)', () => {
+  it('dispatches Interval comparison (strings) and returns kind:"interval"', () => {
     const result = compareMusicAnswer('perfectFifth', 'perfectFifth');
     expect(result.correct).toBe(true);
+    expect((result as { kind: string }).kind).toBe('interval');
+    // Interval-distinctive field
+    expect('inversionMatch' in result).toBe(true);
   });
 
-  it('dispatches ScaleDegreeAnalysis comparison', () => {
+  it('dispatches ScaleDegreeAnalysis comparison and returns kind:"scale-degree"', () => {
     // Construct analyses directly
     const target = { degree: 3 as const, alteration: 'b' as const, semitoneFromTonic: 3 as const };
     const answer = { degree: 3 as const, alteration: '' as const, semitoneFromTonic: 4 as const };
     const result = compareMusicAnswer(target, answer);
     expect(result.correct).toBe(false);
+    expect((result as { kind: string }).kind).toBe('scale-degree');
+    // ScaleDegree-distinctive field
+    expect('targetLabel' in result).toBe(true);
   });
 
-  it('dispatches RomanNumeral comparison', () => {
+  it('dispatches RomanNumeral comparison and returns kind:"roman-numeral"', () => {
     const result = compareMusicAnswer(RomanNumeral.parse('V'), RomanNumeral.parse('V'));
     expect(result.correct).toBe(true);
+    expect((result as { kind: string }).kind).toBe('roman-numeral');
+    // RomanNumeral-distinctive field
+    expect('qualityMatch' in result).toBe(true);
   });
 
   it('throws TypeError for unsupported target type', () => {
@@ -507,18 +531,18 @@ describe('compareMusicAnswer', () => {
   });
 
   it('error message includes RomanNumeral string when answer is RomanNumeral in wrong context', () => {
-    // Exercises describeValue branch: value instanceof RomanNumeral
+    // Exercises describeValue branch: value instanceof RomanNumeral → uses .toString()
     expect(() =>
       compareMusicAnswer(
         Note.create('C4'),
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
         RomanNumeral.parse('V') as any,
       ),
-    ).toThrow(TypeError);
+    ).toThrow(/compareMusicAnswer: target is a Note but answer is not/);
   });
 
   it('error message uses JSON.stringify when answer is a plain ScaleDegreeAnalysis in wrong context', () => {
-    // Exercises describeValue branch: JSON.stringify path
+    // Exercises describeValue branch: JSON.stringify path for plain objects
     const analysis = { degree: 3 as const, alteration: '' as const, semitoneFromTonic: 4 as const };
     expect(() =>
       compareMusicAnswer(
@@ -526,6 +550,6 @@ describe('compareMusicAnswer', () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
         analysis as any,
       ),
-    ).toThrow(TypeError);
+    ).toThrow(/compareMusicAnswer: target is a Note but answer is not/);
   });
 });

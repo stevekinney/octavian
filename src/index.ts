@@ -356,7 +356,6 @@ export {
   Progression,
   analyzeProgression,
   detectModulations,
-  normalizeJazzSuffix,
   suggestContinuations,
 } from './progression.js';
 export type {

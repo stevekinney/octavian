@@ -253,6 +253,43 @@ const ALL_QUALITIES: readonly RomanNumeralQuality[] = Object.freeze([
 ]);
 
 /**
+ * Diatonic quality for each scale degree (1–7) in major and natural-minor modes.
+ * Index 0 is unused; degrees are 1-based.
+ */
+const DIATONIC_QUALITY: Record<KeySignatureMode, readonly RomanNumeralQuality[]> = {
+  major: [
+    'major', // placeholder for index 0
+    'major', // I
+    'minor', // ii
+    'minor', // iii
+    'major', // IV
+    'major', // V
+    'minor', // vi
+    'diminished', // vii°
+  ] as const,
+  minor: [
+    'minor', // placeholder for index 0
+    'minor', // i
+    'diminished', // ii°
+    'major', // III
+    'minor', // iv
+    'minor', // v
+    'major', // VI
+    'major', // VII
+  ] as const,
+};
+
+/**
+ * Returns the diatonic quality for a given degree and mode.
+ * Degree is always in 1–7 so the lookup is always defined.
+ */
+function diatonicQuality(degree: RomanNumeralDegree, mode: KeySignatureMode): RomanNumeralQuality {
+  // Degree is guaranteed 1–7 (RomanNumeralDegree), array index 0 is a placeholder.
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  return DIATONIC_QUALITY[mode][degree]!;
+}
+
+/**
  * Selects a random {@link RomanNumeral} constrained by degree and quality pools.
  *
  * The returned numeral is always in root position (inversion `'5/3'`), with
@@ -272,15 +309,22 @@ export function randomRomanNumeral(options: RandomRomanNumeralOptions = {}): Rom
     throw new TypeError('randomRomanNumeral: the degree pool is empty.');
   }
 
-  const qualityPool: readonly RomanNumeralQuality[] =
-    options.qualities !== undefined ? options.qualities : ALL_QUALITIES;
-
-  if (qualityPool.length === 0) {
-    throw new TypeError('randomRomanNumeral: the quality pool is empty.');
-  }
-
   const degree = pick(degreePool, random);
-  const quality = pick(qualityPool, random);
+
+  // When an explicit quality pool is given, use it.
+  // When a mode is provided but no explicit qualities, derive quality from mode.
+  // Otherwise fall back to picking from ALL_QUALITIES.
+  let quality: RomanNumeralQuality;
+  if (options.qualities !== undefined) {
+    if (options.qualities.length === 0) {
+      throw new TypeError('randomRomanNumeral: the quality pool is empty.');
+    }
+    quality = pick(options.qualities, random);
+  } else if (options.mode !== undefined) {
+    quality = diatonicQuality(degree, options.mode);
+  } else {
+    quality = pick(ALL_QUALITIES, random);
+  }
 
   return RomanNumeral.fromJSON({ degree, quality, inversion: '5/3' });
 }

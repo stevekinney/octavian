@@ -97,7 +97,9 @@ const COMMON_PROGRESSIONS_FROZEN: readonly Progression[] = Object.freeze(
  * match), or `undefined` when no entry matches.
  */
 export function findCommonProgression(name: string): Progression | undefined {
-  const lower = name.toLowerCase();
+  const trimmed = name.trim();
+  if (trimmed.length === 0) return undefined;
+  const lower = trimmed.toLowerCase();
   const index = CANONICAL_PROGRESSIONS.findIndex((entry) =>
     entry.name.toLowerCase().includes(lower),
   );

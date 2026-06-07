@@ -50,6 +50,8 @@ export type ComparisonRelationship =
  * The result of comparing two notes.
  */
 export type NoteComparison = {
+  /** Discriminant tag identifying the comparison kind. */
+  readonly kind: 'note';
   /** True when the notes share the same spelling and octave. */
   readonly correct: boolean;
   /** True when the notes share the same MIDI pitch (enharmonic). */
@@ -100,6 +102,7 @@ export function compareNotes(target: NoteLike, answer: NoteLike): NoteComparison
   }
 
   return {
+    kind: 'note',
     correct,
     equivalent,
     relationship,
@@ -118,6 +121,8 @@ export function compareNotes(target: NoteLike, answer: NoteLike): NoteComparison
  * The result of comparing two intervals.
  */
 export type IntervalComparison = {
+  /** Discriminant tag identifying the comparison kind. */
+  readonly kind: 'interval';
   /** True when both intervals are the canonical same interval. */
   readonly correct: boolean;
   /** True when both intervals span the same number of semitones (enharmonic intervals). */
@@ -181,6 +186,7 @@ export function compareIntervals(target: Interval, answer: Interval): IntervalCo
   }
 
   return {
+    kind: 'interval',
     correct,
     equivalent,
     relationship,
@@ -199,6 +205,8 @@ export function compareIntervals(target: Interval, answer: Interval): IntervalCo
  * The result of comparing two scale degrees within a context.
  */
 export type ScaleDegreeComparison = {
+  /** Discriminant tag identifying the comparison kind. */
+  readonly kind: 'scale-degree';
   /** True when degree number AND alteration match exactly. */
   readonly correct: boolean;
   /** True when the notes are enharmonically equivalent (same chromatic index from tonic). */
@@ -258,6 +266,7 @@ function compareAnalyses(
   }
 
   return {
+    kind: 'scale-degree',
     correct,
     equivalent,
     relationship,
@@ -301,6 +310,8 @@ export function compareScaleDegrees(
  * The result of comparing two Roman numerals.
  */
 export type RomanNumeralComparison = {
+  /** Discriminant tag identifying the comparison kind. */
+  readonly kind: 'roman-numeral';
   /** True when all fields match exactly (degree, quality, inversion, alteration, applied). */
   readonly correct: boolean;
   /** True when the degree and quality match (ignoring inversion and applied). */
@@ -347,7 +358,15 @@ export function compareRomanNumerals(
     relationship = 'different';
   }
 
-  return { correct, equivalent, relationship, degreeDifference, inversionMatch, qualityMatch };
+  return {
+    kind: 'roman-numeral',
+    correct,
+    equivalent,
+    relationship,
+    degreeDifference,
+    inversionMatch,
+    qualityMatch,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -366,14 +385,12 @@ export type AnswerComparison =
 
 /**
  * The accepted target/answer types for {@link compareMusicAnswer}.
+ *
+ * Strings are accepted only as `Interval` values (canonical interval names or
+ * aliases resolved via {@link resolveInterval}). Raw note-name strings are NOT
+ * accepted here — pass a {@link Note} instance instead to avoid ambiguous dispatch.
  */
-export type MusicAnswerTarget =
-  | Note
-  | NoteLike
-  | Interval
-  | Chord
-  | ScaleDegreeAnalysis
-  | RomanNumeral;
+export type MusicAnswerTarget = Note | Interval | Chord | ScaleDegreeAnalysis | RomanNumeral;
 
 function describeValue(value: MusicAnswerTarget): string {
   if (typeof value === 'string') return value;

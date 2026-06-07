@@ -311,14 +311,27 @@ describe('analyzeProgression', () => {
     expect(analysis.numerals[2]!.quality).toBe('major');
   });
 
-  it('returns non-null for borrowed chords (bIII in C major)', () => {
+  it('identifies borrowed bIII (Eb major in C major) as degree 3 major (♭III)', () => {
     const key = Key.create('C', 'major');
-    // Eb major is borrowed (bIII), identifyChromaticRomanNumeral covers it
     const ebMaj = Chord.create('Eb', 'major');
     const analysis = analyzeProgression(key, [ebMaj]);
     expect(analysis.numerals).toHaveLength(1);
-    // May be non-null if chromatic harmony recognizes it; just ensure no crash
-    expect(Array.isArray(analysis.numerals)).toBe(true);
+    const numeral = analysis.numerals[0]!;
+    expect(numeral.degree).toBe(3);
+    expect(numeral.quality).toBe('major');
+    expect(numeral.toString()).toBe('♭III');
+  });
+
+  it('identifies concrete ii7–V7–I in C major with exact numeral strings', () => {
+    const key = Key.create('C', 'major');
+    const analysis = analyzeProgression(key, [
+      Chord.create('D', 'minorSeventh'),
+      Chord.create('G', 'dominantSeventh'),
+      Chord.create('C', 'major'),
+    ]);
+    expect(analysis.numerals.map((n) => n.toString())).toEqual(['ii⁷', 'V⁷', 'I']);
+    const cadenceTypes = analysis.cadences.map((c) => c.type);
+    expect(cadenceTypes).toContain('authentic-perfect');
   });
 
   it('analysis result has key, numerals, cadences, patterns', () => {

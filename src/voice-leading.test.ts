@@ -164,12 +164,17 @@ describe('findParallelPerfects', () => {
     expect(() => findParallelPerfects(from, to)).toThrow(RangeError);
   });
 
-  it('works with ChordVoicing inputs', () => {
+  it('works with ChordVoicing inputs and returns a typed array', () => {
     const cMaj = Chord.create('C4', 'major');
     const gMaj = Chord.create('G4', 'major');
-    // Chord.notes are in root position; detect issues in the parallel motion
     const result = findParallelPerfects(cMaj, gMaj);
+    // Each element must have the expected shape (type + voice index fields)
     expect(Array.isArray(result)).toBe(true);
+    for (const issue of result) {
+      expect(['parallel-fifth', 'parallel-octave']).toContain(issue.type);
+      expect(typeof issue.lowerVoiceIndex).toBe('number');
+      expect(typeof issue.upperVoiceIndex).toBe('number');
+    }
   });
 
   it('detects parallel octave across a double octave (gap=24)', () => {
@@ -279,8 +284,8 @@ describe('analyzeVoiceLeading', () => {
     expect(analysis.steps[0]?.interval).toBeNull();
   });
 
-  it('includes motion classification for all voice pairs', () => {
-    // 4-voice SATB: contrary outer, oblique inner
+  it('includes motion classification for adjacent voice pairs only (3 motions for 4 voices)', () => {
+    // analyzeVoiceLeading classifies adjacent pairs: (0,1), (1,2), (2,3) → 3 motions for 4 voices
     const from = [Note.create('C3'), Note.create('E4'), Note.create('G4'), Note.create('C5')];
     const to = [Note.create('D3'), Note.create('F4'), Note.create('A4'), Note.create('B4')];
     const analysis = analyzeVoiceLeading(from, to);
@@ -302,16 +307,16 @@ describe('analyzeVoiceLeading', () => {
     expect(analysis.steps[2]?.voiceIndex).toBe(2);
   });
 
-  it('classifies motion between adjacent pairs', () => {
-    // All three voices move up a step → parallel motion between each pair
+  it('classifies parallel motion between adjacent pairs when all voices move up by diatonic step', () => {
+    // C→D, E→F, G→A: all three voices up one diatonic step.
+    // Adjacent pair 1 (C→D, E→F): generic interval is a third both before and after → parallel.
+    // Adjacent pair 2 (E→F, G→A): generic interval is a third both before and after → parallel.
+    // (voiceMotion uses staffStep letter-based generic intervals, not semitone counts)
     const from = [Note.create('C4'), Note.create('E4'), Note.create('G4')];
     const to = [Note.create('D4'), Note.create('F4'), Note.create('A4')];
     const analysis = analyzeVoiceLeading(from, to);
-    // Lower pair (C→D, E→F): same direction, generic thirds in both → parallel
-    // Upper pair (E→F, G→A): same direction, generic thirds in both → parallel
-    for (const m of analysis.motions) {
-      expect(['parallel', 'similar']).toContain(m.motion);
-    }
+    expect(analysis.motions[0]!.motion).toBe('parallel');
+    expect(analysis.motions[1]!.motion).toBe('parallel');
   });
 });
 

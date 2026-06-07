@@ -137,9 +137,24 @@ describe('findCommonProgression', () => {
     expect(findCommonProgression('nonsense progression xyz')).toBeUndefined();
   });
 
+  it('returns undefined for an empty string (prevents "always matches first entry" bug)', () => {
+    expect(findCommonProgression('')).toBeUndefined();
+  });
+
+  it('returns undefined for a whitespace-only string', () => {
+    expect(findCommonProgression('   ')).toBeUndefined();
+  });
+
   it('is case-insensitive', () => {
     const turnaround = findCommonProgression('JAZZ TURNAROUND');
     expect(turnaround).toBeDefined();
+  });
+
+  it('matches the exact 12-bar blues numeral sequence', () => {
+    const blues = findCommonProgression('12-bar blues');
+    expect(blues).toBeDefined();
+    const numerals = blues!.numerals.map((n) => n.toString());
+    expect(numerals).toEqual(['I', 'I', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'V']);
   });
 });
 
@@ -148,10 +163,8 @@ describe('findCommonProgression', () => {
 // ---------------------------------------------------------------------------
 
 describe('commonProgressionName', () => {
-  it('returns the name for index 0', () => {
-    const name = commonProgressionName(0);
-    expect(typeof name).toBe('string');
-    expect((name as string).length).toBeGreaterThan(0);
+  it('returns the exact name "Authentic cadence" for index 0', () => {
+    expect(commonProgressionName(0)).toBe('Authentic cadence');
   });
 
   it('returns undefined for out-of-range index', () => {

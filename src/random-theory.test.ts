@@ -33,6 +33,12 @@ describe('randomChord', () => {
     expect(result1.equals(result2)).toBe(true);
   });
 
+  it('produces a fixed known chord for seed 1 (golden output)', () => {
+    // Pinned against actual mulberry32(1) output — any PRNG regression breaks this.
+    const result = randomChord({ random: createSeededRandom(1) });
+    expect(result.name).toBe('G#');
+  });
+
   it('picks the first root from the pool when random is 0', () => {
     const chord = randomChord({ roots: ['C', 'D', 'E'], random: () => 0 });
     expect(chord.root.note).toBe('C');
@@ -116,6 +122,12 @@ describe('randomScale', () => {
     expect(result1.equals(result2)).toBe(true);
   });
 
+  it('produces a fixed known scale for seed 2 (golden output)', () => {
+    // Pinned against actual mulberry32(2) output — any PRNG regression breaks this.
+    const result = randomScale({ random: createSeededRandom(2) });
+    expect(result.toString()).toBe('Db phrygian');
+  });
+
   it('respects an explicit types pool', () => {
     fc.assert(
       fc.property(randInUnit, (rand) => {
@@ -161,6 +173,83 @@ describe('randomRomanNumeral', () => {
     const result1 = randomRomanNumeral({ random: createSeededRandom(10) });
     const result2 = randomRomanNumeral({ random: createSeededRandom(10) });
     expect(result1.equals(result2)).toBe(true);
+  });
+
+  it('produces a fixed known numeral for seed 3 (golden output)', () => {
+    // Pinned against actual mulberry32(3) output — any PRNG regression breaks this.
+    const result = randomRomanNumeral({ random: createSeededRandom(3) });
+    expect(result.toString()).toBe('VI');
+  });
+
+  describe('mode-derived default qualities', () => {
+    it('degree 2 in major mode always yields minor quality', () => {
+      const rn = randomRomanNumeral({ degrees: [2], mode: 'major', random: createSeededRandom(4) });
+      expect(rn.degree).toBe(2);
+      expect(rn.quality).toBe('minor');
+    });
+
+    it('degree 7 in major mode always yields diminished quality', () => {
+      const rn = randomRomanNumeral({ degrees: [7], mode: 'major', random: createSeededRandom(5) });
+      expect(rn.degree).toBe(7);
+      expect(rn.quality).toBe('diminished');
+    });
+
+    it('degree 3 in minor mode always yields major quality', () => {
+      const rn = randomRomanNumeral({ degrees: [3], mode: 'minor', random: createSeededRandom(6) });
+      expect(rn.degree).toBe(3);
+      expect(rn.quality).toBe('major');
+    });
+
+    it('degree 1 in minor mode always yields minor quality', () => {
+      const rn = randomRomanNumeral({ degrees: [1], mode: 'minor', random: createSeededRandom(7) });
+      expect(rn.degree).toBe(1);
+      expect(rn.quality).toBe('minor');
+    });
+
+    it('explicit qualities override mode-derived quality', () => {
+      // Degree 2 in major would normally be minor, but explicit 'major' wins
+      const rn = randomRomanNumeral({
+        degrees: [2],
+        mode: 'major',
+        qualities: ['major'],
+        random: createSeededRandom(8),
+      });
+      expect(rn.quality).toBe('major');
+    });
+
+    it('mode-derived quality is consistent across all 7 major degrees', () => {
+      const expectedMajor: Record<number, string> = {
+        1: 'major',
+        2: 'minor',
+        3: 'minor',
+        4: 'major',
+        5: 'major',
+        6: 'minor',
+        7: 'diminished',
+      };
+      for (const [deg, expectedQuality] of Object.entries(expectedMajor)) {
+        const degree = Number(deg) as 1 | 2 | 3 | 4 | 5 | 6 | 7;
+        const rn = randomRomanNumeral({ degrees: [degree], mode: 'major', random: () => 0 });
+        expect(rn.quality).toBe(expectedQuality);
+      }
+    });
+
+    it('mode-derived quality is consistent across all 7 minor degrees', () => {
+      const expectedMinor: Record<number, string> = {
+        1: 'minor',
+        2: 'diminished',
+        3: 'major',
+        4: 'minor',
+        5: 'minor',
+        6: 'major',
+        7: 'major',
+      };
+      for (const [deg, expectedQuality] of Object.entries(expectedMinor)) {
+        const degree = Number(deg) as 1 | 2 | 3 | 4 | 5 | 6 | 7;
+        const rn = randomRomanNumeral({ degrees: [degree], mode: 'minor', random: () => 0 });
+        expect(rn.quality).toBe(expectedQuality);
+      }
+    });
   });
 
   it('always produces root-position (5/3) inversions', () => {

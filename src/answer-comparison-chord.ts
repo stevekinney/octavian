@@ -11,6 +11,8 @@ export type { ComparisonRelationship };
  * The result of comparing two chords.
  */
 export type ChordComparison = {
+  /** Discriminant tag identifying the comparison kind. */
+  readonly kind: 'chord';
   /** True when the chords are exactly equal (same root spelling, suffix, and inversion). */
   readonly correct: boolean;
   /** True when the chords share the same set of pitch classes (regardless of inversion). */
@@ -77,6 +79,7 @@ export function compareChords(target: Chord, answer: Chord): ChordComparison {
   }
 
   return {
+    kind: 'chord',
     correct,
     equivalent,
     relationship,
