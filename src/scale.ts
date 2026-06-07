@@ -13,6 +13,7 @@ import {
 } from './scales.js';
 import { Chord } from './chord.js';
 import { Note, type NoteLike, type SerializedNote } from './note.js';
+import { parseScaleParts } from './theory-parser-utils.js';
 
 const CHORD_SIZE_BY_STRUCTURE = {
   triad: 3,
@@ -104,6 +105,20 @@ export class Scale {
    */
   public static create(note: NoteLike, type: ScaleType): Scale {
     return new Scale(note, type);
+  }
+
+  /**
+   * Parses a scale name string into a {@link Scale}.
+   *
+   * Accepted formats include `"C major"`, `"A natural minor"`, and `"F# melodic minor"`.
+   *
+   * @param name The scale name string to parse.
+   * @returns The parsed scale.
+   * @throws {TypeError} When the root or scale type is unrecognized.
+   */
+  public static parse(name: string): Scale {
+    const { root, type } = parseScaleParts(name);
+    return new Scale(root, type);
   }
 
   /**

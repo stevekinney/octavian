@@ -70,6 +70,35 @@ describe('Note', () => {
     expect(() => Note.nearestTo(-1)).toThrow(/positive finite/i);
   });
 
+  it('builds notes from chromatic pitch-class index and octave', () => {
+    // A4 is pitch class 9, octave 4: MIDI 69, 440 Hz
+    expect(Note.fromChromaticIndex(9, 4).toString()).toBe('A4');
+    expect(Note.fromChromaticIndex(9, 4).midi).toBe(69);
+    expect(Note.fromChromaticIndex(9, 4).equals(Note.create('A4'))).toBe(true);
+
+    // C4 is pitch class 0, octave 4: MIDI 60
+    expect(Note.fromChromaticIndex(0, 4).toString()).toBe('C4');
+    expect(Note.fromChromaticIndex(0, 4).midi).toBe(60);
+
+    // Black key pitch class 1 respects accidentalPreference
+    expect(Note.fromChromaticIndex(1, 4).toString()).toBe('C#4');
+    expect(Note.fromChromaticIndex(1, 4, 'sharps').toString()).toBe('C#4');
+    expect(Note.fromChromaticIndex(1, 4, 'flats').toString()).toBe('Db4');
+
+    // Natural notes are unambiguous
+    expect(Note.fromChromaticIndex(2, 4).toString()).toBe('D4');
+    expect(Note.fromChromaticIndex(2, 4, 'flats').toString()).toBe('D4');
+
+    // Throws RangeError for invalid pitch class
+    expect(() => Note.fromChromaticIndex(12, 4)).toThrow(RangeError);
+    expect(() => Note.fromChromaticIndex(-1, 4)).toThrow(RangeError);
+    expect(() => Note.fromChromaticIndex(12, 4)).toThrow(/range 0\.\.11/i);
+
+    // Throws RangeError for invalid octave
+    expect(() => Note.fromChromaticIndex(0, 10)).toThrow(RangeError);
+    expect(() => Note.fromChromaticIndex(0, -2)).toThrow(RangeError);
+  });
+
   it('respects accidentalPreference for fromMidi, nearestTo, transposeBy, and simplify', () => {
     // C#4 (MIDI 61) default is sharp
     expect(Note.fromMidi(61).toString()).toBe('C#4');

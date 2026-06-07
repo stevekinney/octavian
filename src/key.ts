@@ -21,6 +21,7 @@ import {
 import { Note, type NoteLike } from './note.js';
 import type { NoteName } from './note-spellings.js';
 import { Scale } from './scale.js';
+import { parseKeyParts } from './theory-parser-utils.js';
 
 /**
  * A serialized snapshot of a {@link Key}.
@@ -82,6 +83,22 @@ export class Key {
 
   static {
     createKey = (tonic: NoteName, mode: KeySignatureMode) => new Key(tonic, mode);
+  }
+
+  /**
+   * Parses a key name string into a {@link Key}.
+   *
+   * Accepted formats include `"C major"`, `"Bb major"`, and `"F# minor"`.
+   *
+   * @param name The key name string to parse.
+   * @returns The parsed key.
+   * @throws {TypeError} When the tonic or mode is unrecognized, or the
+   *   tonic/mode combination is a theoretical key not supported by
+   *   {@link Key.create} (e.g., `"G# major"`).
+   */
+  public static parse(name: string): Key {
+    const { root, mode } = parseKeyParts(name);
+    return Key.create(root, mode);
   }
 
   /**

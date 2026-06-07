@@ -147,6 +147,7 @@ export {
 export type { Accidental, Natural, NoteName, NoteNameWithOctave } from './note-spellings.js';
 
 export {
+  chromaticIndexToFrequency,
   isChordSuffix,
   isChordSymbol,
   isInterval,
@@ -184,3 +185,97 @@ export type {
 
 export { STANDARD_TUNING } from './tuning.js';
 export type { Tuning } from './tuning.js';
+
+export {
+  KEYBOARD_25,
+  KEYBOARD_49,
+  KEYBOARD_61,
+  KEYBOARD_76,
+  KEYBOARD_88,
+  highlightGroupsForChordOrScale,
+  keyboardKeysForRange,
+  keyboardPositionFor,
+  keyboardRange,
+  pianoKeyFor,
+} from './piano-keyboard.js';
+export type {
+  HighlightTarget,
+  KeyboardHighlight,
+  KeyboardOptions,
+  KeyboardPosition,
+  KeyboardRange,
+  PianoKey,
+} from './piano-keyboard.js';
+
+export {
+  addRationals,
+  subtractRationals,
+  multiplyRationals,
+  divideRationals,
+  rationalsEqual,
+  compareRationals,
+  createRational,
+  formatRational,
+  isZeroRational,
+  rationalToNumber,
+} from './rational.js';
+export type { Rational } from './rational.js';
+
+export { Duration, totalDurationFraction } from './duration.js';
+export type {
+  DurationOptions,
+  DurationValue,
+  SerializedDuration,
+  TupletRatio,
+} from './duration.js';
+
+export { Meter, metersEqual } from './meter.js';
+export type { MeterType, SerializedMeter } from './meter.js';
+
+export { RhythmPattern, compareRhythm } from './rhythm.js';
+export type {
+  GridPosition,
+  RhythmComparison,
+  RhythmEvent,
+  SwingDescriptor,
+  SwingOffset,
+} from './rhythm.js';
+
+export {
+  EQUAL_TEMPERAMENT,
+  JUST_INTONATION,
+  centsBetween,
+  centsOffsetTemperament,
+  edo,
+  frequencyFor,
+  tunedScale,
+} from './temperament.js';
+export type {
+  CentsOffsetTemperament,
+  EDO,
+  EqualTemperament,
+  FrequencyForOptions,
+  JustIntonation,
+  Temperament,
+  TunedPitch,
+  TunedScaleOptions,
+} from './temperament.js';
+
+export {
+  createRatio,
+  justIntonationRatiosFor,
+  justRatioForSemitone,
+  ratioCents,
+  ratioValue,
+} from './just-intonation.js';
+export type { Ratio } from './just-intonation.js';
+
+export {
+  formatChord,
+  formatKey,
+  formatScale,
+  parseChordName,
+  parseKeyName,
+  parseScaleName,
+} from './theory-parsers.js';
+export type { FormatChordOptions } from './theory-parsers.js';

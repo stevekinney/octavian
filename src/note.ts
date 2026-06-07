@@ -254,6 +254,25 @@ export class Note {
   }
 
   /**
+   * Creates a note from a chromatic pitch-class index and octave.
+   *
+   * @param pitchClass The chromatic index in the range `0..11` (0 = C, 1 = C#/Db, …, 11 = B).
+   * @param octave The octave in the range `-1..9`.
+   * @param accidentalPreference Whether to prefer sharps or flats for ambiguous pitch classes. Defaults to `'sharps'`.
+   * @returns The created note.
+   * @throws {RangeError} When `pitchClass` is not in `0..11` or `octave` is not in `-1..9`.
+   */
+  public static fromChromaticIndex(
+    pitchClass: number,
+    octave: number,
+    accidentalPreference: AccidentalPreference = 'sharps',
+  ): Note {
+    const midi = createMidiKey((createOctave(octave) + 1) * 12 + createChromaticIndex(pitchClass));
+
+    return Note.fromMidi(midi, accidentalPreference);
+  }
+
+  /**
    * Creates the nearest equal-tempered note for a frequency.
    *
    * @param frequency The frequency in hertz.
