@@ -104,7 +104,7 @@ describe('compareIntervals', () => {
   it('majorThird vs minorThird → near-miss, semitoneDifference 1', () => {
     const result = compareIntervals('majorThird', 'minorThird');
     expect(result.correct).toBe(false);
-    expect(result.semitoneDifference).toBe(-1);
+    expect(result.semitoneDifference).toBe(1);
     expect(result.relationship).toBe('near-miss');
     expect(result.qualityMatch).toBe(false);
   });

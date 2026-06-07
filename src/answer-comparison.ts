@@ -2,7 +2,7 @@
 // ScaleDegreeAnalysis, and RomanNumeral. Chord comparison lives in
 // answer-comparison-chord.ts to stay within the 500-line limit.
 
-import { INTERVALS, resolveInterval, type Interval } from './intervals.js';
+import { INTERVALS, invertInterval, resolveInterval, type Interval } from './intervals.js';
 import { Note, type NoteLike } from './note.js';
 import { RomanNumeral } from './roman-numeral.js';
 import {
@@ -124,7 +124,7 @@ export type IntervalComparison = {
   readonly equivalent: boolean;
   /** A structured relationship token. */
   readonly relationship: ComparisonRelationship;
-  /** The difference in semitones (answer.semitones − target.semitones). */
+  /** The absolute difference in semitones between the two intervals (always ≥ 0). */
   readonly semitoneDifference: number;
   /** The difference in interval degree (answer.degree − target.degree). */
   readonly degreeDifference: number;
@@ -150,16 +150,19 @@ export function compareIntervals(target: Interval, answer: Interval): IntervalCo
   const answerInfo = INTERVALS[canonicalAnswer];
 
   const correct = canonicalTarget === canonicalAnswer;
-  const semitoneDifference = answerInfo.semitones - targetInfo.semitones;
+  const semitoneDifference = Math.abs(answerInfo.semitones - targetInfo.semitones);
   const degreeDifference = answerInfo.degree - targetInfo.degree;
   const qualityMatch = targetInfo.quality === answerInfo.quality;
   // equivalent = same semitone count (enharmonic intervals like M3 vs d4)
   const equivalent = correct || semitoneDifference === 0;
 
-  // Inversion: answer is inversion of target when they sum to a perfect octave.
-  const inversionMatch =
-    targetInfo.semitones + answerInfo.semitones === 12 &&
-    targetInfo.degree + answerInfo.degree === 9;
+  // Inversion: answer is the inversion of target (e.g. P4 ↔ P5, M3 ↔ m6).
+  let inversionMatch = false;
+  try {
+    inversionMatch = invertInterval(canonicalTarget) === canonicalAnswer;
+  } catch {
+    // No inversion defined for this interval — leave false.
+  }
 
   let relationship: ComparisonRelationship;
   if (correct) {
@@ -209,7 +212,7 @@ export type ScaleDegreeComparison = {
   readonly degreeDifference: number;
   /** True when the degree numbers match but alterations differ. */
   readonly alterationDiffers: boolean;
-  /** The difference in semitones from tonic (answer.semitoneFromTonic − target.semitoneFromTonic), in 0..11. */
+  /** The difference in semitones from tonic (answer.semitoneFromTonic − target.semitoneFromTonic), in −11..11. */
   readonly semitoneDifference: number;
 };
 
