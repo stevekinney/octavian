@@ -242,3 +242,32 @@ export type {
   SwingDescriptor,
   SwingOffset,
 } from './rhythm.js';
+
+export {
+  EQUAL_TEMPERAMENT,
+  JUST_INTONATION,
+  centsBetween,
+  centsOffsetTemperament,
+  edo,
+  frequencyFor,
+  tunedScale,
+} from './temperament.js';
+export type {
+  CentsOffsetTemperament,
+  EDO,
+  EqualTemperament,
+  FrequencyForOptions,
+  JustIntonation,
+  Temperament,
+  TunedPitch,
+  TunedScaleOptions,
+} from './temperament.js';
+
+export {
+  createRatio,
+  justIntonationRatiosFor,
+  justRatioForSemitone,
+  ratioCents,
+  ratioValue,
+} from './just-intonation.js';
+export type { Ratio } from './just-intonation.js';

@@ -543,11 +543,13 @@ No dependencies on Phase 1–3.
 No structural dependencies; coordinates with existing `Tuning` type.
 
 - [ ] `JustIntonationTuning` extends `Tuning` with ratio-based intervals
-- [ ] Catalog of 5-limit ratios for each scale degree (1/1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2/1)
+- [x] Catalog of 5-limit ratios for each scale degree (1/1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2/1)
+      (implemented as `Ratio` type + `justIntonationRatiosFor` in `src/just-intonation.ts`)
 - [ ] 7-limit, 11-limit, 13-limit extensions documented in source comments
 - [ ] `interval.justRatio()` returns the simplest just-intonation ratio for an interval
 - [ ] `interval.cents(tuning)` returns the cent value under a given tuning
-- [ ] `tuning.frequencyForNote(note, key?)` accounts for key-dependent intonation drift
+- [x] `tuning.frequencyForNote(note, key?)` accounts for key-dependent intonation drift (implemented
+      as `frequencyFor(note, { temperament: JUST_INTONATION, keyOrTonic })` in `src/temperament.ts`)
 - [ ] Tests verify wolf-fifth and comma-drift scenarios
 
 ### 4.5 Historical temperaments
@@ -564,7 +566,8 @@ No structural dependencies; coordinates with existing `Tuning` type.
 
 **Depends on:** 4.4
 
-- [ ] `EqualDivisionOfOctave(n)` constructor for n-EDO tuning systems
+- [x] `EqualDivisionOfOctave(n)` constructor for n-EDO tuning systems (implemented as `edo(n): EDO`
+      in `src/temperament.ts`)
 - [ ] Presets: `EDO_19`, `EDO_24` (quarter-tone), `EDO_31`, `EDO_53`, `EDO_72`
 - [ ] `MicrotonalNote` extending `Note` with microtonal accidentals (♯, ♯/, ♯\\, etc., or cent
       offsets)
