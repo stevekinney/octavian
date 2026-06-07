@@ -271,3 +271,13 @@ export {
   ratioValue,
 } from './just-intonation.js';
 export type { Ratio } from './just-intonation.js';
+
+export {
+  formatChord,
+  formatKey,
+  formatScale,
+  parseChordName,
+  parseKeyName,
+  parseScaleName,
+} from './theory-parsers.js';
+export type { FormatChordOptions } from './theory-parsers.js';
