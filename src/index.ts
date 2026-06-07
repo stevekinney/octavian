@@ -304,3 +304,23 @@ export {
   chordPositionsFor,
 } from './fretboard.js';
 export type { StringInstrumentTuning, FretPosition, FretboardOptions } from './fretboard.js';
+
+export { CLEFS } from './clef.js';
+export type { Clef } from './clef.js';
+
+export {
+  INSTRUMENTS,
+  instrumentRange,
+  isInInstrumentRange,
+  resolveInstrument,
+  toConcertPitch,
+  toWrittenPitch,
+} from './instruments.js';
+export type {
+  InstrumentDefinition,
+  InstrumentFamily,
+  InstrumentLike,
+  InstrumentName,
+  InstrumentRange,
+  InstrumentRangeOptions,
+} from './instruments.js';
