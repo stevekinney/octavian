@@ -25,6 +25,7 @@
   "buildNoteName",
   "chordFromRomanNumeral",
   "chordQualityForSuffix",
+  "chromaticIndexToFrequency",
   "circleOfFifths",
   "harmonicFunctionFor",
   "harmonicFunctionForAsAlias",

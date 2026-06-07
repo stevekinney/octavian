@@ -147,6 +147,7 @@ export {
 export type { Accidental, Natural, NoteName, NoteNameWithOctave } from './note-spellings.js';
 
 export {
+  chromaticIndexToFrequency,
   isChordSuffix,
   isChordSymbol,
   isInterval,

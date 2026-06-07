@@ -59,6 +59,7 @@ const EXPECTED_EXPORTS = [
   'buildNoteName',
   'chordFromRomanNumeral',
   'chordQualityForSuffix',
+  'chromaticIndexToFrequency',
   'circleOfFifths',
   'harmonicFunctionFor',
   'harmonicFunctionForAsAlias',
