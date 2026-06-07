@@ -387,3 +387,23 @@ export type {
   VoiceLeadingStep,
   VoiceMotion,
 } from './voice-leading.js';
+
+export { compareChords } from './answer-comparison-chord.js';
+export type { ChordComparison } from './answer-comparison-chord.js';
+
+export {
+  compareMusicAnswer,
+  compareNotes,
+  compareIntervals,
+  compareRomanNumerals,
+  compareScaleDegrees,
+} from './answer-comparison.js';
+export type {
+  AnswerComparison,
+  ComparisonRelationship,
+  IntervalComparison,
+  MusicAnswerTarget,
+  NoteComparison,
+  RomanNumeralComparison,
+  ScaleDegreeComparison,
+} from './answer-comparison.js';
