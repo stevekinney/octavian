@@ -481,6 +481,24 @@ describe('tunedScale', () => {
     const result = tunedScale([a4], EQUAL_TEMPERAMENT, { referenceTuning: tuning432 });
     expect(Number(result[0].frequency)).toBeCloseTo(432, 6);
   });
+
+  it('JI throws TypeError when a note is not a major-scale degree relative to the tonic', () => {
+    // notes[0] = C4 (tonic), notes[1] = Eb4 (minor third — semitone 3, not in major)
+    const notes = [Note.create('C4'), Note.create('Eb4')];
+    expect(() => tunedScale(notes, JUST_INTONATION)).toThrow(TypeError);
+  });
+
+  it('JI uses an explicit keyOrTonic instead of notes[0] when provided', () => {
+    // E4 and G4 with default tonic (E4) would make G4 semitone 3 → throws.
+    // With explicit C4 tonic: E4 = M3 (semitone 4) and G4 = P5 (semitone 7) — both valid.
+    const notes = [Note.create('E4'), Note.create('G4')];
+    const result = tunedScale(notes, JUST_INTONATION, { keyOrTonic: Note.create('C4') });
+    expect(result.length).toBe(2);
+    // E4 as M3 from C4 should have ≈ -13.686 cents deviation
+    expect(result[0].centsDeviation).toBeCloseTo(-13.686, 1);
+    // G4 as P5 from C4 should have ≈ +1.955 cents deviation
+    expect(result[1].centsDeviation).toBeCloseTo(1.955, 1);
+  });
 });
 
 // ---------------------------------------------------------------------------

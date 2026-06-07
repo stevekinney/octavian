@@ -27,9 +27,7 @@ import { createFrequency, type Frequency, type MidiKey } from './branded-types.j
 import { midiToFrequency } from './music-utilities.js';
 import { Note, type NoteLike } from './note.js';
 import { STANDARD_TUNING, type Tuning } from './tuning.js';
-import { justRatioForSemitone, ratioValue, type Ratio } from './just-intonation.js';
-
-export type { Ratio };
+import { justRatioForSemitone, ratioValue } from './just-intonation.js';
 
 // ---------------------------------------------------------------------------
 // Temperament discriminated union
@@ -209,6 +207,7 @@ export type FrequencyForOptions = {
  * @throws {RangeError} When either frequency is not positive and finite.
  */
 export function centsBetween(frequencyA: number, frequencyB: number): number {
+  // validate: throws RangeError for non-positive / non-finite input
   createFrequency(frequencyA);
   createFrequency(frequencyB);
 
@@ -334,33 +333,45 @@ export type TunedScaleOptions = {
    * The A4 reference tuning to use. Defaults to {@link STANDARD_TUNING}.
    */
   readonly referenceTuning?: Tuning;
+  /**
+   * The tonic note used to compute just intonation ratios when
+   * `temperament.kind === 'just'`. If omitted, the first note in `notes`
+   * is used as the tonic (best-effort default).
+   */
+  readonly keyOrTonic?: NoteLike;
 };
 
 /**
  * Returns every scale degree with its temperament-adjusted frequency and
  * cent deviation from equal temperament.
  *
+ * When `temperament` is `'just'`, each note's frequency is derived from
+ * 5-limit ratios relative to the tonic. If `options.keyOrTonic` is omitted,
+ * the first note is used as the tonic.
+ *
  * @param notes The notes to tune (typically from a {@link Scale}).
  * @param temperament The temperament to apply.
- * @param options Additional options (reference tuning).
+ * @param options Additional options (reference tuning, tonic).
  * @returns An ordered array of tuned pitches.
- * @throws {TypeError} When `temperament` is `'just'` and no tonic can be
- *   inferred (the first note in `notes` is used as the tonic).
+ * @throws {TypeError} When `temperament` is `'just'` and any note in `notes`
+ *   is not a major-scale degree relative to the tonic (`options.keyOrTonic`
+ *   when provided, otherwise the first note).
  */
 export function tunedScale(
   notes: readonly NoteLike[],
   temperament: Temperament,
   options: TunedScaleOptions = {},
 ): readonly TunedPitch[] {
-  const { referenceTuning = STANDARD_TUNING } = options;
+  const { referenceTuning = STANDARD_TUNING, keyOrTonic } = options;
 
   if (notes.length === 0) {
     return Object.freeze([]);
   }
 
-  // For just intonation the first note in the array serves as the tonic.
+  // For just intonation use the caller-supplied tonic when provided; fall
+  // back to the first note as a documented best-effort default.
   // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
-  const tonicNoteLike = notes[0]!;
+  const tonicNoteLike = keyOrTonic ?? notes[0]!;
 
   return Object.freeze(
     notes.map((noteLike) => {

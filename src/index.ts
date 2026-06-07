@@ -200,7 +200,6 @@ export type {
   EqualTemperament,
   FrequencyForOptions,
   JustIntonation,
-  Ratio,
   Temperament,
   TunedPitch,
   TunedScaleOptions,
@@ -213,3 +212,4 @@ export {
   ratioCents,
   ratioValue,
 } from './just-intonation.js';
+export type { Ratio } from './just-intonation.js';

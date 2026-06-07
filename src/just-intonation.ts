@@ -8,7 +8,7 @@
  */
 
 /**
- * An exact frequency ratio expressed as an irreducible integer fraction.
+ * An exact frequency ratio expressed as an integer numerator/denominator pair.
  */
 export type Ratio = {
   readonly numerator: number;
