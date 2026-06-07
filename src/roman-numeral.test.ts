@@ -111,12 +111,33 @@ describe('RomanNumeral.parse — inversions', () => {
     ['V65', '6/5'],
     ['V43', '4/3'],
     ['V42', '4/2'],
+    // Slashed figured-bass forms (the '/' inside the figure must NOT be read
+    // as an applied-chord separator).
+    ['I6/4', '6/4'],
+    ['V6/5', '6/5'],
+    ['V4/3', '4/3'],
+    ['V4/2', '4/2'],
   ] as const)(
     'parses %s with inversion %s',
     (input: string, expected: RomanNumeral['inversion']) => {
       expect(RomanNumeral.parse(input).inversion).toBe(expected);
+      expect(RomanNumeral.parse(input).applied).toBeUndefined();
     },
   );
+
+  it('distinguishes a figured-bass inversion slash from an applied slash', () => {
+    // V6/5/V: the first slash is inside the inversion figure (6/5); only the
+    // second slash is the applied-chord separator (of V). Regression for a
+    // parser that split on the first '/'.
+    const rn = RomanNumeral.parse('V6/5/V');
+    expect(rn.inversion).toBe('6/5');
+    expect(rn.isApplied).toBe(true);
+    expect(rn.applied?.toString()).toBe('V');
+
+    const rn2 = RomanNumeral.parse('V4/3/ii');
+    expect(rn2.inversion).toBe('4/3');
+    expect(rn2.applied?.toString()).toBe('ii');
+  });
 
   it('parses Unicode superscript inversions', () => {
     expect(RomanNumeral.parse('I⁶').inversion).toBe('6');
