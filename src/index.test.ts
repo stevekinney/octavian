@@ -182,6 +182,11 @@ const EXPECTED_EXPORTS = [
   'totalDurationFraction',
   'toWrittenPitch',
   'tunedScale',
+  'analyzeVoiceLeading',
+  'commonTones',
+  'findParallelPerfects',
+  'leadingToneResolutions',
+  'voiceMotion',
 ].toSorted((a, b) => a.localeCompare(b));
 
 describe('public API contract', () => {

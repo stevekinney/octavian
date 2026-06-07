@@ -147,5 +147,10 @@
   "toConcertPitch",
   "totalDurationFraction",
   "toWrittenPitch",
-  "tunedScale"
+  "tunedScale",
+  "analyzeVoiceLeading",
+  "commonTones",
+  "findParallelPerfects",
+  "leadingToneResolutions",
+  "voiceMotion"
 ]

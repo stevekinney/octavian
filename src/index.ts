@@ -334,3 +334,18 @@ export type {
   MotifOccurrence,
   SerializedMelody,
 } from './melody.js';
+
+export {
+  analyzeVoiceLeading,
+  commonTones,
+  findParallelPerfects,
+  leadingToneResolutions,
+  voiceMotion,
+} from './voice-leading.js';
+export type {
+  ResolutionCheck,
+  VoiceLeadingAnalysis,
+  VoiceLeadingIssue,
+  VoiceLeadingStep,
+  VoiceMotion,
+} from './voice-leading.js';
