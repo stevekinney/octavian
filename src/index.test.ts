@@ -160,6 +160,12 @@ const EXPECTED_EXPORTS = [
   'subtractRationals',
   'totalDurationFraction',
   'tunedScale',
+  'STANDARD_GUITAR_TUNING',
+  'STANDARD_BASS_TUNING',
+  'noteAtFret',
+  'fretPositionsFor',
+  'scalePositionsFor',
+  'chordPositionsFor',
 ].toSorted((a, b) => a.localeCompare(b));
 
 describe('public API contract', () => {

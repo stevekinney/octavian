@@ -279,3 +279,13 @@ export {
   parseScaleName,
 } from './theory-parsers.js';
 export type { FormatChordOptions } from './theory-parsers.js';
+
+export {
+  STANDARD_GUITAR_TUNING,
+  STANDARD_BASS_TUNING,
+  noteAtFret,
+  fretPositionsFor,
+  scalePositionsFor,
+  chordPositionsFor,
+} from './fretboard.js';
+export type { StringInstrumentTuning, FretPosition, FretboardOptions } from './fretboard.js';

@@ -125,5 +125,11 @@
   "STANDARD_TUNING",
   "subtractRationals",
   "totalDurationFraction",
-  "tunedScale"
+  "tunedScale",
+  "STANDARD_GUITAR_TUNING",
+  "STANDARD_BASS_TUNING",
+  "noteAtFret",
+  "fretPositionsFor",
+  "scalePositionsFor",
+  "chordPositionsFor"
 ]
