@@ -85,8 +85,9 @@ export type GridPosition = {
   /** The duration of this event. */
   readonly duration: Duration;
   /**
-   * The beat number (zero-based) this onset falls on, measured in beat units of the meter.
-   * Fractional when the onset is between beats.
+   * The zero-based position in the grid used to build this event. Defaults to
+   * the beat number when using the meter's beat unit; a custom subdivision
+   * counts that subdivision instead. Fractional when between grid positions.
    */
   readonly beatPosition: Rational;
 };

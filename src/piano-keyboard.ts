@@ -7,6 +7,7 @@ import {
 } from './branded-types.js';
 import { Chord } from './chord.js';
 import { Note, type NoteLike } from './note.js';
+import { normalizeChromaticIndex } from './note-spellings.js';
 import { Scale } from './scale.js';
 
 /**
@@ -321,8 +322,10 @@ function chromaticIndexesForTarget(target: HighlightTarget): readonly ChromaticI
   }
 
   if (typeof target === 'number') {
-    // treat as a pitch-class number (0..11)
-    return Object.freeze([createChromaticIndex(target % 12)]);
+    // Treat as a pitch-class number, normalized into 0..11. Reuse the shared
+    // helper so any integer (including negatives, where JS `%` is
+    // sign-preserving) maps consistently with the rest of the library.
+    return Object.freeze([normalizeChromaticIndex(target)]);
   }
 
   // NoteLike / Note
