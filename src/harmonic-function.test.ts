@@ -89,14 +89,22 @@ describe('harmonicFunctionFor — minor key (A minor)', () => {
 describe('harmonicFunctionFor — non-functional and edge cases', () => {
   const cMajor = Key.create('C', 'major');
 
-  it('returns null for a non-diatonic chord (Db major in C major)', () => {
+  it('returns null for a borrowed chord (Db major = ♭II in C major)', () => {
+    // Db major is now recognized as the Neapolitan (♭II), but
+    // harmonicFunctionForNumeral returns null for altered numerals.
     expect(harmonicFunctionFor(cMajor, Chord.create('Db4', 'major'))).toBeNull();
   });
 
-  it('returns null for a non-diatonic chord (D dominant7 in C major)', () => {
-    // D7 is non-diatonic in C major (would be V7/V — secondary dominant
-    // in 2.12). v1 returns null.
+  it('returns null for a secondary dominant (D dominant7 = V⁷/V in C major)', () => {
+    // D7 is now recognized as V7/V (secondary dominant), but
+    // harmonicFunctionForNumeral returns null for applied numerals.
     expect(harmonicFunctionFor(cMajor, Chord.create('D4', 'dominantSeventh'))).toBeNull();
+  });
+
+  it('returns null for a genuinely unrecognized chord (G# minor in C major)', () => {
+    // G# minor is not diatonic, a secondary dominant, borrowed, or Neapolitan.
+    // romanNumeralFor returns null, so harmonicFunctionFor returns null too.
+    expect(harmonicFunctionFor(cMajor, Chord.create('G#4', 'minor'))).toBeNull();
   });
 });
 
@@ -172,7 +180,7 @@ describe('harmonicFunctionForAsAlias — predominant ↔ subdominant alias', () 
     expect(harmonicFunctionForAsAlias(cMajor, Chord.create('G4', 'major'))).toBe('dominant');
   });
 
-  it('returns null for non-diatonic chords', () => {
-    expect(harmonicFunctionForAsAlias(cMajor, Chord.create('Db4', 'major'))).toBeNull();
+  it('returns null for non-functional chords (G# minor is unrecognized in C major)', () => {
+    expect(harmonicFunctionForAsAlias(cMajor, Chord.create('G#4', 'minor'))).toBeNull();
   });
 });

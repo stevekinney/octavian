@@ -39,10 +39,104 @@ describe('romanNumeralFor', () => {
     }
   });
 
-  it('returns null for non-diatonic chords (no chromatic recognition in v1)', () => {
+  it('recognizes D major in C major as V/V (secondary dominant)', () => {
     const cMajor = Key.create('C', 'major');
-    expect(romanNumeralFor(cMajor, Chord.create('Db4', 'major'))).toBeNull();
-    expect(romanNumeralFor(cMajor, Chord.create('D4', 'dominantSeventh'))).toBeNull();
+    const rn = romanNumeralFor(cMajor, Chord.create('D', 'major'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('V/V');
+  });
+
+  it('recognizes D dominant seventh in C major as V⁷/V', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('D', 'dominantSeventh'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('V⁷/V');
+  });
+
+  it('recognizes Db major in C major as the Neapolitan (♭II)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('Db', 'major'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('♭II');
+  });
+
+  it('recognizes F minor in C major as iv (borrowed from parallel minor)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('F', 'minor'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('iv');
+  });
+
+  it('recognizes Ab major in C major as bVI (borrowed from parallel minor)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('Ab', 'major'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('♭VI');
+  });
+
+  it('recognizes Bb major in C major as bVII (borrowed from parallel minor)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('Bb', 'major'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('♭VII');
+  });
+
+  it('recognizes Eb major in C major as bIII (borrowed from parallel minor)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('Eb', 'major'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('♭III');
+  });
+
+  it('recognizes F# diminished in C major as vii°/V (secondary leading-tone)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('F#', 'diminished'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('vii°/V');
+  });
+
+  it('recognizes F# diminished seventh in C major as vii°⁷/V', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('F#', 'diminishedSeventh'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('vii°⁷/V');
+  });
+
+  it('recognizes C# diminished in C major as vii°/ii (secondary leading-tone of ii)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('C#', 'diminished'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('vii°/ii');
+  });
+
+  it('recognizes D diminished in C major as ii° (borrowed from parallel minor)', () => {
+    // In C minor, ii = D° (diminished); borrowed into C major.
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('D', 'diminished'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('ii°');
+  });
+
+  it('recognizes A major in C major as V/ii (secondary dominant of ii)', () => {
+    const cMajor = Key.create('C', 'major');
+    const rn = romanNumeralFor(cMajor, Chord.create('A', 'major'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('V/ii');
+  });
+
+  it('recognizes Db major in A minor as the Neapolitan (♭II) — root check path', () => {
+    // G# major in A minor: not a secondary dominant (G# is not +7 from any
+    // A-minor diatonic root), not borrowed (A major has G# diminished, not
+    // G# major), not Neapolitan (bII of A minor = Bb, not G#). Returns null.
+    const aMinor = Key.create('A', 'minor');
+    expect(romanNumeralFor(aMinor, Chord.create('G#', 'major'))).toBeNull();
+  });
+
+  it('returns null for genuinely unrecognized chords', () => {
+    const cMajor = Key.create('C', 'major');
+    // G# minor is not a diatonic chord, secondary dominant, borrowed chord
+    // from C minor, or Neapolitan in C major.
+    expect(romanNumeralFor(cMajor, Chord.create('G#', 'minor'))).toBeNull();
   });
 
   it('captures inversion when the chord is inverted', () => {
@@ -236,5 +330,34 @@ describe('romanNumeralFor / chordFromRomanNumeral round-trip', () => {
       const rebuilt = chordFromRomanNumeral(cMajor, rn!);
       expect(rebuilt.equals(chord)).toBe(true);
     }
+  });
+
+  it('round-trips diatonic triads in A minor', () => {
+    const aMinor = Key.create('A', 'minor');
+    for (const chord of aMinor.diatonicChords()) {
+      const rn = romanNumeralFor(aMinor, chord);
+      expect(rn).not.toBeNull();
+      const rebuilt = chordFromRomanNumeral(aMinor, rn!);
+      expect(rebuilt.equals(chord)).toBe(true);
+    }
+  });
+
+  it('recognizes E major in A minor as plain V (harmonic-minor dominant, not V/i)', () => {
+    // In a minor key the diatonic V is natural-minor v (minor triad), but
+    // uppercase V (major triad) is the harmonic-minor dominant. It should
+    // be labeled V, not V/i.
+    const aMinor = Key.create('A', 'minor');
+    const rn = romanNumeralFor(aMinor, Chord.create('E', 'major'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('V');
+  });
+
+  it('recognizes G# diminished in A minor as plain vii° (harmonic-minor leading tone, not vii°/i)', () => {
+    // G# diminished is the harmonic-minor leading-tone triad in A minor.
+    // It should be labeled vii°, not vii°/i.
+    const aMinor = Key.create('A', 'minor');
+    const rn = romanNumeralFor(aMinor, Chord.create('G#', 'diminished'));
+    expect(rn).not.toBeNull();
+    expect(rn!.toString()).toBe('vii°');
   });
 });
