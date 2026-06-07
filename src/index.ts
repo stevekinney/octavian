@@ -279,3 +279,58 @@ export {
   parseScaleName,
 } from './theory-parsers.js';
 export type { FormatChordOptions } from './theory-parsers.js';
+
+export { degreeForNote, noteForDegree } from './scale-degree.js';
+export type {
+  DegreeToken,
+  KeyOrScale,
+  ScaleDegreeAlteration,
+  ScaleDegreeAnalysis,
+  ScaleDegreeNumber,
+} from './scale-degree.js';
+
+export { formatNoteName, parseNoteNameLabel } from './note-naming.js';
+export type { NoteNamingSystem } from './note-naming.js';
+
+export { formatSolfege, parseSolfege } from './solfege.js';
+export type { SolfegeSystem } from './solfege.js';
+
+export {
+  STANDARD_GUITAR_TUNING,
+  STANDARD_BASS_TUNING,
+  noteAtFret,
+  fretPositionsFor,
+  scalePositionsFor,
+  chordPositionsFor,
+} from './fretboard.js';
+export type { StringInstrumentTuning, FretPosition, FretboardOptions } from './fretboard.js';
+
+export { CLEFS } from './clef.js';
+export type { Clef } from './clef.js';
+
+export {
+  INSTRUMENTS,
+  instrumentRange,
+  isInInstrumentRange,
+  resolveInstrument,
+  toConcertPitch,
+  toWrittenPitch,
+} from './instruments.js';
+export type {
+  InstrumentDefinition,
+  InstrumentFamily,
+  InstrumentLike,
+  InstrumentName,
+  InstrumentRange,
+  InstrumentRangeOptions,
+} from './instruments.js';
+
+export { Melody, compareMelodicContour, findMotifOccurrences } from './melody.js';
+export type {
+  CompareMelodicContourOptions,
+  ContourComparison,
+  FindMotifOptions,
+  MelodicDirection,
+  MotifOccurrence,
+  SerializedMelody,
+} from './melody.js';
