@@ -335,9 +335,26 @@ describe('isInInstrumentRange', () => {
     expect(isInInstrumentRange('clarinetBb', 'D3', { range: 'written' })).toBe(false);
   });
 
-  it('falls back to concert range when written range is not defined', () => {
-    // Flute has no writtenRange, should fall back to concertRange
+  it('non-transposing instrument without writtenRange falls back to concertRange', () => {
+    // Flute has no writtenRange and no transposition: written == concert.
     expect(isInInstrumentRange('flute', 'C5', { range: 'written' })).toBe(true);
+    expect(isInInstrumentRange('flute', 'B3', { range: 'written' })).toBe(false);
+  });
+
+  it('transposing instrument without explicit writtenRange derives written range from concert', () => {
+    // Custom transposing instrument with no writtenRange: written should be derived.
+    const customBbInstrument: InstrumentDefinition = {
+      name: 'Custom Bb',
+      family: 'other',
+      concertRange: ['Bb3', 'Bb5'],
+      transposition: 'majorSecond',
+      // No writtenRange — should be derived as C4..C6
+    };
+    // Concert Bb3 → written C4 (up M2); concert Bb5 → written C6
+    expect(isInInstrumentRange(customBbInstrument, 'C4', { range: 'written' })).toBe(true);
+    expect(isInInstrumentRange(customBbInstrument, 'C6', { range: 'written' })).toBe(true);
+    expect(isInInstrumentRange(customBbInstrument, 'B3', { range: 'written' })).toBe(false);
+    expect(isInInstrumentRange(customBbInstrument, 'D6', { range: 'written' })).toBe(false);
   });
 
   it('throws TypeError when comfortable range is not defined', () => {
@@ -373,6 +390,19 @@ describe('isInInstrumentRange', () => {
       expect(isInInstrumentRange(name, comfLow)).toBe(true);
       expect(isInInstrumentRange(name, comfHigh)).toBe(true);
     }
+  });
+
+  it('clarinetBb comfortable range is in CONCERT pitch — D3..F6 ⊆ concert D3..Bb6', () => {
+    // Written comfortable E3–G6 → concert D3–F6 (down M2).
+    // D3 and F6 should be in concert range; Eb3 should be in concert range; Gb6 should not.
+    expect(isInInstrumentRange('clarinetBb', 'D3', { range: 'comfortable' })).toBe(true);
+    expect(isInInstrumentRange('clarinetBb', 'F6', { range: 'comfortable' })).toBe(true);
+    // E3 is in concert range (between D3 and F6)
+    expect(isInInstrumentRange('clarinetBb', 'E3', { range: 'comfortable' })).toBe(true);
+    // C#3 is just below D3 (the comfortable low): should be false
+    expect(isInInstrumentRange('clarinetBb', 'C#3', { range: 'comfortable' })).toBe(false);
+    // F#6 is just above F6 (the comfortable high): should be false
+    expect(isInInstrumentRange('clarinetBb', 'F#6', { range: 'comfortable' })).toBe(false);
   });
 
   it('voice families are correctly classified', () => {

@@ -1,5 +1,5 @@
-import { Note, type NoteLike } from './note.js';
 import type { Interval } from './intervals.js';
+import { Note, type NoteLike } from './note.js';
 
 // ---------------------------------------------------------------------------
 // Direction type
@@ -94,52 +94,6 @@ export type SerializedMelody = {
 // ---------------------------------------------------------------------------
 
 let createMelody: (notes: readonly Note[]) => Melody;
-
-// ---------------------------------------------------------------------------
-// Semitone-to-interval mapping
-// Covers 0..21 semitones (unison through major thirteenth, the widest named
-// interval in the INTERVALS catalog). Spans beyond 21 throw — callers needing
-// arbitrarily wide leaps use semitoneContour() (raw signed semitones) instead.
-// ---------------------------------------------------------------------------
-
-const SEMITONE_TO_INTERVAL: Readonly<Record<number, Interval>> = {
-  0: 'perfectUnison',
-  1: 'minorSecond',
-  2: 'majorSecond',
-  3: 'minorThird',
-  4: 'majorThird',
-  5: 'perfectFourth',
-  6: 'augmentedFourth',
-  7: 'perfectFifth',
-  8: 'minorSixth',
-  9: 'majorSixth',
-  10: 'minorSeventh',
-  11: 'majorSeventh',
-  12: 'perfectOctave',
-  13: 'minorNinth',
-  14: 'majorNinth',
-  15: 'minorTenth',
-  16: 'majorTenth',
-  17: 'perfectEleventh',
-  18: 'augmentedEleventh',
-  19: 'perfectTwelfth',
-  20: 'minorThirteenth',
-  21: 'majorThirteenth',
-};
-
-/**
- * Maps an absolute semitone count to the most common interval name.
- * Supports 0..21 semitones (unison through major thirteenth).
- *
- * @throws {RangeError} When `semitones` is not in the range 0..21.
- */
-function semitonesToIntervalName(semitones: number): Interval {
-  const found = SEMITONE_TO_INTERVAL[semitones];
-  if (found !== undefined) return found;
-  throw new RangeError(
-    `intervals() supports up to 21 semitones (majorThirteenth); received ${semitones}. Use semitoneContour() for larger spans.`,
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Internal contour helpers (used by Melody methods and standalone functions)
@@ -269,19 +223,21 @@ export class Melody {
   }
 
   /**
-   * Returns the absolute interval name between each pair of consecutive notes.
+   * Returns the spelled interval name between each pair of consecutive notes.
+   *
+   * Interval names are derived from the notes' actual letter spellings, so
+   * enharmonically distinct spellings produce distinct interval names:
+   * C4→D#4 yields `'augmentedSecond'`, not `'minorThird'`, and C4→Ebb4
+   * yields `'diminishedThird'`, not `'majorSecond'`.
    *
    * Each name reflects the absolute (unsigned) distance regardless of direction.
    * Use {@link semitoneContour} for the signed directed view.
    *
-   * Named intervals span unison through a major thirteenth (0..21 semitones). A
-   * single consecutive leap wider than 21 semitones (e.g. a two-octave jump such
-   * as C4→C6) has no named interval and throws; use {@link semitoneContour} for
-   * melodies with leaps that wide. Octave-crossing melodies whose individual
-   * steps stay within a major thirteenth are fully supported.
+   * Intervals spanning beyond the catalog's largest named interval throw; use
+   * {@link semitoneContour} for melodies with leaps that wide.
    *
-   * @returns The consecutive interval names.
-   * @throws {RangeError} When a consecutive leap exceeds 21 semitones.
+   * @returns The consecutive spelled interval names.
+   * @throws {RangeError} When a consecutive leap cannot be resolved to a named interval.
    */
   public intervals(): readonly Interval[] {
     if (this.#notes.length < 2) return [];
@@ -291,8 +247,9 @@ export class Melody {
       const from = this.#notes[i - 1]!;
       // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
       const to = this.#notes[i]!;
-      const delta = semitonesBetween(from, to);
-      result.push(semitonesToIntervalName(Math.abs(delta)));
+      // Use the lower-pitched note as the source so the interval is always ascending.
+      const [lower, higher] = from.midi <= to.midi ? [from, to] : [to, from];
+      result.push(lower.distanceTo(higher));
     }
     return result;
   }

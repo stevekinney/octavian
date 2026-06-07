@@ -90,6 +90,14 @@ describe('Melody#intervals', () => {
     expect(mel('C#4', 'D4').intervals()[0]).toBe('minorSecond');
   });
 
+  it('returns spelled interval: C4→D#4 is augmentedSecond (not minorThird)', () => {
+    expect(mel('C4', 'D#4').intervals()[0]).toBe('augmentedSecond');
+  });
+
+  it('returns spelled interval: C4→Ebb4 is diminishedThird (not majorSecond)', () => {
+    expect(mel('C4', 'Ebb4').intervals()[0]).toBe('diminishedThird');
+  });
+
   it('throws RangeError for notes more than 21 semitones apart (unsupported range)', () => {
     expect(() => mel('C4', 'C6').intervals()).toThrow(RangeError);
   });
@@ -306,22 +314,40 @@ describe('compareMelodicContour', () => {
 // ---------------------------------------------------------------------------
 
 describe('findMotifOccurrences', () => {
-  it('finds exact match at start, middle, and end', () => {
-    const motif = mel('C4', 'D4', 'E4'); // contour [+2, +2]
-    expect(findMotifOccurrences(mel('C4', 'D4', 'E4', 'F4'), motif)[0]?.startIndex).toBe(0);
-    expect(findMotifOccurrences(mel('A4', 'C4', 'D4', 'E4', 'F4'), motif)[0]?.startIndex).toBe(1);
+  it('finds exact match at start, middle, and end — asserts complete occurrence set', () => {
+    // Melody has the 3-note motif [+2,+2] exactly once at the start.
     expect(
-      findMotifOccurrences(mel('A4', 'B4', 'C5', 'D5', 'E5'), mel('C5', 'D5', 'E5'))[0]?.startIndex,
-    ).toBe(2);
+      findMotifOccurrences(mel('C4', 'D4', 'E4', 'F4'), mel('C4', 'D4', 'E4'), {
+        matchType: 'exact',
+      }),
+    ).toEqual([{ startIndex: 0, matchType: 'exact' }]);
+
+    // Melody has the motif once in the middle.
+    expect(
+      findMotifOccurrences(mel('A4', 'C4', 'D4', 'E4', 'F4'), mel('C4', 'D4', 'E4'), {
+        matchType: 'exact',
+      }),
+    ).toEqual([{ startIndex: 1, matchType: 'exact' }]);
+
+    // Melody has the motif once at the end.
+    expect(
+      findMotifOccurrences(mel('A4', 'B4', 'C5', 'D5', 'E5'), mel('C5', 'D5', 'E5'), {
+        matchType: 'exact',
+      }),
+    ).toEqual([{ startIndex: 2, matchType: 'exact' }]);
   });
 
-  it('finds overlapping occurrences (F4-G4-A4 also has contour [+2,+2])', () => {
-    const motif = mel('C4', 'D4', 'E4'); // [+2,+2]
-    const melody = mel('C4', 'D4', 'E4', 'F4', 'G4', 'A4');
-    const results = findMotifOccurrences(melody, motif);
-    const starts = results.map((r) => r.startIndex);
-    expect(starts).toContain(0);
-    expect(starts).toContain(3); // F4(+2)G4(+2)A4
+  it('finds overlapping occurrences of a 2-note motif yielding consecutive starts', () => {
+    // 2-note motif [+2] over ascending stepwise melody: every consecutive pair is +2,
+    // so the motif appears at starts 0, 1, 2 — genuinely overlapping windows.
+    const motif = mel('C4', 'D4'); // contour [+2]
+    const melody = mel('C4', 'D4', 'E4', 'F4'); // contour [+2, +2, +1]
+    const results = findMotifOccurrences(melody, motif, { matchType: 'exact' });
+    // Exact [+2] matches at start 0 (C4→D4) and start 1 (D4→E4); start 2 (E4→F4) is +1, no match.
+    expect(results).toEqual([
+      { startIndex: 0, matchType: 'exact' },
+      { startIndex: 1, matchType: 'exact' },
+    ]);
   });
 
   it('returns empty when motif is too long, has 1 note, or is empty', () => {
@@ -340,18 +366,28 @@ describe('findMotifOccurrences', () => {
   });
 
   it('matchType both: exact tagged exact, direction-only tagged contour, no double-reporting', () => {
+    // Motif: [+4] (C4→E4)
+    // Melody: C4 E4 G4 B4 C5 D5
+    //   C4→E4 = +4 (exact)
+    //   E4→G4 = +3 (up, contour only)
+    //   G4→B4 = +4 (exact)
+    //   B4→C5 = +1 (up, contour only)
+    //   C5→D5 = +2 (up, contour only)
     const motif = mel('C4', 'E4'); // [+4]
     const melody = mel('C4', 'E4', 'G4', 'B4', 'C5', 'D5');
     const results: readonly MotifOccurrence[] = findMotifOccurrences(melody, motif, {
       matchType: 'both',
     });
-    const exact = results.filter((r) => r.matchType === 'exact');
-    const contour = results.filter((r) => r.matchType === 'contour');
-    expect(exact.some((r) => r.startIndex === 0)).toBe(true); // C4-E4 exact
-    expect(exact.some((r) => r.startIndex === 2)).toBe(true); // G4-B4 exact
-    expect(contour.some((r) => r.startIndex === 4)).toBe(true); // C5-D5 up but +2
-    const exactStarts = new Set(exact.map((r) => r.startIndex));
-    for (const c of contour) expect(exactStarts.has(c.startIndex)).toBe(false);
+    expect(results).toEqual([
+      { startIndex: 0, matchType: 'exact' },
+      { startIndex: 1, matchType: 'contour' },
+      { startIndex: 2, matchType: 'exact' },
+      { startIndex: 3, matchType: 'contour' },
+      { startIndex: 4, matchType: 'contour' },
+    ]);
+    // No start index is reported twice.
+    const starts = results.map((r) => r.startIndex);
+    expect(new Set(starts).size).toBe(starts.length);
   });
 
   it('finds transposed exact motif', () => {

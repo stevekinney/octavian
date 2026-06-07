@@ -124,6 +124,22 @@ describe('fretPositionsFor (pitch-class mode)', () => {
     }
   });
 
+  it('returns the exact set of pitch-class E (4) positions on frets 0..12', () => {
+    const positions = fretPositionsFor(STANDARD_GUITAR_TUNING, 4, { minFret: 0, maxFret: 12 });
+    expect(
+      positions.map((p) => ({ stringIndex: p.stringIndex, fret: p.fret, note: p.note.toString() })),
+    ).toEqual([
+      { stringIndex: 0, fret: 0, note: 'E2' },
+      { stringIndex: 0, fret: 12, note: 'E3' },
+      { stringIndex: 1, fret: 7, note: 'E3' },
+      { stringIndex: 2, fret: 2, note: 'E3' },
+      { stringIndex: 3, fret: 9, note: 'E4' },
+      { stringIndex: 4, fret: 5, note: 'E4' },
+      { stringIndex: 5, fret: 0, note: 'E4' },
+      { stringIndex: 5, fret: 12, note: 'E5' },
+    ]);
+  });
+
   it('finds the open low E string (string 0, fret 0) for pitch class 4', () => {
     const positions = fretPositionsFor(STANDARD_GUITAR_TUNING, 4, { minFret: 0, maxFret: 0 });
     const found = positions.find((p) => p.stringIndex === 0 && p.fret === 0);
@@ -244,6 +260,28 @@ describe('scalePositionsFor', () => {
     }
   });
 
+  it('returns the exact set of C major scale positions on frets 0..2', () => {
+    const scale = Scale.create('C4', 'major');
+    const positions = scalePositionsFor(STANDARD_GUITAR_TUNING, scale, { minFret: 0, maxFret: 2 });
+    // Computed: strings E2/A2/D3/G3/B3/E4, frets 0–2, only C-D-E-F-G-A-B pitch classes
+    expect(
+      positions.map((p) => ({ stringIndex: p.stringIndex, fret: p.fret, note: p.note.toString() })),
+    ).toEqual([
+      { stringIndex: 0, fret: 0, note: 'E2' },
+      { stringIndex: 0, fret: 1, note: 'F2' },
+      { stringIndex: 1, fret: 0, note: 'A2' },
+      { stringIndex: 1, fret: 2, note: 'B2' },
+      { stringIndex: 2, fret: 0, note: 'D3' },
+      { stringIndex: 2, fret: 2, note: 'E3' },
+      { stringIndex: 3, fret: 0, note: 'G3' },
+      { stringIndex: 3, fret: 2, note: 'A3' },
+      { stringIndex: 4, fret: 0, note: 'B3' },
+      { stringIndex: 4, fret: 1, note: 'C4' },
+      { stringIndex: 5, fret: 0, note: 'E4' },
+      { stringIndex: 5, fret: 1, note: 'F4' },
+    ]);
+  });
+
   it('respects a custom fret range', () => {
     const scale = Scale.create('G4', 'major');
     const positions = scalePositionsFor(STANDARD_GUITAR_TUNING, scale, {
@@ -293,6 +331,23 @@ describe('chordPositionsFor', () => {
     for (const pos of positions) {
       expect(cMajorPitchClasses.has(pos.note.chromaticIndex)).toBe(true);
     }
+  });
+
+  it('returns the exact set of C major chord positions on frets 0..3', () => {
+    const chord = Chord.create('C4', 'major');
+    const positions = chordPositionsFor(STANDARD_GUITAR_TUNING, chord, { minFret: 0, maxFret: 3 });
+    expect(
+      positions.map((p) => ({ stringIndex: p.stringIndex, fret: p.fret, note: p.note.toString() })),
+    ).toEqual([
+      { stringIndex: 0, fret: 0, note: 'E2' },
+      { stringIndex: 0, fret: 3, note: 'G2' },
+      { stringIndex: 1, fret: 3, note: 'C3' },
+      { stringIndex: 2, fret: 2, note: 'E3' },
+      { stringIndex: 3, fret: 0, note: 'G3' },
+      { stringIndex: 4, fret: 1, note: 'C4' },
+      { stringIndex: 5, fret: 0, note: 'E4' },
+      { stringIndex: 5, fret: 3, note: 'G4' },
+    ]);
   });
 
   it('respects a custom fret range', () => {

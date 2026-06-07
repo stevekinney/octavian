@@ -17,11 +17,12 @@ export type InstrumentFamily =
 /**
  * The complete definition of an instrument in the catalog.
  *
- * `concertRange` and `writtenRange` are expressed as `[low, high]` pairs of
- * note strings. Non-transposing instruments omit `transposition`; transposing
- * instruments store the magnitude as an ascending interval — the convention is
- * that written pitch is UP by `transposition` from concert pitch (i.e. concert
- * is DOWN by `transposition` from written).
+ * `concertRange`, `writtenRange`, and `comfortableRange` are expressed as
+ * `[low, high]` pairs of note strings. All three are at **concert pitch**.
+ * Non-transposing instruments omit `transposition`; transposing instruments
+ * store the magnitude as an ascending interval — the convention is that written
+ * pitch is UP by `transposition` from concert pitch (i.e. concert is DOWN by
+ * `transposition` from written).
  */
 export type InstrumentDefinition = {
   readonly name: string;
@@ -158,7 +159,8 @@ const CANONICAL_INSTRUMENTS: Record<InstrumentName, InstrumentDefinition> = {
     // Concert range: sounds a major 2nd lower than written
     concertRange: ['D3', 'Bb6'],
     writtenRange: ['E3', 'C7'],
-    comfortableRange: ['E3', 'G6'],
+    // Comfortable range in CONCERT pitch (written E3–G6 transposed down M2)
+    comfortableRange: ['D3', 'F6'],
     transposition: 'majorSecond',
     defaultClefs: ['treble'],
   },
@@ -168,7 +170,8 @@ const CANONICAL_INSTRUMENTS: Record<InstrumentName, InstrumentDefinition> = {
     // Concert range: sounds a major 6th lower than written
     concertRange: ['Db3', 'Ab5'],
     writtenRange: ['Bb3', 'F6'],
-    comfortableRange: ['Bb3', 'Eb6'],
+    // Comfortable range in CONCERT pitch (written Bb3–Eb6 transposed down M6)
+    comfortableRange: ['Db3', 'Gb5'],
     transposition: 'majorSixth',
     defaultClefs: ['treble'],
   },
@@ -178,7 +181,8 @@ const CANONICAL_INSTRUMENTS: Record<InstrumentName, InstrumentDefinition> = {
     // Concert range: sounds a major 9th (M2 + octave) lower than written
     concertRange: ['Ab2', 'E5'],
     writtenRange: ['Bb3', 'F6'],
-    comfortableRange: ['Bb3', 'Eb6'],
+    // Comfortable range in CONCERT pitch (written Bb3–Eb6 transposed down M9)
+    comfortableRange: ['Ab2', 'Db5'],
     transposition: 'majorNinth',
     defaultClefs: ['treble'],
   },
@@ -188,7 +192,8 @@ const CANONICAL_INSTRUMENTS: Record<InstrumentName, InstrumentDefinition> = {
     // Concert range: sounds a major 2nd lower than written
     concertRange: ['E3', 'Bb5'],
     writtenRange: ['F#3', 'C6'],
-    comfortableRange: ['F#3', 'Bb5'],
+    // Comfortable range in CONCERT pitch (written F#3–Bb5 transposed down M2)
+    comfortableRange: ['E3', 'Ab5'],
     transposition: 'majorSecond',
     defaultClefs: ['treble'],
   },
@@ -198,7 +203,8 @@ const CANONICAL_INSTRUMENTS: Record<InstrumentName, InstrumentDefinition> = {
     // Concert range: sounds a perfect 5th lower than written
     concertRange: ['B1', 'F5'],
     writtenRange: ['F#2', 'C6'],
-    comfortableRange: ['F#2', 'F5'],
+    // Comfortable range in CONCERT pitch (written F#2–F5 transposed down P5)
+    comfortableRange: ['B1', 'Bb4'],
     transposition: 'perfectFifth',
     defaultClefs: ['treble'],
   },
@@ -358,7 +364,20 @@ export function isInInstrumentRange(
   if (kind === 'comfortable') {
     rangePair = definition.comfortableRange;
   } else if (kind === 'written') {
-    rangePair = definition.writtenRange ?? definition.concertRange;
+    if (definition.writtenRange !== undefined) {
+      rangePair = definition.writtenRange;
+    } else if (definition.transposition !== undefined && definition.concertRange !== undefined) {
+      // Transposing instrument with no explicit writtenRange: derive from concert range.
+      const [concertLow, concertHigh] = definition.concertRange;
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+      const writtenLow = toWrittenPitch(definition, concertLow as NoteLike).toString();
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+      const writtenHigh = toWrittenPitch(definition, concertHigh as NoteLike).toString();
+      rangePair = [writtenLow, writtenHigh];
+    } else {
+      // Non-transposing instrument: written == concert.
+      rangePair = definition.concertRange;
+    }
   } else {
     rangePair = definition.concertRange;
   }

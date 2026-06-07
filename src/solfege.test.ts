@@ -190,6 +190,29 @@ describe('parseSolfege — movableDo with context', () => {
     const result = parseSolfege('me', 'movableDo', cMajor);
     expect('note' in result && (result as { note: string }).note).toBe('Eb');
   });
+
+  it('me in C minor → Eb, not Ebb (syllables are major-scale-relative)', () => {
+    // Regression: solfège is relative to the tonic's MAJOR scale. Resolving `me`
+    // (b3) against the minor scale would double-lower the already-flat third to
+    // Ebb. It must resolve against C major's third (E) lowered once → Eb.
+    const cMinor = Scale.create('C4', 'naturalMinor');
+    const result = parseSolfege('me', 'movableDo', cMinor);
+    expect('note' in result && (result as { note: string }).note).toBe('Eb');
+  });
+
+  it('mi in C minor → E (raised/major third over the minor tonic)', () => {
+    const cMinor = Scale.create('C4', 'naturalMinor');
+    const result = parseSolfege('mi', 'movableDo', cMinor);
+    expect('note' in result && (result as { note: string }).note).toBe('E');
+  });
+
+  it('do/me in A minor key resolve against A major reference', () => {
+    const aMinor = Key.create('A', 'minor');
+    expect('note' in parseSolfege('do', 'movableDo', aMinor) === true).toBe(true);
+    // me = b3 over A → C major's third (C#) lowered once → C natural.
+    const me = parseSolfege('me', 'movableDo', aMinor);
+    expect('note' in me && (me as { note: string }).note).toBe('C');
+  });
 });
 
 // ---------------------------------------------------------------------------

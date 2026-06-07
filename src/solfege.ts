@@ -3,7 +3,7 @@ import { Key } from './key.js';
 import { Note } from './note.js';
 import type { NoteLike } from './note.js';
 import { normalizeChromaticIndex } from './note-spellings.js';
-import type { Scale } from './scale.js';
+import { Scale } from './scale.js';
 import { degreeForNote, noteForDegree } from './scale-degree.js';
 import type { ScaleDegreeAnalysis, ScaleDegreeNumber } from './scale-degree.js';
 
@@ -260,9 +260,15 @@ export function parseSolfege(
     return noteForDegree(getCMajorKey().scale, token);
   }
 
-  // movableDo
+  // movableDo: solfège syllables are major-scale-relative (do = tonic, mi =
+  // major third, me = minor third), so resolve the token against the tonic's
+  // MAJOR scale — not the supplied scale, which may be minor. Resolving against
+  // a minor context would double-apply the lowering (e.g. `me` -> `b3` against
+  // C minor's already-flat third gives Ebb instead of Eb).
   if (context) {
-    return noteForDegree(context, token);
+    const tonic = context instanceof Key ? context.tonic : context.root;
+    const majorReference = Scale.create(tonic, 'major');
+    return noteForDegree(majorReference, token);
   }
 
   // No context: return abstract analysis
