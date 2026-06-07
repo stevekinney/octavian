@@ -89,6 +89,10 @@ describe('Melody#intervals', () => {
   it('handles enharmonic spellings: C#4→D4 is minorSecond', () => {
     expect(mel('C#4', 'D4').intervals()[0]).toBe('minorSecond');
   });
+
+  it('throws RangeError for notes more than 21 semitones apart (unsupported range)', () => {
+    expect(() => mel('C4', 'C6').intervals()).toThrow(RangeError);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -165,12 +169,15 @@ describe('Melody#transpose', () => {
 // ---------------------------------------------------------------------------
 
 describe('Melody#invert', () => {
-  it('inverts [C4, D4, E4] around C4: axis stays, others reflect down', () => {
+  it('inverts [C4, D4, E4] around C4 to [C4, Bb3, Ab3] (flat spelling)', () => {
     const inv = mel('C4', 'D4', 'E4').invert('C4');
     const c4Midi = Number(Note.create('C4').midi);
     expect(inv.notes[0]!.toString()).toBe('C4');
     expect(Number(inv.notes[1]!.midi)).toBe(c4Midi - 2); // Bb3
     expect(Number(inv.notes[2]!.midi)).toBe(c4Midi - 4); // Ab3
+    // Descending inversion should spell with flats
+    expect(inv.notes[1]!.toString()).toBe('Bb3');
+    expect(inv.notes[2]!.toString()).toBe('Ab3');
   });
 
   it('note at axis stays after inversion', () => {
@@ -196,6 +203,12 @@ describe('Melody#invert', () => {
     const inv2 = m.invert('Db4');
     expect(inv1.notes[0]!.midi).toBe(inv2.notes[0]!.midi);
     expect(inv1.notes[1]!.midi).toBe(inv2.notes[1]!.midi);
+  });
+
+  it('throws RangeError when inversion maps a note outside MIDI 0..127', () => {
+    // C4 (midi 60) inverted around B6 (midi 95): delta = 60-95 = -35,
+    // inverted midi = 95 - (-35) = 130, which exceeds MIDI max of 127.
+    expect(() => mel('C4').invert('B6')).toThrow(RangeError);
   });
 });
 
@@ -417,14 +430,20 @@ describe('Melody property tests', () => {
     );
   });
 
-  it('invert double application is identity', () => {
+  it('invert double application is identity when result stays in MIDI range', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.integer({ min: 40, max: 80 }), { minLength: 1, maxLength: 8 }),
-        fc.integer({ min: 40, max: 80 }),
+        fc.array(fc.integer({ min: 21, max: 108 }), { minLength: 1, maxLength: 8 }),
+        fc.integer({ min: 21, max: 108 }),
         (midis, axisMidi) => {
-          // Restrict range so that inversions stay within MIDI 0..127.
-          // Delta from axis is at most 40, so inverted midi is axisMidi ± 40, always in range.
+          // Skip cases where inversion would produce a MIDI value outside 0..127.
+          // invert(n) maps note midi to axisMidi - (noteMidi - axisMidi) = 2*axisMidi - noteMidi.
+          // Guard: all inverted MIDIs must remain in range.
+          const allInRange = midis.every((midi) => {
+            const inverted = 2 * axisMidi - midi;
+            return inverted >= 0 && inverted <= 127;
+          });
+          if (!allInRange) return;
           const m = Melody.create(midis.map((midi) => Note.fromMidi(midi)));
           const axis = Note.fromMidi(axisMidi);
           const inv2 = m.invert(axis).invert(axis);

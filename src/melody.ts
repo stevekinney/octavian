@@ -127,14 +127,16 @@ const SEMITONE_TO_INTERVAL: Readonly<Record<number, Interval>> = {
 
 /**
  * Maps an absolute semitone count to the most common interval name.
- * For values beyond 21, reduces modulo 12 and returns the simple interval name.
+ * Supports 0..21 semitones (unison through major thirteenth).
+ *
+ * @throws {RangeError} When `semitones` is not in the range 0..21.
  */
 function semitonesToIntervalName(semitones: number): Interval {
   const found = SEMITONE_TO_INTERVAL[semitones];
   if (found !== undefined) return found;
-  // For extreme intervals, use the simple (mod-12) form.
-  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
-  return SEMITONE_TO_INTERVAL[semitones % 12]!;
+  throw new RangeError(
+    `intervals() supports up to 21 semitones (majorThirteenth); received ${semitones}. Use semitoneContour() for larger spans.`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -322,16 +324,21 @@ export class Melody {
    *
    * Each note is reflected by its signed semitone distance from the axis:
    * a note `d` semitones above the axis maps to `d` semitones below it.
+   * For example, inverting `[C4, D4, E4]` around `C4` gives `[C4, Bb3, Ab3]`.
+   *
+   * Inverted notes use flat spelling so that descending motion is spelled
+   * as flats rather than sharps (Bb3, Ab3 instead of A#3, G#3).
    *
    * @param axis The pitch to invert around.
    * @returns The inverted melody.
+   * @throws {RangeError} When any inverted MIDI value falls outside 0..127.
    */
   public invert(axis: NoteLike): Melody {
     const axisNote = Note.create(axis);
     const axisMidi = Number(axisNote.midi);
     const inverted = this.#notes.map((n) => {
       const delta = Number(n.midi) - axisMidi;
-      return Note.fromMidi(axisMidi - delta);
+      return Note.fromMidi(axisMidi - delta, 'flats');
     });
     return createMelody(inverted);
   }
