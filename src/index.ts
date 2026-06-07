@@ -185,3 +185,24 @@ export type {
 
 export { STANDARD_TUNING } from './tuning.js';
 export type { Tuning } from './tuning.js';
+
+export {
+  KEYBOARD_25,
+  KEYBOARD_49,
+  KEYBOARD_61,
+  KEYBOARD_76,
+  KEYBOARD_88,
+  highlightGroupsForChordOrScale,
+  keyboardKeysForRange,
+  keyboardPositionFor,
+  keyboardRange,
+  pianoKeyFor,
+} from './piano-keyboard.js';
+export type {
+  HighlightTarget,
+  KeyboardHighlight,
+  KeyboardOptions,
+  KeyboardPosition,
+  KeyboardRange,
+  PianoKey,
+} from './piano-keyboard.js';
