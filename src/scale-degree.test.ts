@@ -142,7 +142,7 @@ describe('degreeForNote — A natural minor (tonic = degree 1)', () => {
     expect(result).toEqual({ degree: 7, alteration: '', semitoneFromTonic: 10 });
   });
 
-  it('harmonic leading tone G# = degree 7, no alteration (natural 7 in harmonic minor)', () => {
+  it('raised leading tone G# = degree 7 with sharp alteration (relative to natural-minor G)', () => {
     // In A natural minor, G# is a sharp alteration relative to the diatonic G
     const result = degreeForNote(aMinor, 'G#');
     expect(result).toEqual({ degree: 7, alteration: '#', semitoneFromTonic: 11 });

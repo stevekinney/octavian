@@ -18,11 +18,13 @@ export type InstrumentFamily =
  * The complete definition of an instrument in the catalog.
  *
  * `concertRange`, `writtenRange`, and `comfortableRange` are expressed as
- * `[low, high]` pairs of note strings. All three are at **concert pitch**.
- * Non-transposing instruments omit `transposition`; transposing instruments
- * store the magnitude as an ascending interval — the convention is that written
- * pitch is UP by `transposition` from concert pitch (i.e. concert is DOWN by
- * `transposition` from written).
+ * `[low, high]` pairs of note strings. `concertRange` and `comfortableRange` are
+ * at **concert (sounding) pitch**; `writtenRange` is at **written (notated)
+ * pitch** — for a transposing instrument these differ. Non-transposing
+ * instruments omit `transposition`; transposing instruments store the magnitude
+ * as an ascending interval — the convention is that written pitch is UP by
+ * `transposition` from concert pitch (i.e. concert is DOWN by `transposition`
+ * from written).
  */
 export type InstrumentDefinition = {
   readonly name: string;
