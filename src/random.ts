@@ -23,7 +23,11 @@ export type RandomIntervalOptions = {
   random?: RandomFunction;
 };
 
-function pick<T>(pool: readonly T[], random: RandomFunction): T {
+/**
+ * @internal Picks a random element from a non-empty pool using the supplied random function.
+ * Exported for use by sibling modules only; not re-exported from the public barrel.
+ */
+export function pick<T>(pool: readonly T[], random: RandomFunction): T {
   const value = random();
 
   if (!Number.isFinite(value) || value < 0 || value >= 1) {

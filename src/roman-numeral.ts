@@ -358,8 +358,31 @@ function normalizeForParse(input: string): string {
   return result;
 }
 
+/**
+ * Finds the index of the applied-chord slash (the `/` in `V7/V`), distinct from
+ * a figured-bass inversion slash (the `/` in `6/5`, `4/3`, `6/4`). An inversion
+ * slash sits between two digits; the applied slash does not. Returns the index
+ * of the first slash that is NOT flanked by a digit on both sides, or -1 when
+ * every slash is an inversion figure.
+ */
+function findAppliedSlashIndex(raw: string): number {
+  for (let i = 0; i < raw.length; i += 1) {
+    if (raw[i] !== '/') {
+      continue;
+    }
+    const before = raw[i - 1];
+    const after = raw[i + 1];
+    const isInversionSlash =
+      before !== undefined && after !== undefined && /\d/u.test(before) && /\d/u.test(after);
+    if (!isInversionSlash) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 function parseRomanNumeralString(raw: string): RomanNumeral {
-  const slashIndex = raw.indexOf('/');
+  const slashIndex = findAppliedSlashIndex(raw);
   if (slashIndex !== -1) {
     const head = raw.slice(0, slashIndex);
     const tail = raw.slice(slashIndex + 1);

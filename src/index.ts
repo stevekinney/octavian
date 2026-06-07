@@ -167,6 +167,23 @@ export type { NoteLike, SerializedNote } from './note.js';
 export { randomNote, randomInterval } from './random.js';
 export type { RandomFunction, RandomNoteOptions, RandomIntervalOptions } from './random.js';
 
+export {
+  randomChord,
+  randomRomanNumeral,
+  randomRomanNumeralSequence,
+  randomScale,
+  randomScaleDegree,
+} from './random-theory.js';
+export type {
+  RandomChordOptions,
+  RandomRomanNumeralOptions,
+  RandomRomanNumeralSequenceOptions,
+  RandomScaleDegreeOptions,
+  RandomScaleOptions,
+} from './random-theory.js';
+
+export { createSeededRandom } from './seeded-random.js';
+
 export { Chord } from './chord.js';
 export type { ChordVoicing, SerializedChord } from './chord.js';
 
@@ -334,3 +351,58 @@ export type {
   MotifOccurrence,
   SerializedMelody,
 } from './melody.js';
+
+export {
+  Progression,
+  analyzeProgression,
+  detectModulations,
+  suggestContinuations,
+} from './progression.js';
+export type {
+  ModulationCandidate,
+  ProgressionAnalysis,
+  ProgressionContinuation,
+  ProgressionPattern,
+  ResolvedProgression,
+} from './progression.js';
+
+export {
+  commonProgressions,
+  commonProgressionName,
+  findCommonProgression,
+} from './common-progressions.js';
+
+export {
+  analyzeVoiceLeading,
+  commonTones,
+  findParallelPerfects,
+  leadingToneResolutions,
+  voiceMotion,
+} from './voice-leading.js';
+export type {
+  ResolutionCheck,
+  VoiceLeadingAnalysis,
+  VoiceLeadingIssue,
+  VoiceLeadingStep,
+  VoiceMotion,
+} from './voice-leading.js';
+
+export { compareChords } from './answer-comparison-chord.js';
+export type { ChordComparison } from './answer-comparison-chord.js';
+
+export {
+  compareMusicAnswer,
+  compareNotes,
+  compareIntervals,
+  compareRomanNumerals,
+  compareScaleDegrees,
+} from './answer-comparison.js';
+export type {
+  AnswerComparison,
+  ComparisonRelationship,
+  IntervalComparison,
+  MusicAnswerTarget,
+  NoteComparison,
+  RomanNumeralComparison,
+  ScaleDegreeComparison,
+} from './answer-comparison.js';
