@@ -107,7 +107,10 @@ function identifySecondaryDominant(key: Key, chord: Chord): RomanNumeral | null 
  * @returns A secondary leading-tone Roman numeral or `null`.
  */
 function identifySecondaryLeadingTone(key: Key, chord: Chord): RomanNumeral | null {
-  if (!isDiminishedSuffix(chord.suffix)) {
+  // Secondary leading-tone chords are diminished triads or fully-diminished
+  // sevenths. Half-diminished sevenths (ø7) are excluded: they don't carry
+  // the leading-tone resolution and would produce misleading vii°⁷ notation.
+  if (!isDiminishedSuffix(chord.suffix) || chord.suffix === 'halfDiminishedSeventh') {
     return null;
   }
   const isSeventh = chord.size === 4;

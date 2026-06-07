@@ -139,6 +139,14 @@ describe('romanNumeralFor', () => {
     expect(romanNumeralFor(cMajor, Chord.create('G#', 'minor'))).toBeNull();
   });
 
+  it('does not recognize a half-diminished seventh (F#ø7) as a secondary leading-tone chord', () => {
+    // Half-dim sevenths are excluded from secondary leading-tone recognition
+    // because they do not carry the harmonic-minor resolution. F#ø7 in C
+    // major falls through chromatic recognition entirely → null.
+    const cMajor = Key.create('C', 'major');
+    expect(romanNumeralFor(cMajor, Chord.create('F#', 'halfDiminishedSeventh'))).toBeNull();
+  });
+
   it('captures inversion when the chord is inverted', () => {
     const cMajor = Key.create('C', 'major');
     const cMajorTriad = Chord.create('C4', 'major').invert(1);
@@ -295,6 +303,16 @@ describe('chordFromRomanNumeral', () => {
     expect(result.root.note).toBe('C#');
     expect(result.suffix).toBe('diminishedSeventh');
   });
+
+  it('builds vii°7/V in C major as the fully-diminished seventh (F#°7)', () => {
+    // Applied to a major target (G major). The leading-tone seventh is always
+    // fully diminished (F#-A-C-Eb), not half-diminished, regardless of whether
+    // the tonicised target is major or minor.
+    const cMajor = Key.create('C', 'major');
+    const result = chordFromRomanNumeral(cMajor, 'vii°7/V');
+    expect(result.root.note).toBe('F#');
+    expect(result.suffix).toBe('diminishedSeventh');
+  });
 });
 
 describe('chordFromRomanNumeral — applied-chord error paths', () => {
@@ -360,4 +378,33 @@ describe('romanNumeralFor / chordFromRomanNumeral round-trip', () => {
     expect(rn).not.toBeNull();
     expect(rn!.toString()).toBe('vii°');
   });
+
+  it.each([
+    ['V/V', 'D', 'major'],
+    ['V⁷/V', 'D', 'dominantSeventh'],
+    ['vii°/V', 'F#', 'diminished'],
+    ['vii°⁷/V', 'F#', 'diminishedSeventh'],
+    ['vii°/ii', 'C#', 'diminished'],
+    ['vii°⁷/ii', 'C#', 'diminishedSeventh'],
+    ['V/ii', 'A', 'major'],
+    ['♭II', 'Db', 'major'],
+    ['iv', 'F', 'minor'],
+    ['♭VI', 'Ab', 'major'],
+    ['♭VII', 'Bb', 'major'],
+    ['♭III', 'Eb', 'major'],
+    ['ii°', 'D', 'diminished'],
+  ] as const)(
+    'chromatic round-trip for %s in C major: recognize → rebuild → equals original',
+    (numeral, rootNote, suffix) => {
+      const cMajor = Key.create('C', 'major');
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
+      const original = Chord.create(rootNote, suffix as never);
+      const rn = romanNumeralFor(cMajor, original);
+      expect(rn).not.toBeNull();
+      expect(rn!.toString()).toBe(numeral);
+      const rebuilt = chordFromRomanNumeral(cMajor, rn!);
+      expect(rebuilt.root.chromaticIndex).toBe(original.root.chromaticIndex);
+      expect(rebuilt.suffix).toBe(original.suffix);
+    },
+  );
 });

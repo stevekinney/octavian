@@ -33,9 +33,17 @@ export function chordFromRomanNumeral(key: Key, numeral: RomanNumeralLike): Chor
   // temporary key — otherwise V/V/V would build V of V (D) instead of
   // V of (V of V) which is V of D (A).
   const targetTonicChord = chordFromRomanNumeral(key, target);
-  const targetMode = qualityToMode(target.quality);
+  const surface = stripApplied(rn);
+  // Secondary leading-tone sevenths (vii°7/x) are always fully diminished
+  // regardless of the quality of the tonicised degree — they invoke the
+  // harmonic-minor convention. Build the temporary key as minor so that
+  // suffixForNumeral uses 'diminishedSeventh' for the degree-7 chord.
+  const targetMode =
+    surface.degree === 7 && surface.quality === 'diminished'
+      ? 'minor'
+      : qualityToMode(target.quality);
   const targetKey = Key.create(targetTonicChord.root.note, targetMode);
-  return buildChordFromNumeralInKey(targetKey, stripApplied(rn));
+  return buildChordFromNumeralInKey(targetKey, surface);
 }
 
 /**
