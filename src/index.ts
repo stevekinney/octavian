@@ -324,3 +324,13 @@ export type {
   InstrumentRange,
   InstrumentRangeOptions,
 } from './instruments.js';
+
+export { Melody, compareMelodicContour, findMotifOccurrences } from './melody.js';
+export type {
+  CompareMelodicContourOptions,
+  ContourComparison,
+  FindMotifOptions,
+  MelodicDirection,
+  MotifOccurrence,
+  SerializedMelody,
+} from './melody.js';
