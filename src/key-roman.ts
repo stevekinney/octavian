@@ -1,5 +1,6 @@
 import { Chord } from './chord.js';
 import type { ChordSuffix } from './chords.js';
+import { identifyChromaticRomanNumeral } from './chromatic-harmony.js';
 import { Key } from './key.js';
 import type { Note } from './note.js';
 import {
@@ -32,17 +33,31 @@ export function chordFromRomanNumeral(key: Key, numeral: RomanNumeralLike): Chor
   // temporary key — otherwise V/V/V would build V of V (D) instead of
   // V of (V of V) which is V of D (A).
   const targetTonicChord = chordFromRomanNumeral(key, target);
-  const targetMode = qualityToMode(target.quality);
+  const surface = stripApplied(rn);
+  // Secondary leading-tone sevenths (vii°7/x) are always fully diminished
+  // regardless of the quality of the tonicised degree — they invoke the
+  // harmonic-minor convention. Build the temporary key as minor so that
+  // suffixForNumeral uses 'diminishedSeventh' for the degree-7 chord.
+  const targetMode =
+    surface.degree === 7 && surface.quality === 'diminished'
+      ? 'minor'
+      : qualityToMode(target.quality);
   const targetKey = Key.create(targetTonicChord.root.note, targetMode);
-  return buildChordFromNumeralInKey(targetKey, stripApplied(rn));
+  return buildChordFromNumeralInKey(targetKey, surface);
 }
 
 /**
  * Identifies the Roman numeral that best describes `chord` within `key`.
  *
- * Returns `null` when no diatonic match applies. Future items (modal
- * mixture in 2.11, secondary dominants in 2.12) extend the recognized
- * vocabulary to chromatic and applied chords.
+ * Diatonic chords are recognized first. When no diatonic match applies,
+ * chromatic vocabulary is checked: secondary dominants (V/x, V7/x),
+ * secondary leading-tone chords (vii°/x, vii°7/x), borrowed chords from
+ * the parallel key (bIII, iv, bVI, bVII, ii°, …), and the Neapolitan
+ * (♭II). Returns `null` only when no recognized pattern applies.
+ *
+ * @param key The tonal key providing context.
+ * @param chord The chord to analyse.
+ * @returns The identified Roman numeral, or `null`.
  */
 export function romanNumeralFor(key: Key, chord: Chord): RomanNumeral | null {
   return identifyRomanNumeral(key, chord);
@@ -193,7 +208,8 @@ function identifyRomanNumeral(key: Key, chord: Chord): RomanNumeral | null {
       );
     }
   }
-  return null;
+  // Diatonic recognition failed — try chromatic vocabulary.
+  return identifyChromaticRomanNumeral(key, chord);
 }
 
 const degreesByIndex: readonly RomanNumeralDegree[] = [1, 2, 3, 4, 5, 6, 7];
