@@ -294,3 +294,13 @@ export type { NoteNamingSystem } from './note-naming.js';
 
 export { formatSolfege, parseSolfege } from './solfege.js';
 export type { SolfegeSystem } from './solfege.js';
+
+export {
+  STANDARD_GUITAR_TUNING,
+  STANDARD_BASS_TUNING,
+  noteAtFret,
+  fretPositionsFor,
+  scalePositionsFor,
+  chordPositionsFor,
+} from './fretboard.js';
+export type { StringInstrumentTuning, FretPosition, FretboardOptions } from './fretboard.js';
