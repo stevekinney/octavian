@@ -35,6 +35,12 @@
       "import": "./dist/browser/index.js",
       "default": "./dist/browser/index.js"
     },
+    "./sequences": {
+      "types": "./dist/sequences/index.d.ts",
+      "browser": "./dist/browser/sequences/index.js",
+      "import": "./dist/browser/sequences/index.js",
+      "default": "./dist/browser/sequences/index.js"
+    },
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",
