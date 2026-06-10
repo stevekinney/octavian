@@ -16,12 +16,10 @@ type PatternCheck = {
 };
 
 const root = path.resolve(import.meta.dirname, '..');
-const browserArtifactPath = path.join(root, 'dist/browser/index.js');
-const declarationsPath = path.join(root, 'dist/index.d.ts');
+const browserDir = path.join(root, 'dist/browser');
+const distDir = path.join(root, 'dist');
 const packageJsonPath = path.join(root, 'package.json');
 
-const browserArtifact = await fs.readFile(browserArtifactPath, 'utf8');
-const declarationsArtifact = await fs.readFile(declarationsPath, 'utf8');
 const rawPackageJson: unknown = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
 if (!isPackageJson(rawPackageJson)) {
   throw new TypeError('package.json is not a valid object');
@@ -97,22 +95,57 @@ function assertEmptyRuntimeDependencies(): void {
   }
 }
 
-assertZeroMatches(
-  'dist/browser/index.js browser-global check',
-  browserArtifact,
-  browserGlobalPatterns,
-);
+/**
+ * Recursively collects all files under a directory whose name ends with the
+ * given extension.
+ *
+ * @param dir The directory to search.
+ * @param extension The file extension to match (e.g. `.js` or `.d.ts`).
+ * @returns Absolute paths to every matching file found.
+ */
+async function collectFiles(dir: string, extension: string): Promise<string[]> {
+  const results: string[] = [];
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      const nested = await collectFiles(fullPath, extension);
+      results.push(...nested);
+    } else if (entry.isFile() && entry.name.endsWith(extension)) {
+      results.push(fullPath);
+    }
+  }
+
+  return results;
+}
+
+// Check all dist/browser/**/*.js for browser-global and bare-specifier violations.
+// This covers both main bundles and shared chunks emitted by the bundler.
+const browserJsFiles = await collectFiles(browserDir, '.js');
+if (browserJsFiles.length === 0) {
+  failures.push(`No .js files found under dist/browser/ — build may have failed.`);
+}
+
+let totalBrowserBytes = 0;
+for (const jsFile of browserJsFiles) {
+  const relLabel = path.relative(root, jsFile);
+  const source = await fs.readFile(jsFile, 'utf8');
+  totalBrowserBytes += source.length;
+  assertZeroMatches(`${relLabel} browser-global check`, source, browserGlobalPatterns);
+  assertZeroMatches(`${relLabel} bare-specifier check`, source, bareSpecifierPatterns);
+}
+
 assertEmptyRuntimeDependencies();
-assertZeroMatches(
-  'dist/browser/index.js bare-specifier check',
-  browserArtifact,
-  bareSpecifierPatterns,
-);
-assertZeroMatches(
-  'dist/index.d.ts bare-specifier check',
-  declarationsArtifact,
-  bareSpecifierPatterns,
-);
+
+// Check all dist/**/*.d.ts for bare-specifier violations.
+const dtsFiles = await collectFiles(distDir, '.d.ts');
+for (const dtsFile of dtsFiles) {
+  const relLabel = path.relative(root, dtsFile);
+  const source = await fs.readFile(dtsFile, 'utf8');
+  assertZeroMatches(`${relLabel} bare-specifier check`, source, bareSpecifierPatterns);
+}
 
 // Behavioral smoke test. If this script runs under Bun, `node` in PATH may be
 // Bun's shim rather than a real Node binary. Prefer an explicit override and
@@ -189,4 +222,6 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-process.stdout.write(`Artifact validation passed. Bundle size: ${browserArtifact.length} bytes\n`);
+process.stdout.write(
+  `Artifact validation passed. Total browser bundle size: ${totalBrowserBytes} bytes across ${browserJsFiles.length} file(s)\n`,
+);
