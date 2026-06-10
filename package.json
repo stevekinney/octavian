@@ -71,6 +71,18 @@
       "import": "./dist/browser/performance-timing/index.js",
       "default": "./dist/browser/performance-timing/index.js"
     },
+    "./web-audio": {
+      "types": "./dist/web-audio/index.d.ts",
+      "browser": "./dist/browser/web-audio/index.js",
+      "import": "./dist/browser/web-audio/index.js",
+      "default": "./dist/browser/web-audio/index.js"
+    },
+    "./web-midi": {
+      "types": "./dist/web-midi/index.d.ts",
+      "browser": "./dist/browser/web-midi/index.js",
+      "import": "./dist/browser/web-midi/index.js",
+      "default": "./dist/browser/web-midi/index.js"
+    },
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",
