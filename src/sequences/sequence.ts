@@ -99,7 +99,17 @@ function validateMusicalDuration(value: Rational): void {
   }
 }
 
+const EVENT_TYPES: ReadonlySet<string> = new Set(['note', 'chord', 'rest']);
+
 function validateEvent(event: MusicEvent): void {
+  // Trust boundary: in plain JS (or via casts) an unknown discriminant can reach
+  // create(). Reject it here rather than letting toJSON/transpose crash later.
+  if (!EVENT_TYPES.has(event.type)) {
+    throw new TypeError(
+      `Unknown music event type, received ${JSON.stringify((event as { type: unknown }).type)}.`,
+    );
+  }
+
   validateMusicalTime(event.start, 'start');
   validateMusicalDuration(event.duration);
 

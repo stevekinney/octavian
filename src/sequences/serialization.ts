@@ -131,8 +131,8 @@ function deserializeChordEvent(raw: SerializedChordEvent): ChordEvent {
  * @param chord The root-position chord.
  * @param inversion The serialized inversion index, or `undefined` for root position.
  * @returns The chord at the requested inversion.
- * @throws {TypeError} When the inversion is not a non-negative integer.
- * @throws {RangeError} When the inversion exceeds the chord's note count.
+ * @throws {TypeError} When the inversion is not an integer.
+ * @throws {RangeError} When the inversion is negative or exceeds the chord's note count.
  */
 function applyInversion(chord: Chord, inversion: number | undefined): Chord {
   if (inversion === undefined || inversion === 0) {

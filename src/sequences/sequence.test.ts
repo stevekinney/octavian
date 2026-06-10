@@ -226,6 +226,16 @@ describe('Sequence.create', () => {
     expect(() => Sequence.create([event], { tempo: 120 })).toThrow(RangeError);
   });
 
+  it('throws TypeError for an unknown event discriminant', () => {
+    const bogus = {
+      type: 'glissando',
+      start: q(0, 1),
+      duration: QUARTER,
+    } as unknown as MusicEvent;
+
+    expect(() => Sequence.create([bogus], { tempo: 120 })).toThrow(TypeError);
+  });
+
   it('accepts rest events', () => {
     const seq = Sequence.create([restEvent(q(0, 1), QUARTER)], { tempo: 120 });
     expect(seq.events[0]?.type).toBe('rest');
