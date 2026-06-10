@@ -80,7 +80,16 @@ export function deserializeEvent(raw: SerializedMusicEvent): MusicEvent {
     return deserializeNoteEvent(raw);
   }
 
-  return deserializeChordEvent(raw);
+  if (raw.type === 'chord') {
+    return deserializeChordEvent(raw);
+  }
+
+  // Trust boundary: a serialized event from external JSON may carry an
+  // unknown discriminant. Reject it explicitly rather than mis-deserializing
+  // it as a chord.
+  throw new TypeError(
+    `Unknown serialized event type, received ${JSON.stringify((raw as { type: unknown }).type)}.`,
+  );
 }
 
 function deserializeNoteEvent(raw: SerializedNoteEvent): NoteEvent {

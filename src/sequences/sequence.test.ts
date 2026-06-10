@@ -3,7 +3,6 @@ import { Sequence, musicalTime } from './sequence.js';
 import { Sequence as SequenceFromBarrel, musicalTime as musicalTimeFromBarrel } from './index.js';
 import { Note } from '../note.js';
 import { Chord } from '../chord.js';
-import { Meter } from '../meter.js';
 import type { MusicEvent, NoteEvent, ChordEvent, RestEvent } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -130,6 +129,78 @@ describe('Sequence.create', () => {
 
   it('throws RangeError for velocity out of range', () => {
     const event = noteEvent('C4', q(0, 1), QUARTER, 200);
+    expect(() => Sequence.create([event], { tempo: 120 })).toThrow(RangeError);
+  });
+
+  it('accepts velocity 0 (lower boundary)', () => {
+    const event = noteEvent('C4', q(0, 1), QUARTER, 0);
+    expect(() => Sequence.create([event], { tempo: 120 })).not.toThrow();
+  });
+
+  it('accepts velocity 127 (upper boundary)', () => {
+    const event = noteEvent('C4', q(0, 1), QUARTER, 127);
+    expect(() => Sequence.create([event], { tempo: 120 })).not.toThrow();
+  });
+
+  it('throws RangeError for velocity below 0', () => {
+    const event = noteEvent('C4', q(0, 1), QUARTER, -1);
+    expect(() => Sequence.create([event], { tempo: 120 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for non-integer velocity', () => {
+    const event = noteEvent('C4', q(0, 1), QUARTER, 63.5);
+    expect(() => Sequence.create([event], { tempo: 120 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for non-finite tempo (NaN)', () => {
+    expect(() => Sequence.create([], { tempo: NaN })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for non-finite tempo (Infinity)', () => {
+    expect(() => Sequence.create([], { tempo: Infinity })).toThrow(RangeError);
+  });
+
+  it('throws TypeError for non-integer start numerator', () => {
+    const event: NoteEvent = {
+      type: 'note',
+      note: Note.create('C4'),
+      start: { numerator: 1.5, denominator: 4 },
+      duration: QUARTER,
+    };
+
+    expect(() => Sequence.create([event], { tempo: 120 })).toThrow(TypeError);
+  });
+
+  it('throws RangeError for non-positive start denominator', () => {
+    const event: NoteEvent = {
+      type: 'note',
+      note: Note.create('C4'),
+      start: { numerator: 1, denominator: -4 },
+      duration: QUARTER,
+    };
+
+    expect(() => Sequence.create([event], { tempo: 120 })).toThrow(RangeError);
+  });
+
+  it('throws TypeError for non-integer duration denominator', () => {
+    const event: NoteEvent = {
+      type: 'note',
+      note: Note.create('C4'),
+      start: q(0, 1),
+      duration: { numerator: 1, denominator: 2.5 },
+    };
+
+    expect(() => Sequence.create([event], { tempo: 120 })).toThrow(TypeError);
+  });
+
+  it('throws RangeError for non-positive duration denominator', () => {
+    const event: NoteEvent = {
+      type: 'note',
+      note: Note.create('C4'),
+      start: q(0, 1),
+      duration: { numerator: 1, denominator: 0 },
+    };
+
     expect(() => Sequence.create([event], { tempo: 120 })).toThrow(RangeError);
   });
 
@@ -326,201 +397,12 @@ describe('Sequence.totalDuration', () => {
 // Serialization round-trip
 // ---------------------------------------------------------------------------
 
-describe('Sequence.toJSON / fromJSON', () => {
-  it('round-trips a note event sequence', () => {
-    const original = Sequence.create(
-      [
-        noteEvent('C4', q(0, 1), QUARTER),
-        noteEvent('E4', QUARTER, QUARTER, 64),
-        restEvent(HALF, QUARTER),
-      ],
-      { tempo: 120 },
-    );
-
-    const json = original.toJSON();
-    const restored = Sequence.fromJSON(json);
-
-    expect(restored.equals(original)).toBe(true);
-  });
-
-  it('round-trips a chord event without velocity', () => {
-    const original = Sequence.create([chordEvent('C4', 'maj7', q(0, 1), WHOLE)], { tempo: 80 });
-
-    const json = original.toJSON();
-    const restored = Sequence.fromJSON(json);
-
-    expect(restored.equals(original)).toBe(true);
-  });
-
-  it('round-trips a chord event with velocity', () => {
-    const original = Sequence.create([chordEvent('G4', '', q(0, 1), HALF, 90)], { tempo: 120 });
-
-    const json = original.toJSON();
-    const restored = Sequence.fromJSON(json);
-
-    expect(restored.equals(original)).toBe(true);
-    expect((restored.events[0] as ChordEvent).velocity).toBe(90);
-  });
-
-  it('produces deterministic JSON', () => {
-    const seq = Sequence.create([noteEvent('C4', q(0, 1), QUARTER)], { tempo: 120 });
-    const json1 = JSON.stringify(seq.toJSON());
-    const json2 = JSON.stringify(seq.toJSON());
-
-    expect(json1).toBe(json2);
-  });
-
-  it('throws TypeError for invalid tempo in fromJSON', () => {
-    expect(() => Sequence.fromJSON({ tempo: 0, meter: null, events: [] })).toThrow(TypeError);
-  });
-
-  it('round-trips with a rest event', () => {
-    const original = Sequence.create([restEvent(q(0, 1), QUARTER)], { tempo: 120 });
-    const restored = Sequence.fromJSON(original.toJSON());
-
-    expect(restored.equals(original)).toBe(true);
-  });
-
-  it('serializes meter as null when absent', () => {
-    const seq = Sequence.create([], { tempo: 120 });
-    expect(seq.toJSON().meter).toBeNull();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// equals
-// ---------------------------------------------------------------------------
-
-describe('Sequence.equals', () => {
-  it('considers two empty sequences with same tempo equal', () => {
-    const a = Sequence.create([], { tempo: 120 });
-    const b = Sequence.create([], { tempo: 120 });
-    expect(a.equals(b)).toBe(true);
-  });
-
-  it('considers two sequences unequal when tempos differ', () => {
-    const a = Sequence.create([], { tempo: 120 });
-    const b = Sequence.create([], { tempo: 96 });
-    expect(a.equals(b)).toBe(false);
-  });
-
-  it('considers two sequences unequal when event counts differ', () => {
-    const a = Sequence.create([noteEvent('C4', q(0, 1), QUARTER)], { tempo: 120 });
-    const b = Sequence.create([], { tempo: 120 });
-    expect(a.equals(b)).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Symbol.toStringTag
-// ---------------------------------------------------------------------------
-
-describe('Sequence[Symbol.toStringTag]', () => {
-  it('returns a descriptive tag', () => {
-    const seq = Sequence.create([noteEvent('C4', q(0, 1), QUARTER)], { tempo: 120 });
-    expect(seq[Symbol.toStringTag]).toBe('Sequence(1 event(s), 120 BPM)');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Meter option
-// ---------------------------------------------------------------------------
-
-describe('Sequence with meter', () => {
-  it('stores the meter when provided', () => {
-    const meter = Meter.create('4/4');
-    const seq = Sequence.create([], { tempo: 120, meter });
-    expect(seq.meter).not.toBeNull();
-    expect(seq.meter?.numerator).toBe(4);
-    expect(seq.meter?.denominator).toBe(4);
-  });
-
-  it('uses meter.beatUnit for toAbsoluteSeconds in 4/4', () => {
-    // 4/4: beatUnit = 1/4; quarter note at 120 BPM = 0.5s (same as no-meter)
-    const meter = Meter.create('4/4');
-    const seq = Sequence.create([noteEvent('C4', QUARTER, QUARTER)], { tempo: 120, meter });
-    const [timed] = seq.toAbsoluteSeconds();
-    expect(timed?.startSeconds).toBeCloseTo(0.5);
-    expect(timed?.durationSeconds).toBeCloseTo(0.5);
-  });
-
-  it('uses meter.beatUnit for toAbsoluteSeconds in 6/8 (compound)', () => {
-    // 6/8: beatUnit = 3/8; dotted quarter = 3/8 = one beat at 120 BPM → 0.5s
-    const meter = Meter.create('6/8');
-    const dottedQuarter = q(3, 8);
-    const seq = Sequence.create([noteEvent('C4', dottedQuarter, dottedQuarter)], {
-      tempo: 120,
-      meter,
-    });
-    const [timed] = seq.toAbsoluteSeconds();
-    // start = 3/8 beat; beatUnit = 3/8 → 1 beat → 0.5s
-    expect(timed?.startSeconds).toBeCloseTo(0.5);
-    expect(timed?.durationSeconds).toBeCloseTo(0.5);
-  });
-
-  it('round-trips a sequence with meter via toJSON/fromJSON', () => {
-    const meter = Meter.create('6/8');
-    const original = Sequence.create([noteEvent('C4', q(0, 1), q(3, 8))], { tempo: 120, meter });
-
-    const json = original.toJSON();
-    const restored = Sequence.fromJSON(json);
-
-    // meter must be a real Meter instance with beatUnit
-    expect(restored.meter).not.toBeNull();
-    expect(restored.meter).toBeInstanceOf(Meter);
-    expect(restored.meter?.numerator).toBe(6);
-    expect(restored.meter?.denominator).toBe(8);
-    expect(restored.equals(original)).toBe(true);
-  });
-
-  it('toAbsoluteSeconds works correctly after fromJSON with meter', () => {
-    const meter = Meter.create('6/8');
-    const dottedQuarter = q(3, 8);
-    const original = Sequence.create([noteEvent('C4', dottedQuarter, dottedQuarter)], {
-      tempo: 120,
-      meter,
-    });
-
-    const restored = Sequence.fromJSON(original.toJSON());
-    const [timed] = restored.toAbsoluteSeconds();
-
-    // Should use meter.beatUnit = 3/8; dotted quarter at 120 BPM → 0.5s
-    expect(timed?.startSeconds).toBeCloseTo(0.5);
-    expect(timed?.durationSeconds).toBeCloseTo(0.5);
-  });
-
-  it('preserves meter after transpose', () => {
-    const meter = Meter.create('3/4');
-    const seq = Sequence.create([noteEvent('C4', q(0, 1), QUARTER)], { tempo: 120, meter });
-    const transposed = seq.transpose('majorSecond');
-
-    expect(transposed.meter).not.toBeNull();
-    expect(transposed.meter?.numerator).toBe(3);
-    expect(transposed.meter?.denominator).toBe(4);
-  });
-
-  it('considers two sequences with same meter equal', () => {
-    const meter = Meter.create('3/4');
-    const a = Sequence.create([], { tempo: 120, meter });
-    const b = Sequence.create([], { tempo: 120, meter: Meter.create('3/4') });
-    expect(a.equals(b)).toBe(true);
-  });
-
-  it('considers two sequences unequal when meters differ', () => {
-    const a = Sequence.create([], { tempo: 120, meter: Meter.create('4/4') });
-    const b = Sequence.create([], { tempo: 120, meter: Meter.create('3/4') });
-    expect(a.equals(b)).toBe(false);
-  });
-
-  it('considers sequence with meter unequal to one without', () => {
-    const a = Sequence.create([], { tempo: 120, meter: Meter.create('4/4') });
-    const b = Sequence.create([], { tempo: 120 });
-    expect(a.equals(b)).toBe(false);
-  });
-});
-
 // ---------------------------------------------------------------------------
 // Subpath barrel (index.js)
+//
+// Serialization, equality, Symbol.toStringTag, and meter coverage live in the
+// companion file serialization.test.ts (kept separate to stay under the
+// max-lines lint cap).
 // ---------------------------------------------------------------------------
 
 describe('octavian/sequences barrel exports', () => {

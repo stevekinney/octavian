@@ -1,8 +1,10 @@
 import { defineConfig } from 'tsdown';
 
 // Each subpath export gets its own entry point here.
-// Convention: add 'src/<name>/index.ts' to the entry array and a matching
-// "./name" condition to package.json exports (types + browser/import/default).
+// Convention: add 'src/<name>/index.ts' to the entry array, a matching
+// "./name" condition to package.json exports (types + browser/import/default),
+// and a runtime assertion in scripts/smoke-checks.mjs wired into
+// scripts/smoke-consumer-check.mjs so the tarball smoke test covers it.
 export default defineConfig({
   entry: ['src/index.ts', 'src/sequences/index.ts'],
   outDir: 'dist/browser',

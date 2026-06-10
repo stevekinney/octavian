@@ -147,28 +147,17 @@ function transposeChordEvent(event: ChordEvent, interval: Interval): ChordEvent 
 // ---------------------------------------------------------------------------
 
 function metersMatch(a: Meter | null, b: Meter | null): boolean {
-  if ((a === null) !== (b === null)) return false;
+  if (a === null || b === null) return a === b;
 
-  if (a !== null && b !== null) {
-    return a.numerator === b.numerator && a.denominator === b.denominator;
-  }
-
-  return true;
+  return a.equals(b);
 }
 
 function noteEventsMatch(a: NoteEvent, b: NoteEvent): boolean {
-  return (
-    a.note.note === b.note.note && a.note.octave === b.note.octave && a.velocity === b.velocity
-  );
+  return a.note.equals(b.note) && a.velocity === b.velocity;
 }
 
 function chordEventsMatch(a: ChordEvent, b: ChordEvent): boolean {
-  return (
-    a.chord.root.note === b.chord.root.note &&
-    a.chord.root.octave === b.chord.root.octave &&
-    a.chord.suffix === b.chord.suffix &&
-    a.velocity === b.velocity
-  );
+  return a.chord.equals(b.chord) && a.velocity === b.velocity;
 }
 
 function eventsMatch(a: MusicEvent, b: MusicEvent): boolean {
@@ -215,7 +204,7 @@ export class Sequence {
       events: readonly MusicEvent[],
       tempo: number,
       meter: Meter | null,
-    ): Sequence => new Sequence(events, tempo, meter);
+    ): Sequence => new Sequence(Object.freeze([...events]), tempo, meter);
   }
 
   /**
@@ -251,9 +240,7 @@ export class Sequence {
    * @throws {TypeError} When the serialized tempo is invalid.
    */
   public static fromJSON(serialized: SerializedSequence): Sequence {
-    if (!Number.isFinite(serialized.tempo) || serialized.tempo <= 0) {
-      throw new TypeError(`Serialized tempo must be a finite positive number.`);
-    }
+    validateTempo(serialized.tempo);
 
     const events = serialized.events.map(deserializeEvent);
 

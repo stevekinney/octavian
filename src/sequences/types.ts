@@ -6,11 +6,8 @@
 
 import type { Note } from '../note.js';
 import type { Chord } from '../chord.js';
-import type { Interval } from '../intervals.js';
 import type { Rational } from '../rational.js';
 import type { Meter } from '../meter.js';
-
-export type { Note, Chord, Interval, Rational, Meter };
 
 // ---------------------------------------------------------------------------
 // MusicalTime / MusicalDuration
@@ -144,7 +141,7 @@ export type SerializedChordEvent = {
   readonly type: 'chord';
   /** Root note-name-with-octave, e.g. `"C4"`. */
   readonly rootWithOctave: string;
-  /** Canonical chord suffix, e.g. `"maj7"`. */
+  /** Canonical chord suffix (the resolved catalog key, e.g. `"majorSeventh"`, not the `"maj7"` alias). */
   readonly suffix: string;
   readonly start: Rational;
   readonly duration: Rational;

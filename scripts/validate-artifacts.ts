@@ -96,12 +96,14 @@ function assertEmptyRuntimeDependencies(): void {
 }
 
 /**
- * Recursively collects all `.js` files under a directory.
+ * Recursively collects all files under a directory whose name ends with the
+ * given extension.
  *
  * @param dir The directory to search.
- * @returns Absolute paths to every `.js` file found.
+ * @param extension The file extension to match (e.g. `.js` or `.d.ts`).
+ * @returns Absolute paths to every matching file found.
  */
-async function collectJsFiles(dir: string): Promise<string[]> {
+async function collectFiles(dir: string, extension: string): Promise<string[]> {
   const results: string[] = [];
   const entries = await fs.readdir(dir, { withFileTypes: true });
 
@@ -109,33 +111,9 @@ async function collectJsFiles(dir: string): Promise<string[]> {
     const fullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      const nested = await collectJsFiles(fullPath);
+      const nested = await collectFiles(fullPath, extension);
       results.push(...nested);
-    } else if (entry.isFile() && entry.name.endsWith('.js')) {
-      results.push(fullPath);
-    }
-  }
-
-  return results;
-}
-
-/**
- * Recursively collects all `.d.ts` files under a directory.
- *
- * @param dir The directory to search.
- * @returns Absolute paths to every `.d.ts` file found.
- */
-async function collectDtsFiles(dir: string): Promise<string[]> {
-  const results: string[] = [];
-  const entries = await fs.readdir(dir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      const nested = await collectDtsFiles(fullPath);
-      results.push(...nested);
-    } else if (entry.isFile() && entry.name.endsWith('.d.ts')) {
+    } else if (entry.isFile() && entry.name.endsWith(extension)) {
       results.push(fullPath);
     }
   }
@@ -145,7 +123,7 @@ async function collectDtsFiles(dir: string): Promise<string[]> {
 
 // Check all dist/browser/**/*.js for browser-global and bare-specifier violations.
 // This covers both main bundles and shared chunks emitted by the bundler.
-const browserJsFiles = await collectJsFiles(browserDir);
+const browserJsFiles = await collectFiles(browserDir, '.js');
 if (browserJsFiles.length === 0) {
   failures.push(`No .js files found under dist/browser/ — build may have failed.`);
 }
@@ -162,7 +140,7 @@ for (const jsFile of browserJsFiles) {
 assertEmptyRuntimeDependencies();
 
 // Check all dist/**/*.d.ts for bare-specifier violations.
-const dtsFiles = await collectDtsFiles(distDir);
+const dtsFiles = await collectFiles(distDir, '.d.ts');
 for (const dtsFile of dtsFiles) {
   const relLabel = path.relative(root, dtsFile);
   const source = await fs.readFile(dtsFile, 'utf8');

@@ -24,3 +24,21 @@ export function assertSmokeChecks(octavian) {
     throw new Error('INTERVALS catalog broken');
   }
 }
+
+// Subpath-export smoke checks. Each subpath (e.g. octavian/sequences) is a
+// separate entry in the package.json "exports" map and resolves to its own
+// browser bundle. When adding a new subpath, import it in
+// smoke-consumer-check.mjs and add an assertion here.
+export function assertSequencesSmokeChecks(sequences) {
+  if (typeof sequences.Sequence?.create !== 'function') {
+    throw new Error('octavian/sequences: Sequence.create missing');
+  }
+  if (typeof sequences.musicalTime !== 'function') {
+    throw new Error('octavian/sequences: musicalTime missing');
+  }
+  const seq = sequences.Sequence.create(
+    [{ type: 'rest', start: sequences.musicalTime(0, 1), duration: sequences.musicalTime(1, 4) }],
+    { tempo: 120 },
+  );
+  if (seq.events.length !== 1) throw new Error('octavian/sequences: Sequence.create broken');
+}
