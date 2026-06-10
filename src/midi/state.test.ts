@@ -373,4 +373,82 @@ describe('sequenceToMidiMessages', () => {
     const messages = sequenceToMidiMessages(seq);
     expect(Object.isFrozen(messages)).toBe(true);
   });
+
+  // Fix #3: option validation
+  it('throws RangeError for channel 16', () => {
+    const seq = Sequence.create([], { tempo: 120 });
+    expect(() => sequenceToMidiMessages(seq, { channel: 16 })).toThrow(RangeError);
+    expect(() => sequenceToMidiMessages(seq, { channel: 16 })).toThrow(/0..15/);
+  });
+
+  it('throws RangeError for channel -1', () => {
+    const seq = Sequence.create([], { tempo: 120 });
+    expect(() => sequenceToMidiMessages(seq, { channel: -1 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for defaultVelocity 0', () => {
+    const seq = Sequence.create([], { tempo: 120 });
+    expect(() => sequenceToMidiMessages(seq, { defaultVelocity: 0 })).toThrow(RangeError);
+    expect(() => sequenceToMidiMessages(seq, { defaultVelocity: 0 })).toThrow(/1..127/);
+  });
+
+  it('throws RangeError for defaultVelocity 200', () => {
+    const seq = Sequence.create([], { tempo: 120 });
+    expect(() => sequenceToMidiMessages(seq, { defaultVelocity: 200 })).toThrow(RangeError);
+  });
+
+  // Fix #4: velocity-0 rejection at MIDI conversion boundary
+  it('throws RangeError when a note event has velocity 0', () => {
+    const note = Note.fromMidi(60);
+    const seq = Sequence.create(
+      [{ type: 'note', note, start: musicalTime(0, 1), duration: musicalTime(1, 4), velocity: 0 }],
+      { tempo: 120 },
+    );
+    expect(() => sequenceToMidiMessages(seq)).toThrow(RangeError);
+    expect(() => sequenceToMidiMessages(seq)).toThrow(/0 is interpreted as note-off/);
+  });
+
+  it('throws RangeError when a chord event has velocity 0', () => {
+    const chord = Chord.create('C4', 'major');
+    const seq = Sequence.create(
+      [
+        {
+          type: 'chord',
+          chord,
+          start: musicalTime(0, 1),
+          duration: musicalTime(1, 4),
+          velocity: 0,
+        },
+      ],
+      { tempo: 120 },
+    );
+    expect(() => sequenceToMidiMessages(seq)).toThrow(RangeError);
+    expect(() => sequenceToMidiMessages(seq)).toThrow(/0 is interpreted as note-off/);
+  });
+
+  it('accepts note event velocity 1 (boundary)', () => {
+    const note = Note.fromMidi(60);
+    const seq = Sequence.create(
+      [{ type: 'note', note, start: musicalTime(0, 1), duration: musicalTime(1, 4), velocity: 1 }],
+      { tempo: 120 },
+    );
+    expect(() => sequenceToMidiMessages(seq)).not.toThrow();
+  });
+
+  it('accepts note event velocity 127 (boundary)', () => {
+    const note = Note.fromMidi(60);
+    const seq = Sequence.create(
+      [
+        {
+          type: 'note',
+          note,
+          start: musicalTime(0, 1),
+          duration: musicalTime(1, 4),
+          velocity: 127,
+        },
+      ],
+      { tempo: 120 },
+    );
+    expect(() => sequenceToMidiMessages(seq)).not.toThrow();
+  });
 });

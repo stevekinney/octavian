@@ -194,7 +194,7 @@ function parseTrackEvents(
   let runningStatus = 0;
 
   while (pos < end) {
-    const { value: deltaTicks, bytesRead } = decodeVlq(data, pos);
+    const { value: deltaTicks, bytesRead } = decodeVlq(data, pos, end);
     pos += bytesRead;
 
     if (pos >= end) {
@@ -213,6 +213,12 @@ function parseTrackEvents(
       events.push(result.event);
 
       if (result.done) break;
+    } else if (firstByte >= 0xf0) {
+      // SysEx (0xF0, 0xF7) and other system messages are not supported.
+      // Silently mis-parsing them as channel events would desync the parser.
+      throw new TypeError(
+        `Unsupported system status byte 0x${firstByte.toString(16).toUpperCase()} at offset ${pos}; SysEx and system messages are not supported.`,
+      );
     } else if ((firstByte & 0x80) !== 0) {
       // Status byte present — update running status
       runningStatus = firstByte;

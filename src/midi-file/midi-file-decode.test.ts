@@ -358,6 +358,35 @@ describe('parseMidiFile — track event parsing', () => {
     expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(RangeError);
   });
 
+  it('throws RangeError (Truncated VLQ) when delta-time VLQ at track boundary is a lone continuation byte', () => {
+    // Track has exactly 1 byte: 0x81 (continuation byte, high bit set).
+    // A trailing file byte (0x00) sits at track end + 1 — the parser must NOT
+    // read it.  Without the `end` limit fix, decodeVlq consumes the trailing
+    // byte and returns successfully; with the fix it throws "Truncated VLQ".
+    // prettier-ignore
+    const truncated = new Uint8Array([
+      0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06, // MThd
+      0x00, 0x00, 0x00, 0x01, 0x01, 0xe0,              // format=0, tracks=1, division=480
+      0x4d, 0x54, 0x72, 0x6b,                          // MTrk
+      0x00, 0x00, 0x00, 0x01,                          // track length = 1 (one byte only)
+      0x81,                                            // lone continuation byte at track boundary
+      0x00,                                            // trailing file byte, outside the track
+    ]);
+    expect(() => parseMidiFile(truncated)).toThrow(/Truncated VLQ/);
+  });
+
+  it('throws TypeError for a 0xF0 SysEx status byte', () => {
+    // 0xF0 is a SysEx start byte — unsupported; must throw TypeError before trying
+    // to parse it as a channel event (which would desync the parser).
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xf0, 0x03, 0x41, 0x10, 0xf7, // SysEx: delta=0, F0, len=3, payload, F7
+      0x00, 0xff, 0x2f, 0x00,              // end of track
+    ];
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(TypeError);
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(/0xF0/);
+  });
+
   it('throws RangeError when a channel data byte is >= 0x80 (status-like, malformed stream)', () => {
     // Note-on C4 with velocity 0x80 — velocity byte >= 0x80 is invalid per SMF spec.
     // prettier-ignore

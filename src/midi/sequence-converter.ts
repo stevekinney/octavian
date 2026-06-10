@@ -78,11 +78,21 @@ function processEvent(
 
   if (event.type === 'note') {
     const velocity = event.velocity ?? defaultVelocity;
+    if (velocity === 0) {
+      throw new RangeError(
+        `Note event velocity must be 1..127 for MIDI conversion (0 is interpreted as note-off), received 0.`,
+      );
+    }
     return noteOnOff(event.note.midi, velocity, channel, event.startSeconds, endSeconds);
   }
 
   if (event.type === 'chord') {
     const velocity = event.velocity ?? defaultVelocity;
+    if (velocity === 0) {
+      throw new RangeError(
+        `Note event velocity must be 1..127 for MIDI conversion (0 is interpreted as note-off), received 0.`,
+      );
+    }
     const messages: TimedMidiMessage[] = [];
     for (const note of event.chord.notes) {
       const pairs = noteOnOff(note.midi, velocity, channel, event.startSeconds, endSeconds);
@@ -97,24 +107,42 @@ function processEvent(
   return [];
 }
 
+function validateChannel(channel: number): void {
+  if (!Number.isInteger(channel) || channel < 0 || channel > 15) {
+    throw new RangeError(`channel must be an integer in 0..15, received ${channel}.`);
+  }
+}
+
+function validateDefaultVelocity(velocity: number): void {
+  if (!Number.isInteger(velocity) || velocity < 1 || velocity > 127) {
+    throw new RangeError(`defaultVelocity must be an integer in 1..127, received ${velocity}.`);
+  }
+}
+
 /**
- * Converts an octavian {@link Sequence} into an array of timed MIDI messages.
+ * Validates options and returns resolved channel and defaultVelocity.
  *
- * Each note and chord event yields Note-On and Note-Off message pairs.
- * Rest events are silently skipped. The result is sorted by `timeSeconds`
- * ascending; ties preserve the note-on-before-note-off ordering within
- * a single event.
- *
- * @param sequence The sequence to convert.
- * @param options Channel and default velocity overrides.
- * @returns Sorted array of timed MIDI messages.
+ * @throws {RangeError} When channel is not an integer in 0..15.
+ * @throws {RangeError} When defaultVelocity is not an integer in 1..127.
  */
+function validateSequenceToMidiOptions(options: SequenceToMidiMessagesOptions | undefined): {
+  readonly channel: number;
+  readonly defaultVelocity: number;
+} {
+  const channel = options?.channel ?? 0;
+  const defaultVelocity = options?.defaultVelocity ?? 64;
+
+  if (options?.channel !== undefined) validateChannel(channel);
+  if (options?.defaultVelocity !== undefined) validateDefaultVelocity(defaultVelocity);
+
+  return { channel, defaultVelocity };
+}
+
 export function sequenceToMidiMessages(
   sequence: Sequence,
   options?: SequenceToMidiMessagesOptions,
 ): readonly TimedMidiMessage[] {
-  const channel = options?.channel ?? 0;
-  const defaultVelocity = options?.defaultVelocity ?? 64;
+  const { channel, defaultVelocity } = validateSequenceToMidiOptions(options);
 
   const timedEvents = sequence.toAbsoluteSeconds();
   const result: TimedMidiMessage[] = [];

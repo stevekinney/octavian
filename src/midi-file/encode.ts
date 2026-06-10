@@ -116,6 +116,14 @@ type NoteEventPair = {
   readonly velocity: number;
 };
 
+function validateEventVelocity(velocity: number): void {
+  if (velocity === 0) {
+    throw new RangeError(
+      `Note event velocity must be 1..127 for MIDI conversion (0 is interpreted as note-off), received 0.`,
+    );
+  }
+}
+
 function collectNoteEventPairs(event: NoteEvent, division: number): readonly NoteEventPair[] {
   const onTick = rationalToTicks(event.start.numerator, event.start.denominator, division);
   const durationTicks = rationalToTicks(
@@ -126,6 +134,7 @@ function collectNoteEventPairs(event: NoteEvent, division: number): readonly Not
   const offTick = onTick + durationTicks;
   const noteNumber = Number(event.note.midi);
   const velocity = event.velocity ?? DEFAULT_VELOCITY;
+  validateEventVelocity(velocity);
 
   return [{ onTick, offTick, noteNumber, velocity }];
 }
@@ -139,6 +148,7 @@ function collectChordNoteEventPairs(event: ChordEvent, division: number): readon
   );
   const offTick = onTick + durationTicks;
   const velocity = event.velocity ?? DEFAULT_VELOCITY;
+  validateEventVelocity(velocity);
 
   return event.chord.notes.map((note) => ({
     onTick,
