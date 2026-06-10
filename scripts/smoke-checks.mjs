@@ -29,6 +29,15 @@ export function assertSmokeChecks(octavian) {
 // separate entry in the package.json "exports" map and resolves to its own
 // browser bundle. When adding a new subpath, import it in
 // smoke-consumer-check.mjs and add an assertion here.
+//
+// The tarball smoke test runs under Bun (a non-browser runtime). For pure
+// subpaths, exercise real behavior as below. For browser-only ADAPTER subpaths
+// (Web Audio, Web MIDI), the runtime globals (AudioContext,
+// navigator.requestMIDIAccess) do not exist here — so:
+//   1. The adapter module MUST NOT touch browser globals at import time, or the
+//      bare `await import('octavian/<adapter>')` will throw in this test.
+//   2. The assertion must be EXISTENCE-ONLY (`typeof X === 'function'`). Never
+//      instantiate or call an adapter that needs a browser global.
 export function assertSequencesSmokeChecks(sequences) {
   if (typeof sequences.Sequence?.create !== 'function') {
     throw new Error('octavian/sequences: Sequence.create missing');

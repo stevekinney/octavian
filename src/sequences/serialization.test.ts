@@ -219,6 +219,25 @@ describe('Sequence.toJSON / fromJSON', () => {
     ).toThrow(TypeError);
   });
 
+  it('throws RangeError for a negative serialized chord inversion', () => {
+    expect(() =>
+      Sequence.fromJSON({
+        tempo: 120,
+        meter: null,
+        events: [
+          {
+            type: 'chord',
+            rootWithOctave: 'C4',
+            suffix: 'major',
+            inversion: -1,
+            start: q(0, 1),
+            duration: WHOLE,
+          },
+        ],
+      }),
+    ).toThrow(RangeError);
+  });
+
   it('serializes meter as null when absent', () => {
     const seq = Sequence.create([], { tempo: 120 });
     expect(seq.toJSON().meter).toBeNull();

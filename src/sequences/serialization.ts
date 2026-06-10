@@ -139,17 +139,17 @@ function applyInversion(chord: Chord, inversion: number | undefined): Chord {
     return chord;
   }
 
-  if (!Number.isInteger(inversion) || inversion < 0) {
-    throw new TypeError(
-      `Serialized chord inversion must be a non-negative integer, received ${inversion}.`,
-    );
+  // Shape vs. bounds, per the error taxonomy: a non-integer is a type error,
+  // an out-of-range integer is a range error.
+  if (!Number.isInteger(inversion)) {
+    throw new TypeError(`Serialized chord inversion must be an integer, received ${inversion}.`);
   }
 
-  // Chord.invert wraps modulo the note count; guard the upper bound explicitly so
-  // an out-of-range serialized index is rejected rather than silently wrapped.
-  if (inversion >= chord.notes.length) {
+  // Chord.invert wraps modulo the note count; guard both bounds explicitly so an
+  // out-of-range serialized index is rejected rather than silently wrapped.
+  if (inversion < 0 || inversion >= chord.notes.length) {
     throw new RangeError(
-      `Serialized chord inversion ${inversion} exceeds the ${chord.notes.length}-note chord.`,
+      `Serialized chord inversion ${inversion} is out of range for the ${chord.notes.length}-note chord.`,
     );
   }
 
