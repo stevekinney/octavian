@@ -6,7 +6,7 @@
  * already implies the note's correct spelling — no symbol is drawn.
  */
 
-import { accidentalFromNoteName, naturalFromNoteName } from '../note-spellings.js';
+import { accidentalFromNoteName, naturalFromNoteName, type Accidental } from '../note-spellings.js';
 import { Note, type NoteLike } from '../note.js';
 import type { KeySignatureInformation } from '../key-signature-catalog.js';
 import type { AccidentalDisplay } from './types.js';
@@ -43,11 +43,13 @@ function keySignatureAccidentalFor(letter: string, keySignature: KeySignatureInf
 }
 
 /**
- * Maps an accidental suffix string to an {@link AccidentalDisplay} value.
+ * Maps an {@link Accidental} suffix to an {@link AccidentalDisplay} value.
  *
- * @throws {TypeError} When the suffix is not a supported accidental.
+ * The parameter is typed as {@link Accidental} (the exhaustive union from
+ * `note-spellings`), so the switch covers every possible value at compile
+ * time — no `default` branch is needed or present. // exhaustive
  */
-function accidentalSuffixToDisplay(suffix: string): AccidentalDisplay {
+function accidentalSuffixToDisplay(suffix: Accidental): AccidentalDisplay {
   switch (suffix) {
     case '#':
       return 'sharp';
@@ -63,8 +65,6 @@ function accidentalSuffixToDisplay(suffix: string): AccidentalDisplay {
       return 'triple-flat';
     case '':
       return 'natural';
-    default:
-      throw new TypeError(`Unsupported accidental suffix: ${suffix}.`);
   }
 }
 

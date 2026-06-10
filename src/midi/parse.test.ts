@@ -197,6 +197,82 @@ describe('parseMidiMessage — errors', () => {
 });
 
 // ---------------------------------------------------------------------------
+// parseMidiMessage — byte range validation
+// ---------------------------------------------------------------------------
+
+describe('parseMidiMessage — byte range validation', () => {
+  // Pinned ground-truth regression guard: valid noteOn still works.
+  it('parseMidiMessage([0x90, 60, 100]) returns a valid noteOn (regression guard)', () => {
+    const msg = parseMidiMessage([0x90, 60, 100]);
+    expect(msg.type).toBe('noteOn');
+    if (msg.type !== 'noteOn') throw new Error('narrowing');
+    expect(msg.channel).toBe(0);
+    expect(msg.note).toBe(60);
+    expect(msg.velocity).toBe(100);
+  });
+
+  // Note number out of range
+  it('parseMidiMessage([0x90, 999, 100]) throws RangeError (note > 127)', () => {
+    expect(() => parseMidiMessage([0x90, 999, 100])).toThrow(RangeError);
+  });
+
+  // Velocity out of range
+  it('parseMidiMessage([0x90, 60, 200]) throws RangeError (velocity > 127)', () => {
+    expect(() => parseMidiMessage([0x90, 60, 200])).toThrow(RangeError);
+  });
+
+  // Non-integer note (fractional)
+  it('parseMidiMessage([0x90, 60.5, 100]) throws TypeError (non-integer note)', () => {
+    expect(() => parseMidiMessage([0x90, 60.5, 100])).toThrow(TypeError);
+  });
+
+  // Negative note
+  it('parseMidiMessage([0x90, -1, 100]) throws RangeError (negative note)', () => {
+    expect(() => parseMidiMessage([0x90, -1, 100])).toThrow(RangeError);
+  });
+
+  // CC controller out of range
+  it('parseMidiMessage([0xB0, 200, 0]) throws RangeError (controller > 127)', () => {
+    expect(() => parseMidiMessage([0xb0, 200, 0])).toThrow(RangeError);
+  });
+
+  // CC value out of range
+  it('parseMidiMessage([0xB0, 64, 200]) throws RangeError (CC value > 127)', () => {
+    expect(() => parseMidiMessage([0xb0, 64, 200])).toThrow(RangeError);
+  });
+
+  // Non-integer CC controller
+  it('parseMidiMessage([0xB0, 7.5, 100]) throws TypeError (non-integer controller)', () => {
+    expect(() => parseMidiMessage([0xb0, 7.5, 100])).toThrow(TypeError);
+  });
+
+  // Program number out of range
+  it('parseMidiMessage([0xC0, 200]) throws RangeError (program > 127)', () => {
+    expect(() => parseMidiMessage([0xc0, 200])).toThrow(RangeError);
+  });
+
+  // Pitch-bend LSB out of range
+  it('parseMidiMessage([0xE0, 200, 0]) throws RangeError (pitch-bend LSB > 127)', () => {
+    expect(() => parseMidiMessage([0xe0, 200, 0])).toThrow(RangeError);
+  });
+
+  // Pitch-bend MSB out of range
+  it('parseMidiMessage([0xE0, 0, 200]) throws RangeError (pitch-bend MSB > 127)', () => {
+    expect(() => parseMidiMessage([0xe0, 0, 200])).toThrow(RangeError);
+  });
+
+  // Note-Off note out of range
+  it('parseMidiMessage([0x80, 200, 64]) throws RangeError (noteOff note > 127)', () => {
+    expect(() => parseMidiMessage([0x80, 200, 64])).toThrow(RangeError);
+  });
+
+  // Note-Off velocity out of range
+  it('parseMidiMessage([0x80, 60, 200]) throws RangeError (noteOff velocity > 127)', () => {
+    expect(() => parseMidiMessage([0x80, 60, 200])).toThrow(RangeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 

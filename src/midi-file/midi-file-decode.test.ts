@@ -296,6 +296,134 @@ describe('parseMidiFile — track event parsing', () => {
     ]);
     expect(() => parseMidiFile(bytes)).toThrow(RangeError);
   });
+
+  it('throws RangeError when declared track length exceeds the file size', () => {
+    // prettier-ignore
+    const bytes = new Uint8Array([
+      0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06, // MThd
+      0x00, 0x00, 0x00, 0x01, 0x01, 0xe0,              // format=0, tracks=1, division=480
+      0x4d, 0x54, 0x72, 0x6b,                          // MTrk
+      0x00, 0x00, 0x00, 0xff,                          // declares 255-byte track, but no bytes follow
+    ]);
+    expect(() => parseMidiFile(bytes)).toThrow(RangeError);
+  });
+
+  it('throws RangeError when end-of-track meta has non-zero length', () => {
+    // FF 2F 01 00: end-of-track with metaLength=1 (invalid; must be 0)
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xff, 0x2f, 0x01, 0x00, // end-of-track with illegal payload byte
+    ];
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(RangeError);
+  });
+
+  it('throws RangeError when meta payload exceeds track boundary', () => {
+    // Unknown meta (type 0x07) declaring length=10 but only 3 bytes remain in track.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xff, 0x07, 0x0a, 0x61, 0x62, 0x63, // length=10, only 3 payload bytes present
+    ];
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(RangeError);
+  });
+
+  it('throws RangeError when a channel data byte is >= 0x80 (status-like, malformed stream)', () => {
+    // Note-on C4 with velocity 0x80 — velocity byte >= 0x80 is invalid per SMF spec.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0x90, 0x3c, 0x80, // note-on, noteNumber=0x3c, velocity=0x80 (invalid)
+      0x00, 0xff, 0x2f, 0x00,
+    ];
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(RangeError);
+  });
+
+  it('throws RangeError when a note-on note number byte is >= 0x80', () => {
+    // prettier-ignore
+    const trackData = [
+      0x00, 0x90, 0x80, 0x40, // note-on, noteNumber=0x80 (invalid), velocity=64
+      0x00, 0xff, 0x2f, 0x00,
+    ];
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(RangeError);
+  });
+
+  it('throws RangeError when a skipped-event data byte is >= 0x80 (pitch bend)', () => {
+    // Pitch bend (0xE0) with second data byte = 0x80 — invalid data byte.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xe0, 0x00, 0x80, // pitch bend, LSB=0x00, MSB=0x80 (invalid)
+      0x00, 0xff, 0x2f, 0x00,
+    ];
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(RangeError);
+  });
+
+  it('throws RangeError on truncated skipped channel event (pitch bend, 2 bytes needed, 1 present)', () => {
+    // Pitch bend (0xE0) needs 2 data bytes; only 1 present before track end.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xe0, 0x00, // pitch bend with only 1 data byte in track
+    ];
+    expect(() => parseMidiFile(buildSimpleMidi(trackData))).toThrow(RangeError);
+  });
+
+  it('program-change advances byte pointer correctly (following noteOn decodes)', () => {
+    // Program change (0xC0) consumes exactly 1 data byte.
+    // A noteOn immediately after must decode correctly, proving the byte pointer advanced right.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xc0, 0x28,             // delta=0, program change ch0, program=40
+      0x00, 0x90, 0x3c, 0x40,       // delta=0, note-on ch0, C4 (0x3c=60), vel=64
+      0x60, 0x90, 0x3c, 0x00,       // delta=96, note-on vel=0 (note-off), C4
+      0x00, 0xff, 0x2f, 0x00,       // end of track
+    ];
+    const doc = parseMidiFile(buildSimpleMidi(trackData));
+    const track = doc.tracks[0]!;
+    const noteOn = track.find((e) => e.type === 'noteOn' && e.velocity > 0);
+    expect(noteOn).toBeDefined();
+    if (noteOn?.type === 'noteOn') {
+      expect(noteOn.noteNumber).toBe(0x3c);
+      expect(noteOn.velocity).toBe(0x40);
+      expect(noteOn.deltaTicks).toBe(0);
+    }
+  });
+
+  it('channel-pressure advances byte pointer correctly (following noteOn decodes)', () => {
+    // Channel pressure (0xD0) consumes exactly 1 data byte.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xd0, 0x40,             // delta=0, channel pressure ch0, value=64
+      0x00, 0x90, 0x3c, 0x40,       // delta=0, note-on ch0, C4, vel=64
+      0x60, 0x90, 0x3c, 0x00,       // delta=96, note-off C4
+      0x00, 0xff, 0x2f, 0x00,       // end of track
+    ];
+    const doc = parseMidiFile(buildSimpleMidi(trackData));
+    const track = doc.tracks[0]!;
+    const noteOn = track.find((e) => e.type === 'noteOn' && e.velocity > 0);
+    expect(noteOn).toBeDefined();
+    if (noteOn?.type === 'noteOn') {
+      expect(noteOn.noteNumber).toBe(0x3c);
+      expect(noteOn.velocity).toBe(0x40);
+      expect(noteOn.deltaTicks).toBe(0);
+    }
+  });
+
+  it('pitch-bend advances byte pointer correctly (following noteOn decodes)', () => {
+    // Pitch bend (0xE0) consumes exactly 2 data bytes.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0xe0, 0x00, 0x40,       // delta=0, pitch bend ch0, LSB=0, MSB=64
+      0x00, 0x90, 0x3c, 0x40,       // delta=0, note-on ch0, C4, vel=64
+      0x60, 0x90, 0x3c, 0x00,       // delta=96, note-off C4
+      0x00, 0xff, 0x2f, 0x00,       // end of track
+    ];
+    const doc = parseMidiFile(buildSimpleMidi(trackData));
+    const track = doc.tracks[0]!;
+    const noteOn = track.find((e) => e.type === 'noteOn' && e.velocity > 0);
+    expect(noteOn).toBeDefined();
+    if (noteOn?.type === 'noteOn') {
+      expect(noteOn.noteNumber).toBe(0x3c);
+      expect(noteOn.velocity).toBe(0x40);
+      expect(noteOn.deltaTicks).toBe(0);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -376,5 +504,50 @@ describe('sequenceToMidiFile — custom channel', () => {
     if (noteOn?.type === 'noteOn') {
       expect(noteOn.channel).toBe(3);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// sequenceToMidiFile — option validation
+// ---------------------------------------------------------------------------
+
+describe('sequenceToMidiFile — option validation', () => {
+  const seq = Sequence.create([], { tempo: 120 });
+
+  it('throws RangeError for ticksPerQuarter = 0', () => {
+    expect(() => sequenceToMidiFile(seq, { ticksPerQuarter: 0 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for negative ticksPerQuarter', () => {
+    expect(() => sequenceToMidiFile(seq, { ticksPerQuarter: -1 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for fractional ticksPerQuarter', () => {
+    expect(() => sequenceToMidiFile(seq, { ticksPerQuarter: 480.5 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for ticksPerQuarter = 32768 (exceeds 0x7fff)', () => {
+    expect(() => sequenceToMidiFile(seq, { ticksPerQuarter: 32768 })).toThrow(RangeError);
+  });
+
+  it('accepts ticksPerQuarter = 32767 (0x7fff maximum)', () => {
+    expect(() => sequenceToMidiFile(seq, { ticksPerQuarter: 32767 })).not.toThrow();
+  });
+
+  it('throws RangeError for channel = 16', () => {
+    expect(() => sequenceToMidiFile(seq, { channel: 16 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for negative channel', () => {
+    expect(() => sequenceToMidiFile(seq, { channel: -1 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for fractional channel', () => {
+    expect(() => sequenceToMidiFile(seq, { channel: 1.5 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError when tempo yields microseconds exceeding 0xffffff (very slow BPM)', () => {
+    const slowSeq = Sequence.create([], { tempo: 0.001 });
+    expect(() => sequenceToMidiFile(slowSeq)).toThrow(RangeError);
   });
 });

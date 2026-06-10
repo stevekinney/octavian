@@ -20,15 +20,11 @@ import { STANDARD_TUNING, type Tuning } from '../tuning.js';
 /**
  * A raw pitch estimate provided by an external pitch-detection algorithm.
  *
- * Only `frequency` is required. `clarity` is an optional confidence value
- * (0–1) that the caller may provide — it is not used by {@link evaluatePitchEstimate}
- * but is preserved for callers who wish to gate on it.
+ * Only `frequency` is required and consumed by {@link evaluatePitchEstimate}.
  */
 export type PitchEstimate = {
   /** The estimated fundamental frequency in hertz. Must be positive and finite. */
   readonly frequency: number;
-  /** Optional clarity / confidence value from the pitch detector (0–1). */
-  readonly clarity?: number;
 };
 
 /**
@@ -118,6 +114,28 @@ function foldCentsIntoPitchClass(cents: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// Helper: compute withinTolerance
+// ---------------------------------------------------------------------------
+
+/**
+ * Computes whether a cents error is within the given tolerance, using either
+ * register mode (exact pitch + octave match required) or pitch-class-only mode
+ * (octave ignored, cents folded into one octave).
+ */
+function computeWithinTolerance(
+  centsError: number,
+  registerMatches: boolean,
+  centsTolerance: number,
+  pitchClassOnly: boolean,
+): boolean {
+  if (pitchClassOnly) {
+    return Math.abs(foldCentsIntoPitchClass(centsError)) <= centsTolerance;
+  }
+
+  return registerMatches && Math.abs(centsError) <= centsTolerance;
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -137,6 +155,8 @@ function foldCentsIntoPitchClass(cents: number): number {
  * @returns A {@link PitchEvaluation} with the full scoring breakdown.
  * @throws {RangeError} When `estimate.frequency` is not a positive finite
  *   number (propagated from the underlying frequency utilities).
+ * @throws {RangeError} When `options.centsTolerance` is not a finite
+ *   non-negative number.
  * @throws {TypeError} When `target` is not a valid note-like value.
  */
 export function evaluatePitchEstimate(
@@ -145,6 +165,12 @@ export function evaluatePitchEstimate(
   options: EvaluatePitchEstimateOptions = {},
 ): PitchEvaluation {
   const { tuning = STANDARD_TUNING, centsTolerance = 50, pitchClassOnly = false } = options;
+
+  if (!Number.isFinite(centsTolerance) || centsTolerance < 0) {
+    throw new RangeError(
+      `Expected a finite non-negative centsTolerance, received ${centsTolerance}.`,
+    );
+  }
 
   // Resolve target note and compute its frequency under the requested tuning.
   const targetNote = Note.create(target);
@@ -170,15 +196,12 @@ export function evaluatePitchEstimate(
   const likelyOctaveError = pitchClassMatches && !registerMatches;
 
   // Tolerance check.
-  let withinTolerance: boolean;
-
-  if (pitchClassOnly) {
-    const folded = foldCentsIntoPitchClass(centsError);
-
-    withinTolerance = Math.abs(folded) <= centsTolerance;
-  } else {
-    withinTolerance = registerMatches && Math.abs(centsError) <= centsTolerance;
-  }
+  const withinTolerance = computeWithinTolerance(
+    centsError,
+    registerMatches,
+    centsTolerance,
+    pitchClassOnly,
+  );
 
   return {
     nearestNote,

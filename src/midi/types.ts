@@ -82,8 +82,8 @@ export type PitchBendMessage = {
   /** MIDI channel, 0..15. */
   readonly channel: number;
   /**
-   * The 14-bit bend value, 0..16383. Centre (no bend) = 8192.
-   * Positive values bend up; negative values bend down from centre.
+   * The raw unsigned 14-bit bend value, 0..16383. Centre (no bend) = 8192.
+   * Full bend down = 0; full bend up = 16383.
    */
   readonly value: number;
 };

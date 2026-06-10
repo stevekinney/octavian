@@ -21,7 +21,7 @@ import { keySignatureFor } from '../key-signature-catalog.js';
 import { createRational } from '../rational.js';
 import { staffPositionFor } from './staff-position.js';
 import { accidentalForDisplay } from './accidental-display.js';
-import { toNotationEvent, serializeNotationEvent } from './notation-event.js';
+import { toNotationEvent } from './notation-event.js';
 
 // ---------------------------------------------------------------------------
 // staffPositionFor — treble clef
@@ -70,10 +70,11 @@ describe('staffPositionFor — treble clef', () => {
     expect(pos.ledgerLines).toBe(1);
   });
 
-  it('places B5 at position 11 (space above 1st ledger line)', () => {
+  it('places B5 at position 11 (space above the 1st ledger line — still 1 ledger line)', () => {
     const pos = staffPositionFor(Note.create({ note: 'B', octave: 5 }), 'treble');
     expect(pos.lineOrSpace).toBe(11);
-    expect(pos.ledgerLines).toBe(2);
+    // B5 sits in the space just above the A5 ledger line; only that one ledger line is drawn.
+    expect(pos.ledgerLines).toBe(1);
   });
 
   it('places C6 at position 12 (2nd ledger line above)', () => {
@@ -82,17 +83,18 @@ describe('staffPositionFor — treble clef', () => {
     expect(pos.ledgerLines).toBe(2);
   });
 
-  it('places D4 below bottom line in the first space (position -1)', () => {
+  it('places D4 below bottom line in the first space (position -1, no ledger line)', () => {
     const pos = staffPositionFor(Note.create({ note: 'D', octave: 4 }), 'treble');
     expect(pos.lineOrSpace).toBe(-1);
-    // D4 is in the space just below the bottom line — no full ledger line yet
-    expect(pos.ledgerLines).toBe(1);
+    // D4 is in the space just below the bottom line — no ledger line is drawn yet.
+    expect(pos.ledgerLines).toBe(0);
   });
 
-  it('places B3 at position -3 (space below first ledger line)', () => {
+  it('places B3 at position -3 (space below the C4 ledger line — still 1 ledger line)', () => {
     const pos = staffPositionFor(Note.create({ note: 'B', octave: 3 }), 'treble');
     expect(pos.lineOrSpace).toBe(-3);
-    expect(pos.ledgerLines).toBe(2);
+    // B3 sits in the space just below the C4 ledger line; only that one ledger line is drawn.
+    expect(pos.ledgerLines).toBe(1);
   });
 
   it('places A3 at position -4 (second ledger line below)', () => {
@@ -333,7 +335,8 @@ describe('toNotationEvent — chord input', () => {
     const event = toNotationEvent(chord, { clef: 'treble' });
     expect(event.type).toBe('chord');
     if (event.type === 'chord') {
-      expect(event.notes.length).toBeGreaterThan(0);
+      // C major triad (C4, E4, G4) = 3 notes
+      expect(event.notes.length).toBe(3);
       for (const note of event.notes) {
         expect(note.type).toBe('note');
         expect(typeof note.noteName).toBe('string');
@@ -390,105 +393,18 @@ describe('toNotationEvent — rest input', () => {
 });
 
 // ---------------------------------------------------------------------------
-// serializeNotationEvent
+// JSON round-trip
 // ---------------------------------------------------------------------------
 
-describe('serializeNotationEvent — note event', () => {
-  it('serializes a note event to a plain object', () => {
-    const gMajor = keySignatureFor('G', 'major');
-    const event = toNotationEvent(Note.create({ note: 'F#', octave: 4 }), {
-      clef: 'treble',
-      keySignature: gMajor,
-    });
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('note');
-    if (serialized.type === 'note') {
-      expect(serialized.noteName).toBe('F#');
-      expect(serialized.octave).toBe(4);
-      expect(serialized.accidentalDisplay).toBeNull();
-      expect(serialized.staffPosition.clef).toBe('treble');
-      expect(serialized.staffPosition.step).toBe('F');
-    }
-  });
-
-  it('round-trips through JSON.stringify', () => {
-    const event = toNotationEvent(Note.create({ note: 'C', octave: 4 }), {
-      duration: createRational(1, 4),
-    });
-    const serialized = serializeNotationEvent(event);
-    const json = JSON.stringify(serialized);
-    const parsed = JSON.parse(json);
-    expect(parsed.type).toBe('note');
-    expect(parsed.noteName).toBe('C');
-    expect(parsed.octave).toBe(4);
-    expect(parsed.duration).toEqual({ numerator: 1, denominator: 4 });
-  });
-
-  it('omits duration from serialized note when not present', () => {
-    const event = toNotationEvent(Note.create({ note: 'C', octave: 4 }));
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('note');
-    if (serialized.type === 'note') {
-      expect(serialized.duration).toBeUndefined();
-    }
-  });
-});
-
-describe('serializeNotationEvent — chord event', () => {
-  it('serializes a chord event', () => {
-    const chord = Chord.create('C4', 'major');
-    const event = toNotationEvent(chord, { clef: 'treble' });
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('chord');
-    if (serialized.type === 'chord') {
-      expect(Array.isArray(serialized.notes)).toBe(true);
-      expect(serialized.notes.length).toBeGreaterThan(0);
-    }
-  });
-
-  it('serializes chord with duration', () => {
-    const chord = Chord.create('C4', 'major');
-    const event = toNotationEvent(chord, { duration: createRational(1, 2) });
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('chord');
-    if (serialized.type === 'chord') {
-      expect(serialized.duration).toEqual({ numerator: 1, denominator: 2 });
-    }
-  });
-
-  it('omits duration from serialized chord when not present', () => {
-    const chord = Chord.create('C4', 'major');
-    const event = toNotationEvent(chord);
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('chord');
-    if (serialized.type === 'chord') {
-      expect(serialized.duration).toBeUndefined();
-    }
-  });
-});
-
-describe('serializeNotationEvent — rest event', () => {
-  it('serializes a rest event', () => {
-    const event = toNotationEvent('rest');
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('rest');
-  });
-
-  it('serializes rest with duration', () => {
-    const event = toNotationEvent('rest', { duration: createRational(1, 4) });
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('rest');
-    if (serialized.type === 'rest') {
-      expect(serialized.duration).toEqual({ numerator: 1, denominator: 4 });
-    }
-  });
-
-  it('omits duration from serialized rest when not present', () => {
-    const event = toNotationEvent('rest');
-    const serialized = serializeNotationEvent(event);
-    expect(serialized.type).toBe('rest');
-    if (serialized.type === 'rest') {
-      expect(serialized.duration).toBeUndefined();
+describe('toNotationEvent — JSON round-trip', () => {
+  it('note event survives JSON.stringify / JSON.parse without losing spelling', () => {
+    const event = toNotationEvent(Note.create({ note: 'F#', octave: 4 }), { clef: 'treble' });
+    expect(JSON.parse(JSON.stringify(event))).toEqual(event);
+    // Verify spelling fields survive the round-trip
+    if (event.type === 'note') {
+      const parsed = JSON.parse(JSON.stringify(event));
+      expect(parsed.noteName).toBe('F#');
+      expect(parsed.octave).toBe(4);
     }
   });
 });
@@ -498,18 +414,20 @@ describe('serializeNotationEvent — rest event', () => {
 // ---------------------------------------------------------------------------
 
 describe('ledger line computation', () => {
-  it('space just below staff (D4 in treble) uses 1 ledger line (drawn at C4)', () => {
-    // D4 is at position -1; to reach the note the reader needs C4 ledger line
+  it('space just below staff (D4 in treble) uses 0 ledger lines (first ledger line is C4)', () => {
+    // D4 is at position -1; it sits in the space below the bottom line.
+    // The C4 ledger line (position -2) is only drawn when needed for C4 itself.
     const pos = staffPositionFor(Note.create({ note: 'D', octave: 4 }), 'treble');
     expect(pos.lineOrSpace).toBe(-1);
-    expect(pos.ledgerLines).toBe(1);
+    expect(pos.ledgerLines).toBe(0);
   });
 
-  it('space just above staff (G5 in treble) uses 1 ledger line', () => {
-    // F5 is position 8 (top line), G5 is position 9
+  it('space just above staff (G5 in treble) uses 0 ledger lines (first ledger line is A5)', () => {
+    // F5 is position 8 (top line), G5 is position 9 — the space above the top line.
+    // The A5 ledger line (position 10) is only drawn when needed for A5 itself.
     const pos = staffPositionFor(Note.create({ note: 'G', octave: 5 }), 'treble');
     expect(pos.lineOrSpace).toBe(9);
-    expect(pos.ledgerLines).toBe(1);
+    expect(pos.ledgerLines).toBe(0);
   });
 
   it('notes on the staff have 0 ledger lines', () => {
@@ -529,14 +447,6 @@ describe('ledger line computation', () => {
 // ---------------------------------------------------------------------------
 // Error arms
 // ---------------------------------------------------------------------------
-
-describe('serializeNotationEvent — unknown discriminant throws', () => {
-  it('throws TypeError for an unknown event type', () => {
-    const bogus = { type: 'unknown' } as any;
-    expect(() => serializeNotationEvent(bogus)).toThrow(TypeError);
-    expect(() => serializeNotationEvent(bogus)).toThrow('Unknown notation event type: unknown.');
-  });
-});
 
 describe('staffPositionFor — invalid clef throws', () => {
   it('throws TypeError for an unrecognized clef', () => {

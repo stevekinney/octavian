@@ -212,24 +212,6 @@ describe('evaluatePitchEstimate', () => {
     });
   });
 
-  describe('clarity field (pass-through)', () => {
-    it('accepts and ignores clarity without error', () => {
-      const result = evaluatePitchEstimate(
-        { frequency: A4_FREQ, clarity: 0.95 },
-        { note: 'A', octave: 4 },
-      );
-
-      // clarity does not affect the result — just make sure it does not throw
-      expect(result.centsError).toBeCloseTo(0, 6);
-    });
-
-    it('accepts estimates with no clarity field', () => {
-      const result = evaluatePitchEstimate({ frequency: A4_FREQ }, { note: 'A', octave: 4 });
-
-      expect(result.withinTolerance).toBe(true);
-    });
-  });
-
   describe('default options', () => {
     it('defaults to 50-cent tolerance (boundary at exactly 50 cents)', () => {
       // 50 cents sharp from A4 is exactly the semitone midpoint; it rounds to
@@ -308,6 +290,36 @@ describe('evaluatePitchEstimate', () => {
       expect(() =>
         evaluatePitchEstimate({ frequency: A4_FREQ }, 'NotAValidNoteName' as never),
       ).toThrow(TypeError);
+    });
+
+    it('throws RangeError for negative centsTolerance', () => {
+      expect(() =>
+        evaluatePitchEstimate(
+          { frequency: A4_FREQ },
+          { note: 'A', octave: 4 },
+          { centsTolerance: -1 },
+        ),
+      ).toThrow(RangeError);
+    });
+
+    it('throws RangeError for NaN centsTolerance', () => {
+      expect(() =>
+        evaluatePitchEstimate(
+          { frequency: A4_FREQ },
+          { note: 'A', octave: 4 },
+          { centsTolerance: NaN },
+        ),
+      ).toThrow(RangeError);
+    });
+
+    it('throws RangeError for Infinity centsTolerance', () => {
+      expect(() =>
+        evaluatePitchEstimate(
+          { frequency: A4_FREQ },
+          { note: 'A', octave: 4 },
+          { centsTolerance: Infinity },
+        ),
+      ).toThrow(RangeError);
     });
   });
 });

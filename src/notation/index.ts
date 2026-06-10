@@ -9,7 +9,6 @@
  * - {@link staffPositionFor} — diatonic staff position for a note in a clef.
  * - {@link accidentalForDisplay} — accidental glyph decision given a key signature.
  * - {@link toNotationEvent} — build a notation event from a Note, Chord, or rest.
- * - {@link serializeNotationEvent} — render-neutral JSON serialization.
  *
  * Import path: `octavian/notation`
  */
@@ -17,7 +16,7 @@
 // Values
 export { staffPositionFor } from './staff-position.js';
 export { accidentalForDisplay } from './accidental-display.js';
-export { toNotationEvent, serializeNotationEvent } from './notation-event.js';
+export { toNotationEvent } from './notation-event.js';
 
 // Types
 export type {
@@ -31,10 +30,4 @@ export type {
   Clef,
   KeySignatureInformation,
 } from './types.js';
-export type {
-  NotationInput,
-  SerializedNotationEvent,
-  SerializedNotationNoteEvent,
-  SerializedNotationChordEvent,
-  SerializedNotationRestEvent,
-} from './notation-event.js';
+export type { NotationInput } from './notation-event.js';

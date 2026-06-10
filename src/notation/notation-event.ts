@@ -1,13 +1,11 @@
 /**
- * Notation event construction and serialization.
+ * Notation event construction.
  *
  * `toNotationEvent` converts a Note, Chord, or rest descriptor into a
  * renderer-neutral {@link NotationEvent} that carries spelled pitches, staff
- * positions, accidental decisions, and optional duration.
- *
- * `serializeNotationEvent` converts a {@link NotationEvent} to a plain JSON
- * object — safe to `JSON.stringify` and round-trip back via
- * `deserializeNotationEvent`.
+ * positions, accidental decisions, and optional duration. All fields are plain
+ * primitives or plain objects, so the result is directly JSON-serializable via
+ * `JSON.stringify`.
  */
 
 import { Note, type NoteLike } from '../note.js';
@@ -109,110 +107,4 @@ export function toNotationEvent(
   // Treat as NoteLike
   const note = Note.create(value);
   return buildNoteEvent(note, clef, keySignature, duration);
-}
-
-// ---------------------------------------------------------------------------
-// Public API: serializeNotationEvent / deserializeNotationEvent
-// ---------------------------------------------------------------------------
-
-/**
- * A JSON-serializable snapshot of a {@link NotationNoteEvent}.
- */
-export type SerializedNotationNoteEvent = {
-  readonly type: 'note';
-  readonly noteName: string;
-  readonly octave: number;
-  readonly accidentalDisplay: AccidentalDisplay | null;
-  readonly staffPosition: {
-    readonly clef: Clef;
-    readonly step: string;
-    readonly octave: number;
-    readonly lineOrSpace: number;
-    readonly ledgerLines: number;
-  };
-  readonly duration?: Rational;
-};
-
-/**
- * A JSON-serializable snapshot of a {@link NotationChordEvent}.
- */
-export type SerializedNotationChordEvent = {
-  readonly type: 'chord';
-  readonly notes: readonly SerializedNotationNoteEvent[];
-  readonly duration?: Rational;
-};
-
-/**
- * A JSON-serializable snapshot of a {@link NotationRestEvent}.
- */
-export type SerializedNotationRestEvent = {
-  readonly type: 'rest';
-  readonly duration?: Rational;
-};
-
-/**
- * A JSON-serializable snapshot of any {@link NotationEvent}.
- */
-export type SerializedNotationEvent =
-  | SerializedNotationNoteEvent
-  | SerializedNotationChordEvent
-  | SerializedNotationRestEvent;
-
-/**
- * Serializes a {@link NotationNoteEvent} to a plain JSON-safe object.
- */
-function serializeNoteEvent(event: NotationNoteEvent): SerializedNotationNoteEvent {
-  const base = {
-    type: 'note' as const,
-    noteName: event.noteName,
-    octave: event.octave,
-    accidentalDisplay: event.accidentalDisplay,
-    staffPosition: {
-      clef: event.staffPosition.clef,
-      step: event.staffPosition.step,
-      octave: event.staffPosition.octave,
-      lineOrSpace: event.staffPosition.lineOrSpace,
-      ledgerLines: event.staffPosition.ledgerLines,
-    },
-  };
-  if (event.duration !== undefined) {
-    return { ...base, duration: event.duration };
-  }
-  return base;
-}
-
-/**
- * Converts a {@link NotationEvent} to a renderer-neutral JSON object that
- * preserves spelling, duration, clef, and key-signature accidental decisions.
- *
- * @param event - The notation event to serialize.
- * @returns A plain serializable snapshot.
- * @throws {TypeError} When the event discriminant is not recognized.
- */
-export function serializeNotationEvent(event: NotationEvent): SerializedNotationEvent {
-  switch (event.type) {
-    case 'note':
-      return serializeNoteEvent(event);
-    case 'chord': {
-      const base = {
-        type: 'chord' as const,
-        notes: event.notes.map(serializeNoteEvent),
-      };
-      if (event.duration !== undefined) {
-        return { ...base, duration: event.duration };
-      }
-      return base;
-    }
-    case 'rest': {
-      if (event.duration !== undefined) {
-        return { type: 'rest', duration: event.duration };
-      }
-      return { type: 'rest' };
-    }
-    default:
-      throw new TypeError(
-        // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-        `Unknown notation event type: ${String((event as { type: unknown }).type)}.`,
-      );
-  }
 }

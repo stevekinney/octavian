@@ -50,8 +50,20 @@ function rationalToTicks(numerator: number, denominator: number, division: numbe
 // Meta event builders
 // ---------------------------------------------------------------------------
 
-function buildTempoEvent(deltaTicks: number, bpm: number): readonly number[] {
+function validateTempoForEncoding(bpm: number): number {
+  // bpm is sourced from sequence.tempo which Sequence.create validates as finite-positive.
+  // Guard the SMF encoding range: microseconds per quarter must fit in a 24-bit field.
   const us = Math.round(60_000_000 / bpm);
+  if (us < 1 || us > 0xffffff) {
+    throw new RangeError(
+      `Tempo ${bpm} BPM yields ${us} microseconds per quarter, which is outside the valid SMF range 1..16777215.`,
+    );
+  }
+  return us;
+}
+
+function buildTempoEvent(deltaTicks: number, bpm: number): readonly number[] {
+  const us = validateTempoForEncoding(bpm);
   return [
     ...encodeVlq(deltaTicks),
     0xff,
@@ -105,7 +117,7 @@ function collectNoteEventPairs(event: NoteEvent, division: number): readonly Not
     division,
   );
   const offTick = onTick + durationTicks;
-  const noteNumber = event.note.midi as number;
+  const noteNumber = Number(event.note.midi);
   const velocity = event.velocity ?? DEFAULT_VELOCITY;
 
   return [{ onTick, offTick, noteNumber, velocity }];
@@ -124,7 +136,7 @@ function collectChordNoteEventPairs(event: ChordEvent, division: number): readon
   return event.chord.notes.map((note) => ({
     onTick,
     offTick,
-    noteNumber: note.midi as number,
+    noteNumber: Number(note.midi),
     velocity,
   }));
 }
@@ -223,6 +235,29 @@ function buildTrackBytes(
 // Public API
 // ---------------------------------------------------------------------------
 
+function validateDivision(division: number): void {
+  if (!Number.isInteger(division) || division < 1 || division > 0x7fff) {
+    throw new RangeError(`ticksPerQuarter must be an integer in 1..32767, received ${division}.`);
+  }
+}
+
+function validateChannel(channel: number): void {
+  if (!Number.isInteger(channel) || channel < 0 || channel > 15) {
+    throw new RangeError(`channel must be an integer in 0..15, received ${channel}.`);
+  }
+}
+
+function validateOptions(options: SequenceToMidiOptions | undefined): {
+  readonly division: number;
+  readonly channel: number;
+} {
+  const division = options?.ticksPerQuarter ?? DEFAULT_TICKS_PER_QUARTER;
+  const channel = options?.channel ?? DEFAULT_CHANNEL;
+  validateDivision(division);
+  validateChannel(channel);
+  return { division, channel };
+}
+
 /**
  * Serializes an octavian {@link Sequence} to a valid Standard MIDI File byte array.
  *
@@ -240,8 +275,7 @@ export function sequenceToMidiFile(
   sequence: Sequence,
   options?: SequenceToMidiOptions,
 ): Uint8Array {
-  const division = options?.ticksPerQuarter ?? DEFAULT_TICKS_PER_QUARTER;
-  const channel = options?.channel ?? DEFAULT_CHANNEL;
+  const { division, channel } = validateOptions(options);
 
   const meter =
     sequence.meter !== null

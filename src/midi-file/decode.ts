@@ -75,13 +75,22 @@ function parseMetaEvent(
   cursor += mlBytes;
 
   if (metaType === 0x2f) {
-    // End of track — emit the event so the parsed track is a faithful,
-    // exhaustive record of the MidiTrackEvent union.
+    // End of track — metaLength must be 0 per SMF spec.
+    if (metaLength !== 0) {
+      throw new RangeError(`End-of-track meta event must have length 0, received ${metaLength}.`);
+    }
     return {
-      pos: cursor + metaLength,
+      pos: cursor,
       done: true,
       event: { type: 'endOfTrack', deltaTicks },
     };
+  }
+
+  // Bounds check: the declared payload must fit within the track boundary.
+  if (cursor + metaLength > end) {
+    throw new RangeError(
+      `Meta event payload (length ${metaLength}) at offset ${cursor} exceeds track boundary ${end}.`,
+    );
   }
 
   if (metaType === 0x51 && metaLength === 3) {
@@ -107,13 +116,12 @@ function parseTempoMeta(
   metaLength: number,
   deltaTicks: number,
 ): ParseMetaResult {
-  const b0 = data[pos];
-  const b1 = data[pos + 1];
-  const b2 = data[pos + 2];
-
-  if (b0 === undefined || b1 === undefined || b2 === undefined) {
-    throw new RangeError(`Truncated tempo meta at offset ${pos}.`);
-  }
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b0 = data[pos]!;
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b1 = data[pos + 1]!;
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b2 = data[pos + 2]!;
 
   const microsecondsPerQuarter = (b0 << 16) | (b1 << 8) | b2;
   return {
@@ -129,14 +137,14 @@ function parseTimeSignatureMeta(
   metaLength: number,
   deltaTicks: number,
 ): ParseMetaResult {
-  const b0 = data[pos];
-  const b1 = data[pos + 1];
-  const b2 = data[pos + 2];
-  const b3 = data[pos + 3];
-
-  if (b0 === undefined || b1 === undefined || b2 === undefined || b3 === undefined) {
-    throw new RangeError(`Truncated time signature meta at offset ${pos}.`);
-  }
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b0 = data[pos]!;
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b1 = data[pos + 1]!;
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b2 = data[pos + 2]!;
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b3 = data[pos + 3]!;
 
   return {
     pos: pos + metaLength,
@@ -190,23 +198,32 @@ function parseTrackEvents(
       // Status byte present — update running status
       runningStatus = firstByte;
       pos++;
-      pos = parseChannelEvent(data, pos, deltaTicks, runningStatus, events);
+      pos = parseChannelEvent(data, pos, end, deltaTicks, runningStatus, events);
     } else {
       // No status byte — use running status
       if (runningStatus === 0) {
         throw new TypeError(`Running status used before any status byte at offset ${pos}.`);
       }
 
-      pos = parseChannelEvent(data, pos, deltaTicks, runningStatus, events);
+      pos = parseChannelEvent(data, pos, end, deltaTicks, runningStatus, events);
     }
   }
 
   return events;
 }
 
+function validateDataByte(value: number, offset: number): void {
+  if (value > 0x7f) {
+    throw new RangeError(
+      `Invalid MIDI data byte 0x${value.toString(16).toUpperCase()} at offset ${offset}; data bytes must be 0..127.`,
+    );
+  }
+}
+
 function parseChannelEvent(
   data: Uint8Array,
   pos: number,
+  end: number,
   deltaTicks: number,
   status: number,
   events: MidiTrackEvent[],
@@ -214,35 +231,37 @@ function parseChannelEvent(
   const eventType = (status >> 4) & 0x0f;
   const channel = status & 0x0f;
 
-  const b0 = data[pos];
-  const b1 = data[pos + 1];
+  const needed = channelEventDataLength(eventType);
 
-  if (b0 === undefined) {
+  if (pos + needed > end) {
     throw new RangeError(`Truncated channel event at offset ${pos}.`);
   }
 
+  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+  const b0 = data[pos]!;
+  validateDataByte(b0, pos);
+
   if (eventType === 0x09) {
     // Note-on
-    if (b1 === undefined) {
-      throw new RangeError(`Truncated note-on event at offset ${pos}.`);
-    }
-
+    // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+    const b1 = data[pos + 1]!;
+    validateDataByte(b1, pos + 1);
     events.push({ type: 'noteOn', deltaTicks, channel, noteNumber: b0, velocity: b1 });
-
     return pos + 2;
   } else if (eventType === 0x08) {
     // Note-off
-    if (b1 === undefined) {
-      throw new RangeError(`Truncated note-off event at offset ${pos}.`);
-    }
-
+    // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+    const b1 = data[pos + 1]!;
+    validateDataByte(b1, pos + 1);
     events.push({ type: 'noteOff', deltaTicks, channel, noteNumber: b0, velocity: b1 });
-
     return pos + 2;
   } else {
-    // Other channel events — skip based on event type
-    const dataBytes = channelEventDataLength(eventType);
-    return pos + dataBytes;
+    // Other channel events — skip, validating all data bytes
+    for (let i = 1; i < needed; i++) {
+      // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+      validateDataByte(data[pos + i]!, pos + i);
+    }
+    return pos + needed;
   }
 }
 
@@ -252,6 +271,43 @@ function channelEventDataLength(eventType: number): number {
   if (eventType === 0x0c || eventType === 0x0d) return 1;
 
   return 2;
+}
+
+// ---------------------------------------------------------------------------
+// Track chunk loop (extracted to keep parseMidiFile under complexity 10)
+// ---------------------------------------------------------------------------
+
+function parseTracks(
+  data: Uint8Array,
+  ntrks: number,
+  startPos: number,
+): { readonly tracks: (readonly MidiTrackEvent[])[]; readonly pos: number } {
+  const tracks: (readonly MidiTrackEvent[])[] = [];
+  let pos = startPos;
+
+  for (let t = 0; t < ntrks; t++) {
+    if (pos + 8 > data.length) {
+      throw new RangeError(`Truncated track chunk header at offset ${pos}.`);
+    }
+
+    if (!checkFourCC(data, pos, MTRK_BYTES)) {
+      throw new TypeError(`Expected 'MTrk' at offset ${pos}.`);
+    }
+
+    const trackLength = readUint32(data, pos + 4);
+    pos += 8;
+
+    if (pos + trackLength > data.length) {
+      throw new RangeError(
+        `Track ${t} declares length ${trackLength} at offset ${pos} but file only has ${data.length - pos} bytes remaining.`,
+      );
+    }
+
+    tracks.push(parseTrackEvents(data, pos, trackLength));
+    pos += trackLength;
+  }
+
+  return { tracks, pos };
 }
 
 // ---------------------------------------------------------------------------
@@ -305,25 +361,7 @@ export function parseMidiFile(data: Uint8Array): MidiFileDocument {
     );
   }
 
-  const tracks: (readonly MidiTrackEvent[])[] = [];
-  let pos = 8 + headerLength;
-
-  for (let t = 0; t < ntrks; t++) {
-    if (pos + 8 > data.length) {
-      throw new RangeError(`Truncated track chunk header at offset ${pos}.`);
-    }
-
-    if (!checkFourCC(data, pos, MTRK_BYTES)) {
-      throw new TypeError(`Expected 'MTrk' at offset ${pos}.`);
-    }
-
-    const trackLength = readUint32(data, pos + 4);
-    pos += 8;
-
-    const trackEvents = parseTrackEvents(data, pos, trackLength);
-    tracks.push(trackEvents);
-    pos += trackLength;
-  }
+  const { tracks, pos: _finalPos } = parseTracks(data, ntrks, 8 + headerLength);
 
   return { format, ticksPerQuarter: division, tracks };
 }
@@ -397,7 +435,20 @@ export function midiFileToSequence(
   return Sequence.create(musicEvents, sequenceOptions);
 }
 
-type ActiveNoteMap = Map<number, { readonly onTick: number; readonly velocity: number }>;
+/**
+ * Key for the active-note map: channel * 128 + noteNumber.
+ * This uniquely identifies a pitch-on-channel combination since noteNumber ≤ 127.
+ */
+function activeNoteKey(channel: number, noteNumber: number): number {
+  return channel * 128 + noteNumber;
+}
+
+/**
+ * FIFO queue of pending note-on onsets for a single (channel, noteNumber) key.
+ * note-on pushes; note-off pops the oldest onset so overlapping notes pair correctly.
+ */
+type ActiveNoteQueue = Array<{ readonly onTick: number; readonly velocity: number }>;
+type ActiveNoteMap = Map<number, ActiveNoteQueue>;
 
 function isNoteOff(event: MidiTrackEvent): boolean {
   if (event.type === 'noteOff') return true;
@@ -413,10 +464,13 @@ function resolveNoteOff(
   musicEvents: MusicEvent[],
 ): void {
   if (event.type !== 'noteOn' && event.type !== 'noteOff') return;
-  const active = activeNotes.get(event.noteNumber);
+  const key = activeNoteKey(event.channel, event.noteNumber);
+  const queue = activeNotes.get(key);
 
-  if (active !== undefined) {
-    activeNotes.delete(event.noteNumber);
+  if (queue !== undefined && queue.length > 0) {
+    // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
+    const active = queue.shift()!;
+    if (queue.length === 0) activeNotes.delete(key);
     const noteEvent = buildNoteEvent(
       event.noteNumber,
       active.onTick,
@@ -446,7 +500,13 @@ function processTrack(
     } else if (event.type === 'timeSignature') {
       onMeter(event.numerator, event.denominator);
     } else if (event.type === 'noteOn' && event.velocity > 0) {
-      activeNotes.set(event.noteNumber, { onTick: absoluteTick, velocity: event.velocity });
+      const key = activeNoteKey(event.channel, event.noteNumber);
+      const queue = activeNotes.get(key);
+      if (queue !== undefined) {
+        queue.push({ onTick: absoluteTick, velocity: event.velocity });
+      } else {
+        activeNotes.set(key, [{ onTick: absoluteTick, velocity: event.velocity }]);
+      }
     } else if (isNoteOff(event)) {
       resolveNoteOff(event, absoluteTick, activeNotes, ticksPerQuarter, musicEvents);
     }

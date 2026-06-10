@@ -84,18 +84,25 @@ const STAFF_TOP = 8;
 /**
  * Computes how many ledger lines are needed for a given `lineOrSpace` value.
  *
+ * Ledger lines are only drawn at the line positions themselves (even offsets
+ * from the staff edge), not the spaces between them. A note in the space just
+ * beyond the staff (an odd offset) needs zero ledger lines; the first ledger
+ * line appears at the next line position.
+ *
  * - 0 when the note is on the staff (0 ≤ pos ≤ 8).
- * - Below: ledger lines are drawn at even positions -2, -4, -6, …
- * - Above: ledger lines are drawn at even positions 10, 12, 14, …
+ * - Below: ledger lines are at even positions -2 (C4), -4 (A3), -6, …
+ *   so D4 (-1) → 0, C4 (-2) → 1, B3 (-3) → 1, A3 (-4) → 2.
+ * - Above: ledger lines are at even positions 10 (A5), 12 (C6), 14, …
+ *   so G5 (9) → 0, A5 (10) → 1, B5 (11) → 1, C6 (12) → 2.
  */
 function ledgerLinesForPosition(lineOrSpace: number): number {
   if (lineOrSpace >= STAFF_BOTTOM && lineOrSpace <= STAFF_TOP) {
     return 0;
   }
   if (lineOrSpace < STAFF_BOTTOM) {
-    return Math.ceil(-lineOrSpace / 2);
+    return Math.floor(-lineOrSpace / 2);
   }
-  return Math.ceil((lineOrSpace - STAFF_TOP) / 2);
+  return Math.floor((lineOrSpace - STAFF_TOP) / 2);
 }
 
 // ---------------------------------------------------------------------------

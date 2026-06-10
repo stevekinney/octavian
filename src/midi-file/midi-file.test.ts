@@ -529,3 +529,98 @@ describe('round-trip: sequenceToMidiFile -> midiFileToSequence', () => {
     expect(reconstructed.events.length).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// midiFileToSequence — overlapping notes (same pitch, FIFO pairing)
+// ---------------------------------------------------------------------------
+
+// prettier-ignore
+function buildOverlapMidi(trackData: number[]): Uint8Array {
+  return new Uint8Array([
+    0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06,
+    0x00, 0x00, 0x00, 0x01, 0x01, 0xe0,
+    0x4d, 0x54, 0x72, 0x6b,
+    0x00, 0x00, 0x00, trackData.length,
+    ...trackData,
+  ]);
+}
+
+describe('midiFileToSequence — overlapping same-pitch notes', () => {
+  it('pairs two overlapping note-ons of the same pitch+channel by FIFO order', () => {
+    // Two note-ons at ticks 0 and 96 (same pitch C4, same channel), then two
+    // note-offs at ticks 192 and 288.  FIFO pairing: note1=(0,192), note2=(96,288).
+    // division=480; whole=1920 ticks.
+    // prettier-ignore
+    const trackData = [
+      0x00, 0x90, 0x3c, 0x40,  // tick   0: note-on  ch0 C4 vel=64
+      0x60, 0x90, 0x3c, 0x50,  // tick  96: note-on  ch0 C4 vel=80
+      0x60, 0x90, 0x3c, 0x00,  // tick 192: note-on vel=0 (note-off) ch0 C4
+      0x60, 0x90, 0x3c, 0x00,  // tick 288: note-on vel=0 (note-off) ch0 C4
+      0x00, 0xff, 0x2f, 0x00,
+    ];
+    const result = midiFileToSequence(buildOverlapMidi(trackData));
+    expect(result.events.length).toBe(2);
+
+    const sorted = result.events.toSorted(
+      (a, b) => a.start.numerator / a.start.denominator - b.start.numerator / b.start.denominator,
+    );
+    const note1 = sorted[0];
+    const note2 = sorted[1];
+
+    // note1: onset tick 0, off tick 192, vel 64
+    expect(note1?.type).toBe('note');
+    if (note1?.type === 'note') {
+      expect(note1.note.midi).toBe(60);
+      expect(note1.start.numerator / note1.start.denominator).toBe(0);
+      expect(note1.duration.numerator / note1.duration.denominator).toBeCloseTo(192 / 1920, 6);
+      expect(note1.velocity).toBe(64);
+    }
+
+    // note2: onset tick 96, off tick 288, vel 80
+    expect(note2?.type).toBe('note');
+    if (note2?.type === 'note') {
+      expect(note2.note.midi).toBe(60);
+      expect(note2.start.numerator / note2.start.denominator).toBeCloseTo(96 / 1920, 6);
+      expect(note2.duration.numerator / note2.duration.denominator).toBeCloseTo(192 / 1920, 6);
+      expect(note2.velocity).toBe(80);
+    }
+  });
+
+  it('same pitch on different channels does not collide (ch0 and ch1 pair independently)', () => {
+    // Absolute ticks (division=480, whole=1920 ticks):
+    //   tick  0: note-on  ch0 C4 vel=64  (delta=0x00)
+    //   tick 48: note-on  ch1 C4 vel=80  (delta=0x30=48)
+    //   tick144: note-off ch0 C4         (delta=0x60=96)
+    //   tick192: note-off ch1 C4         (delta=0x30=48)
+    // ch0 note: start=0, duration=144 ticks = 144/1920
+    // ch1 note: start=48 ticks = 48/1920, duration=144 ticks = 144/1920
+    // prettier-ignore
+    const trackData = [
+      0x00, 0x90, 0x3c, 0x40,  // tick  0:  note-on  ch0 C4 vel=64
+      0x30, 0x91, 0x3c, 0x50,  // tick 48:  note-on  ch1 C4 vel=80
+      0x60, 0x90, 0x3c, 0x00,  // tick144:  note-off ch0 C4
+      0x30, 0x91, 0x3c, 0x00,  // tick192:  note-off ch1 C4
+      0x00, 0xff, 0x2f, 0x00,
+    ];
+    const result = midiFileToSequence(buildOverlapMidi(trackData));
+    expect(result.events.length).toBe(2);
+
+    const sorted = result.events.toSorted(
+      (a, b) => a.start.numerator / a.start.denominator - b.start.numerator / b.start.denominator,
+    );
+    const note1 = sorted[0];
+    const note2 = sorted[1];
+
+    if (note1?.type === 'note') {
+      expect(note1.note.midi).toBe(60);
+      expect(note1.start.numerator / note1.start.denominator).toBe(0);
+      expect(note1.duration.numerator / note1.duration.denominator).toBeCloseTo(144 / 1920, 6);
+    }
+
+    if (note2?.type === 'note') {
+      expect(note2.note.midi).toBe(60);
+      expect(note2.start.numerator / note2.start.denominator).toBeCloseTo(48 / 1920, 6);
+      expect(note2.duration.numerator / note2.duration.denominator).toBeCloseTo(144 / 1920, 6);
+    }
+  });
+});
