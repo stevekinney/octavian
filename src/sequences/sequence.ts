@@ -20,7 +20,7 @@ import {
   rationalsEqual,
   rationalToNumber,
 } from '../rational.js';
-import type { Meter } from '../meter.js';
+import { Meter } from '../meter.js';
 import { serializeEvent, deserializeEvent } from './serialization.js';
 import type {
   MusicEvent,
@@ -256,12 +256,14 @@ export class Sequence {
     }
 
     const events = serialized.events.map(deserializeEvent);
+
+    for (const event of events) {
+      validateEvent(event);
+    }
+
     const sorted = [...events].toSorted((a, b) => compareRationals(a.start, b.start));
 
-    // The meter shape { numerator, denominator } is compatible with Meter's
-    // public interface. Callers needing full Meter behaviour can reconstruct
-    // via Meter.fromJSON(sequence.meter).
-    const meter = serialized.meter as Meter | null;
+    const meter = serialized.meter !== null ? Meter.fromJSON(serialized.meter) : null;
 
     return createSequence(sorted, serialized.tempo, meter);
   }

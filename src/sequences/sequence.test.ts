@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'bun:test';
 import { Sequence, musicalTime } from './sequence.js';
+import { Sequence as SequenceFromBarrel, musicalTime as musicalTimeFromBarrel } from './index.js';
 import { Note } from '../note.js';
 import { Chord } from '../chord.js';
+import { Meter } from '../meter.js';
 import type { MusicEvent, NoteEvent, ChordEvent, RestEvent } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -417,5 +419,121 @@ describe('Sequence[Symbol.toStringTag]', () => {
   it('returns a descriptive tag', () => {
     const seq = Sequence.create([noteEvent('C4', q(0, 1), QUARTER)], { tempo: 120 });
     expect(seq[Symbol.toStringTag]).toBe('Sequence(1 event(s), 120 BPM)');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Meter option
+// ---------------------------------------------------------------------------
+
+describe('Sequence with meter', () => {
+  it('stores the meter when provided', () => {
+    const meter = Meter.create('4/4');
+    const seq = Sequence.create([], { tempo: 120, meter });
+    expect(seq.meter).not.toBeNull();
+    expect(seq.meter?.numerator).toBe(4);
+    expect(seq.meter?.denominator).toBe(4);
+  });
+
+  it('uses meter.beatUnit for toAbsoluteSeconds in 4/4', () => {
+    // 4/4: beatUnit = 1/4; quarter note at 120 BPM = 0.5s (same as no-meter)
+    const meter = Meter.create('4/4');
+    const seq = Sequence.create([noteEvent('C4', QUARTER, QUARTER)], { tempo: 120, meter });
+    const [timed] = seq.toAbsoluteSeconds();
+    expect(timed?.startSeconds).toBeCloseTo(0.5);
+    expect(timed?.durationSeconds).toBeCloseTo(0.5);
+  });
+
+  it('uses meter.beatUnit for toAbsoluteSeconds in 6/8 (compound)', () => {
+    // 6/8: beatUnit = 3/8; dotted quarter = 3/8 = one beat at 120 BPM → 0.5s
+    const meter = Meter.create('6/8');
+    const dottedQuarter = q(3, 8);
+    const seq = Sequence.create([noteEvent('C4', dottedQuarter, dottedQuarter)], {
+      tempo: 120,
+      meter,
+    });
+    const [timed] = seq.toAbsoluteSeconds();
+    // start = 3/8 beat; beatUnit = 3/8 → 1 beat → 0.5s
+    expect(timed?.startSeconds).toBeCloseTo(0.5);
+    expect(timed?.durationSeconds).toBeCloseTo(0.5);
+  });
+
+  it('round-trips a sequence with meter via toJSON/fromJSON', () => {
+    const meter = Meter.create('6/8');
+    const original = Sequence.create([noteEvent('C4', q(0, 1), q(3, 8))], { tempo: 120, meter });
+
+    const json = original.toJSON();
+    const restored = Sequence.fromJSON(json);
+
+    // meter must be a real Meter instance with beatUnit
+    expect(restored.meter).not.toBeNull();
+    expect(restored.meter).toBeInstanceOf(Meter);
+    expect(restored.meter?.numerator).toBe(6);
+    expect(restored.meter?.denominator).toBe(8);
+    expect(restored.equals(original)).toBe(true);
+  });
+
+  it('toAbsoluteSeconds works correctly after fromJSON with meter', () => {
+    const meter = Meter.create('6/8');
+    const dottedQuarter = q(3, 8);
+    const original = Sequence.create([noteEvent('C4', dottedQuarter, dottedQuarter)], {
+      tempo: 120,
+      meter,
+    });
+
+    const restored = Sequence.fromJSON(original.toJSON());
+    const [timed] = restored.toAbsoluteSeconds();
+
+    // Should use meter.beatUnit = 3/8; dotted quarter at 120 BPM → 0.5s
+    expect(timed?.startSeconds).toBeCloseTo(0.5);
+    expect(timed?.durationSeconds).toBeCloseTo(0.5);
+  });
+
+  it('preserves meter after transpose', () => {
+    const meter = Meter.create('3/4');
+    const seq = Sequence.create([noteEvent('C4', q(0, 1), QUARTER)], { tempo: 120, meter });
+    const transposed = seq.transpose('majorSecond');
+
+    expect(transposed.meter).not.toBeNull();
+    expect(transposed.meter?.numerator).toBe(3);
+    expect(transposed.meter?.denominator).toBe(4);
+  });
+
+  it('considers two sequences with same meter equal', () => {
+    const meter = Meter.create('3/4');
+    const a = Sequence.create([], { tempo: 120, meter });
+    const b = Sequence.create([], { tempo: 120, meter: Meter.create('3/4') });
+    expect(a.equals(b)).toBe(true);
+  });
+
+  it('considers two sequences unequal when meters differ', () => {
+    const a = Sequence.create([], { tempo: 120, meter: Meter.create('4/4') });
+    const b = Sequence.create([], { tempo: 120, meter: Meter.create('3/4') });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('considers sequence with meter unequal to one without', () => {
+    const a = Sequence.create([], { tempo: 120, meter: Meter.create('4/4') });
+    const b = Sequence.create([], { tempo: 120 });
+    expect(a.equals(b)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Subpath barrel (index.js)
+// ---------------------------------------------------------------------------
+
+describe('octavian/sequences barrel exports', () => {
+  it('exports Sequence from barrel', () => {
+    expect(SequenceFromBarrel).toBe(Sequence);
+  });
+
+  it('exports musicalTime from barrel', () => {
+    expect(musicalTimeFromBarrel).toBe(musicalTime);
+  });
+
+  it('barrel Sequence.create works end-to-end', () => {
+    const seq = SequenceFromBarrel.create([noteEvent('C4', q(0, 1), QUARTER)], { tempo: 120 });
+    expect(seq.events).toHaveLength(1);
   });
 });
