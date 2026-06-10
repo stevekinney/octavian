@@ -70,20 +70,12 @@ function decodeMetaLength(
   cursor: number,
   end: number,
 ): { readonly metaLength: number; readonly cursor: number } {
-  if (cursor >= end) {
-    throw new RangeError(`Truncated meta event length at offset ${cursor}.`);
-  }
+  // Bound the decode at the track end so a length VLQ whose bytes run past the
+  // track (a missing length byte, or a multi-byte VLQ overrunning the boundary)
+  // throws before reading a byte that belongs to the next chunk.
+  const { value: metaLength, bytesRead } = decodeVlq(data, cursor, end);
 
-  const { value: metaLength, bytesRead } = decodeVlq(data, cursor);
-  const next = cursor + bytesRead;
-
-  if (next > end) {
-    throw new RangeError(
-      `Meta event length field at offset ${cursor} exceeds track boundary ${end}.`,
-    );
-  }
-
-  return { metaLength, cursor: next };
+  return { metaLength, cursor: cursor + bytesRead };
 }
 
 function parseMetaEvent(

@@ -58,15 +58,23 @@ export type VlqDecodeResult = {
  *
  * @param data The byte array to read from.
  * @param offset The byte offset to start reading at.
+ * @param limit The exclusive upper bound the VLQ must stay within. Defaults to
+ *   `data.length`. Pass a track `end` to keep a meta-length VLQ from reading
+ *   bytes that belong to the next chunk.
  * @returns The decoded value and the number of bytes consumed.
- * @throws {RangeError} When the VLQ exceeds the 4-byte maximum or the data is truncated.
+ * @throws {RangeError} When the VLQ exceeds the 4-byte maximum, is truncated, or
+ *   would read past `limit`.
  */
-export function decodeVlq(data: Uint8Array, offset: number): VlqDecodeResult {
+export function decodeVlq(
+  data: Uint8Array,
+  offset: number,
+  limit: number = data.length,
+): VlqDecodeResult {
   let value = 0;
   let bytesRead = 0;
 
   for (;;) {
-    if (offset + bytesRead >= data.length) {
+    if (offset + bytesRead >= limit) {
       throw new RangeError(`Truncated VLQ at offset ${offset + bytesRead}.`);
     }
 
