@@ -39,19 +39,55 @@ const DEFAULT_OSCILLATOR_TYPE = 'sine';
 /**
  * Resolves the effective velocity for a scheduled event.
  *
- * Returns `defaultVelocity` when `velocity` is absent. Throws when it is
- * present and equal to 0 (Web Audio has no "note-off" concept; velocity-0
- * is meaningless and indicates a caller error).
+ * Returns `defaultVelocity` when `velocity` is absent. A present velocity must
+ * be an integer in 1..127: `0` is note-off (meaningless for Web Audio, which
+ * has no note-off concept), and values outside the range produce out-of-bounds
+ * gain. Mirrors the validation in `octavian/midi` and `octavian/midi-file`.
  *
- * @throws {RangeError} When velocity is present and equals 0.
+ * @throws {TypeError} When velocity is present but not an integer.
+ * @throws {RangeError} When velocity is present and outside 1..127.
  */
 function resolveVelocity(velocity: number | undefined, defaultVelocity: number): number {
-  if (velocity !== undefined && velocity === 0) {
-    throw new RangeError(
-      `Note event velocity must be 1..127 for Web Audio scheduling (0 is interpreted as note-off), received 0.`,
+  if (velocity === undefined) {
+    return defaultVelocity;
+  }
+  if (!Number.isInteger(velocity)) {
+    throw new TypeError(
+      `Velocity must be an integer in 1..127 for Web Audio scheduling, received ${String(velocity)}.`,
     );
   }
-  return velocity ?? defaultVelocity;
+  if (velocity < 1 || velocity > 127) {
+    throw new RangeError(
+      `Velocity must be an integer in 1..127 for Web Audio scheduling (0 is interpreted as note-off), received ${velocity}.`,
+    );
+  }
+  return velocity;
+}
+
+/**
+ * Validates the timing inputs for a single scheduled voice.
+ *
+ * Web Audio's automation timeline requires finite, ordered times: a non-finite
+ * or non-positive `duration` (or non-finite `startTime` / negative `attack`)
+ * would schedule the release before the attack, or make the real API throw at
+ * scheduling time. Mirrors the finite-bounds checks in `octavian/midi-file`.
+ *
+ * @throws {RangeError} When startTime, duration, or attack are out of bounds.
+ */
+function validateVoiceTiming(startTime: number, duration: number, attack: number): void {
+  if (!Number.isFinite(startTime)) {
+    throw new RangeError(`startTime must be a finite number, received ${String(startTime)}.`);
+  }
+  if (!Number.isFinite(duration) || duration <= 0) {
+    throw new RangeError(
+      `duration must be a finite number greater than 0, received ${String(duration)}.`,
+    );
+  }
+  if (!Number.isFinite(attack) || attack < 0) {
+    throw new RangeError(
+      `envelope attack must be a finite number >= 0, received ${String(attack)}.`,
+    );
+  }
 }
 
 /**
@@ -83,6 +119,8 @@ function scheduleVoice(
   gainPeak: number,
   envelope: Envelope,
 ): void {
+  validateVoiceTiming(startTime, duration, envelope.attack);
+
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
@@ -121,7 +159,8 @@ function resolveFrequency(note: NoteLike, tuning: Tuning | undefined): number {
  *
  * Note and chord events are scheduled; rest events are skipped.
  *
- * @throws {RangeError} When a sequence event carries a present velocity of 0.
+ * @throws {TypeError} When an event velocity is present but not an integer.
+ * @throws {RangeError} When an event velocity is outside 1..127 or its timing is out of bounds.
  */
 function scheduleEvents(
   ctx: AudioContextLike,

@@ -32,12 +32,13 @@ export type MIDIInputLike = {
 /**
  * A Web MIDI message event.
  *
- * `data` may be null on some browser implementations — the adapter guards
- * against this by skipping any event whose data is null or empty.
+ * Per the Web MIDI spec, `data` is a non-null `Uint8Array`. The adapter still
+ * skips any event whose data is empty or whose first byte is not a channel-voice
+ * status byte.
  */
 export type MIDIMessageEventLike = {
-  /** Raw MIDI bytes. May be null; guard before use. */
-  readonly data: Uint8Array | null;
+  /** Raw MIDI bytes (the message's status + data bytes). */
+  readonly data: Uint8Array;
 };
 
 /**

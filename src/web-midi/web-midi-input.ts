@@ -79,7 +79,7 @@ const SYSTEM_MESSAGE_THRESHOLD = 0xf0;
  * fires caller callbacks.
  *
  * Only channel-voice messages (status byte 0x80–0xEF) are dispatched.
- * Null/empty data, stray data bytes (< 0x80), and system messages (>= 0xF0)
+ * Empty data, stray data bytes (< 0x80), and system messages (>= 0xF0)
  * are silently skipped.
  *
  * Returns the new state after applying the message.
@@ -93,11 +93,6 @@ function processMessageEvent(
   onNote: OnNoteCallback | undefined,
   onChord: OnChordCallback | undefined,
 ): { state: MidiState; chord: Chord | null } {
-  // Guard: skip null data (some browsers emit events with null data).
-  if (event.data === null) {
-    return { state, chord: previousChord };
-  }
-
   // Guard: skip anything that is not a channel-voice status byte. Empty data
   // (undefined first byte), stray data bytes (< 0x80), and system messages
   // (>= 0xF0) are all out of scope; parseMidiMessage would throw for them.
@@ -181,9 +176,14 @@ export function createWebMidiInput(options: WebMidiInputOptions): WebMidiInputCo
   // Last chord seen — used for change-detection in onChord.
   let lastChord: Chord | null = null;
 
-  // Capture inputs at creation time into a stable array for PINNED teardown.
+  // Capture inputs at creation time, each paired with the handler it had before
+  // we bound ours, so teardown can RESTORE the caller's prior handler rather
+  // than clobbering it — the MIDIAccess is caller-owned and may be shared.
   // Hot-plug (ports added after creation) is explicitly out of scope for v1.
-  const boundInputs: MIDIInputLike[] = [];
+  const boundInputs: Array<{
+    input: MIDIInputLike;
+    previous: ((event: MIDIMessageEventLike) => void) | null;
+  }> = [];
 
   // The single handler shared across all bound inputs.
   const handleMessage = (event: MIDIMessageEventLike): void => {
@@ -200,20 +200,20 @@ export function createWebMidiInput(options: WebMidiInputOptions): WebMidiInputCo
     lastChord = result.chord;
   };
 
-  // Bind to every input available at creation time.
+  // Bind to every input available at creation time, remembering its prior handler.
   for (const input of midiAccess.inputs.values()) {
+    boundInputs.push({ input, previous: input.onmidimessage });
     input.onmidimessage = handleMessage;
-    boundInputs.push(input);
   }
 
-  // Teardown: detach from every input that was bound at creation.
+  // Teardown: restore each input's prior handler (null when there was none).
   let stopped = false;
 
   function stop(): void {
     if (stopped) return;
     stopped = true;
-    for (const input of boundInputs) {
-      input.onmidimessage = null;
+    for (const { input, previous } of boundInputs) {
+      input.onmidimessage = previous;
     }
   }
 

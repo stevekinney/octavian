@@ -23,11 +23,11 @@ import type { Chord } from '../chord.js';
 // ---------------------------------------------------------------------------
 
 function makeFakeInput(): MIDIInputLike & {
-  fire(data: Uint8Array | null): void;
+  fire(data: Uint8Array): void;
 } {
   const fake = {
     onmidimessage: null as ((event: MIDIMessageEventLike) => void) | null,
-    fire(data: Uint8Array | null): void {
+    fire(data: Uint8Array): void {
       const event: MIDIMessageEventLike = { data };
       if (fake.onmidimessage !== null) {
         fake.onmidimessage(event);
@@ -73,7 +73,9 @@ function programChange(program: number): Uint8Array {
 
 // MIDI note numbers for common notes
 const C4 = 60;
+const D4 = 62;
 const E4 = 64;
+const Fs4 = 66;
 const G4 = 67;
 const A4 = 69;
 
@@ -141,6 +143,26 @@ describe('createWebMidiInput — binding', () => {
     input.fire(noteOn(E4, 80));
     expect(messages).toHaveLength(1);
   });
+
+  it("stop() restores the caller's pre-existing onmidimessage handler", () => {
+    const input = makeFakeInput();
+    const access = makeFakeAccess([input]);
+    let priorCalls = 0;
+    const priorHandler = (): void => {
+      priorCalls += 1;
+    };
+    input.onmidimessage = priorHandler;
+
+    const controller = createWebMidiInput({ midiAccess: access });
+    // Our handler displaced the caller's while active.
+    expect(input.onmidimessage).not.toBe(priorHandler);
+
+    controller.stop();
+    // The caller's original handler is restored, not nulled.
+    expect(input.onmidimessage).toBe(priorHandler);
+    input.fire(noteOn(C4, 80));
+    expect(priorCalls).toBe(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -177,17 +199,6 @@ describe('createWebMidiInput — onMessage', () => {
     input2.fire(noteOn(E4, 80));
 
     expect(messages).toHaveLength(2);
-  });
-
-  it('skips null data without throwing', () => {
-    const input = makeFakeInput();
-    const access = makeFakeAccess([input]);
-    const messages: MidiMessage[] = [];
-
-    createWebMidiInput({ midiAccess: access, onMessage: (m) => messages.push(m) });
-
-    input.fire(null);
-    expect(messages).toHaveLength(0);
   });
 
   it('skips empty data (length 0) without throwing', () => {
@@ -456,20 +467,32 @@ describe('createWebMidiInput — onChord', () => {
 
     createWebMidiInput({ midiAccess: access, onChord: (c) => chords.push(c) });
 
-    // C major: C E G
+    // First chord — C major triad: C4 E4 G4 (root is the lowest sounding note).
     input.fire(noteOn(C4, 80));
     input.fire(noteOn(E4, 80));
     input.fire(noteOn(G4, 80));
 
-    const afterCMajor = chords.length;
+    const firstChord = chords.filter((c): c is Chord => c !== null).at(-1);
+    if (firstChord === undefined) throw new Error('expected a first chord to be detected.');
+    expect(firstChord.root.note).toBe('C');
+    expect(firstChord.suffix).toBe('major');
 
-    // Release G, add A → C minor 7th / Am
-    input.fire(noteOff(G4));
+    // Release the C major triad and play a D major triad: D4 F#4 A4.
+    input.fire(noteOff(C4));
     input.fire(noteOff(E4));
+    input.fire(noteOff(G4));
+    input.fire(noteOn(D4, 80));
+    input.fire(noteOn(Fs4, 80));
     input.fire(noteOn(A4, 80));
 
-    // Should have fired at least once more
-    expect(chords.length).toBeGreaterThan(afterCMajor);
+    // A non-null chord with a different identity must have been emitted.
+    const distinctSecond = chords
+      .filter((c): c is Chord => c !== null)
+      .find((c) => c.root.note !== firstChord.root.note || c.suffix !== firstChord.suffix);
+    expect(distinctSecond).toBeDefined();
+    if (distinctSecond === undefined) throw new Error('expected a distinct second chord.');
+    expect(distinctSecond.root.note).toBe('D');
+    expect(distinctSecond.suffix).toBe('major');
   });
 
   it('does NOT fire onChord when chord is unchanged', () => {

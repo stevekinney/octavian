@@ -252,27 +252,51 @@ describe('scheduleNote — basic scheduling', () => {
   });
 });
 
-describe('scheduleNote — velocity-0 RangeError', () => {
-  it('throws RangeError for velocity=0', () => {
+describe('scheduleNote — input validation', () => {
+  const render = (options: { startTime: number; duration: number; velocity?: number }) => {
     const { ctx } = buildFakeAudioContext(0);
-    expect(() =>
-      createWebAudioRenderer({ audioContext: ctx }).scheduleNote('C4', {
-        startTime: 0,
-        duration: 1,
-        velocity: 0,
-      }),
-    ).toThrow(RangeError);
+    return () => createWebAudioRenderer({ audioContext: ctx }).scheduleNote('C4', options);
+  };
+
+  it('throws RangeError for velocity=0 (note-off)', () => {
+    expect(render({ startTime: 0, duration: 1, velocity: 0 })).toThrow(RangeError);
+    expect(render({ startTime: 0, duration: 1, velocity: 0 })).toThrow('received 0');
   });
 
-  it('error message contains "received 0"', () => {
+  it('throws RangeError for velocity below 1', () => {
+    expect(render({ startTime: 0, duration: 1, velocity: -1 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for velocity above 127', () => {
+    expect(render({ startTime: 0, duration: 1, velocity: 128 })).toThrow(RangeError);
+  });
+
+  it('throws TypeError for a non-integer velocity', () => {
+    expect(render({ startTime: 0, duration: 1, velocity: 63.5 })).toThrow(TypeError);
+  });
+
+  it('throws RangeError for a non-positive duration', () => {
+    expect(render({ startTime: 0, duration: 0 })).toThrow(RangeError);
+    expect(render({ startTime: 0, duration: -1 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for a non-finite duration', () => {
+    expect(render({ startTime: 0, duration: Number.POSITIVE_INFINITY })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for a non-finite startTime', () => {
+    expect(render({ startTime: Number.NaN, duration: 1 })).toThrow(RangeError);
+  });
+
+  it('throws RangeError for a negative envelope attack', () => {
     const { ctx } = buildFakeAudioContext(0);
     expect(() =>
       createWebAudioRenderer({ audioContext: ctx }).scheduleNote('C4', {
         startTime: 0,
         duration: 1,
-        velocity: 0,
+        envelope: { attack: -0.1 },
       }),
-    ).toThrow('received 0');
+    ).toThrow(RangeError);
   });
 });
 
