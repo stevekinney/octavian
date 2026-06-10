@@ -36,7 +36,11 @@ import type {
 
 /**
  * Returns a stable string key for chord-change detection.
- * Combines root note name, octave, and suffix to identify the exact chord.
+ *
+ * Combines the root pitch class, suffix, and inversion — deliberately NOT the
+ * root octave: re-voicing the same chord quality an octave higher requires
+ * releasing the bass, which passes through a no-chord (null) state and so
+ * already re-fires `onChord` on the way back up.
  */
 function chordKey(chord: Chord): string {
   return `${chord.root.note}${chord.suffix}:${chord.inversionIndex}`;
@@ -79,8 +83,9 @@ const SYSTEM_MESSAGE_THRESHOLD = 0xf0;
  * fires caller callbacks.
  *
  * Only channel-voice messages (status byte 0x80–0xEF) are dispatched.
- * Empty data, stray data bytes (< 0x80), and system messages (>= 0xF0)
- * are silently skipped.
+ * Empty data, stray data bytes (< 0x80), system messages (>= 0xF0), and
+ * messages that fail to parse (out-of-range data bytes, truncated) are
+ * silently skipped — no exception escapes the caller's onmidimessage handler.
  *
  * Returns the new state after applying the message.
  */
@@ -105,7 +110,18 @@ function processMessageEvent(
     return { state, chord: previousChord };
   }
 
-  const parsed: MidiMessage = parseMidiMessage(event.data);
+  // A well-formed status byte can still carry out-of-range data bytes (e.g.
+  // velocity 200) or be truncated, both of which make parseMidiMessage throw.
+  // Skip such messages silently — consistent with the other out-of-scope skips —
+  // rather than letting an exception escape the caller's onmidimessage handler.
+  // The catch is scoped to the parse ONLY: a throw from a consumer callback below
+  // must still surface to the consumer.
+  let parsed: MidiMessage;
+  try {
+    parsed = parseMidiMessage(event.data);
+  } catch {
+    return { state, chord: previousChord };
+  }
 
   // Fire onMessage for every successfully-parsed message.
   onMessage?.(parsed);

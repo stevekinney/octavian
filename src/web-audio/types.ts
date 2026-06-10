@@ -125,13 +125,19 @@ export type AudioContextLike = {
 /**
  * Minimal structural interface for an OfflineAudioContext.
  *
- * Extends {@link AudioContextLike} with `startRendering`, which begins
- * offline rendering and resolves with the rendered audio buffer.
+ * Extends {@link AudioContextLike} with `startRendering`, which begins offline
+ * rendering and resolves with the platform's rendered audio buffer.
  */
 export type OfflineAudioContextLike = AudioContextLike & {
   /**
-   * Begins rendering and returns a Promise that resolves with the rendered
-   * audio buffer.
+   * Begins rendering and returns a Promise that resolves with the platform's
+   * rendered audio buffer.
+   *
+   * Typed as `unknown` on purpose: this package has no DOM lib, so it cannot
+   * reference the real `AudioBuffer` type, and the renderer only passes the
+   * result through — it never reads it. A caller (which, by virtue of owning an
+   * `OfflineAudioContext`, is already in a DOM-typed context) can cast the
+   * resolved value to `AudioBuffer` for full fidelity.
    */
   startRendering(): Promise<unknown>;
 };
@@ -276,6 +282,10 @@ export type WebAudioRenderer = {
   /**
    * Schedules all sequence events onto `offlineContext` (anchored at
    * `offlineContext.currentTime`) and returns `offlineContext.startRendering()`.
+   *
+   * Resolves with the platform's rendered audio buffer, typed `unknown` (this
+   * package has no DOM lib). Cast the resolved value to `AudioBuffer` in a DOM
+   * context. See {@link OfflineAudioContextLike.startRendering}.
    */
   renderOffline(sequence: Sequence, options: RenderOfflineOptions): Promise<unknown>;
 };

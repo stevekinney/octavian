@@ -277,6 +277,24 @@ describe('createWebMidiInput — onMessage', () => {
     expect(() => input.fire(new Uint8Array([0x40, 0x50]))).not.toThrow();
     expect(messages).toHaveLength(0);
   });
+
+  it('skips a channel-voice message that fails to parse, without throwing', () => {
+    const input = makeFakeInput();
+    const access = makeFakeAccess([input]);
+    const messages: MidiMessage[] = [];
+    const controller = createWebMidiInput({
+      midiAccess: access,
+      onMessage: (m) => messages.push(m),
+    });
+
+    // Valid note-on status (0x90) but an out-of-range velocity (200) and a
+    // truncated note-on both make parseMidiMessage throw. The catch must skip
+    // them silently rather than letting the exception escape the handler.
+    expect(() => input.fire(new Uint8Array([0x90, 60, 200]))).not.toThrow();
+    expect(() => input.fire(new Uint8Array([0x90, 60]))).not.toThrow();
+    expect(messages).toHaveLength(0);
+    expect(controller.getNotes()).toHaveLength(0);
+  });
 });
 
 // ---------------------------------------------------------------------------
