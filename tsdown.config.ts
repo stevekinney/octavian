@@ -6,7 +6,15 @@ import { defineConfig } from 'tsdown';
 // and a runtime assertion in scripts/smoke-checks.mjs wired into
 // scripts/smoke-consumer-check.mjs so the tarball smoke test covers it.
 export default defineConfig({
-  entry: ['src/index.ts', 'src/sequences/index.ts'],
+  entry: [
+    'src/index.ts',
+    'src/sequences/index.ts',
+    'src/notation/index.ts',
+    'src/pitch/index.ts',
+    'src/midi/index.ts',
+    'src/midi-file/index.ts',
+    'src/performance-timing/index.ts',
+  ],
   outDir: 'dist/browser',
   format: 'esm',
   outExtensions: () => ({ js: '.js' }),

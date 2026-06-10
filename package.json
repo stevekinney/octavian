@@ -41,6 +41,36 @@
       "import": "./dist/browser/sequences/index.js",
       "default": "./dist/browser/sequences/index.js"
     },
+    "./notation": {
+      "types": "./dist/notation/index.d.ts",
+      "browser": "./dist/browser/notation/index.js",
+      "import": "./dist/browser/notation/index.js",
+      "default": "./dist/browser/notation/index.js"
+    },
+    "./pitch": {
+      "types": "./dist/pitch/index.d.ts",
+      "browser": "./dist/browser/pitch/index.js",
+      "import": "./dist/browser/pitch/index.js",
+      "default": "./dist/browser/pitch/index.js"
+    },
+    "./midi": {
+      "types": "./dist/midi/index.d.ts",
+      "browser": "./dist/browser/midi/index.js",
+      "import": "./dist/browser/midi/index.js",
+      "default": "./dist/browser/midi/index.js"
+    },
+    "./midi-file": {
+      "types": "./dist/midi-file/index.d.ts",
+      "browser": "./dist/browser/midi-file/index.js",
+      "import": "./dist/browser/midi-file/index.js",
+      "default": "./dist/browser/midi-file/index.js"
+    },
+    "./perf-timing": {
+      "types": "./dist/performance-timing/index.d.ts",
+      "browser": "./dist/browser/performance-timing/index.js",
+      "import": "./dist/browser/performance-timing/index.js",
+      "default": "./dist/browser/performance-timing/index.js"
+    },
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",
