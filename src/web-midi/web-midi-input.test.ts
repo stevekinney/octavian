@@ -22,6 +22,9 @@ import type { Chord } from '../chord.js';
 // Fake MIDIInput factory
 // ---------------------------------------------------------------------------
 
+/** A no-op handler used as an identity sentinel for "a foreign handler". */
+const interloper = (_event: MIDIMessageEventLike): void => {};
+
 function makeFakeInput(): MIDIInputLike & {
   fire(data: Uint8Array): void;
 } {
@@ -162,6 +165,40 @@ describe('createWebMidiInput — binding', () => {
     expect(input.onmidimessage).toBe(priorHandler);
     input.fire(noteOn(C4, 80));
     expect(priorCalls).toBe(1);
+  });
+
+  it('the bound handler is inert after stop(), even if invoked via a stale reference', () => {
+    const input = makeFakeInput();
+    const access = makeFakeAccess([input]);
+    const messages: MidiMessage[] = [];
+
+    const controller = createWebMidiInput({
+      midiAccess: access,
+      onMessage: (m) => messages.push(m),
+    });
+    // Capture our handler reference before tearing down, then stop.
+    const ourHandler = input.onmidimessage;
+    expect(ourHandler).not.toBeNull();
+    controller.stop();
+
+    // Deliver a message directly to the stale handler reference. The internal
+    // `stopped` guard must make it a no-op (no torn-down state is touched).
+    if (ourHandler !== null) ourHandler({ data: noteOn(C4, 80) });
+    expect(messages).toHaveLength(0);
+    expect(controller.getNotes()).toHaveLength(0);
+  });
+
+  it('stop() does NOT clobber a handler that replaced ours after binding', () => {
+    const input = makeFakeInput();
+    const access = makeFakeAccess([input]);
+
+    const controller = createWebMidiInput({ midiAccess: access });
+    // Someone (the caller) swaps in their own handler after we bound.
+    input.onmidimessage = interloper;
+
+    controller.stop();
+    // Teardown leaves the foreign handler alone rather than restoring our stale capture.
+    expect(input.onmidimessage).toBe(interloper);
   });
 });
 

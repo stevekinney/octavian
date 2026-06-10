@@ -178,15 +178,23 @@ export function createWebMidiInput(options: WebMidiInputOptions): WebMidiInputCo
 
   // Capture inputs at creation time, each paired with the handler it had before
   // we bound ours, so teardown can RESTORE the caller's prior handler rather
-  // than clobbering it — the MIDIAccess is caller-owned and may be shared.
-  // Hot-plug (ports added after creation) is explicitly out of scope for v1.
+  // than clobbering it — the MIDIAccess is caller-owned.
+  //
+  // Ownership model (v1): ONE controller per MIDIInput. Binding two controllers
+  // to the same input concurrently, and hot-plug (ports added after creation),
+  // are out of scope. A stopped controller is always inert (the `stopped` guard
+  // below) and never clobbers a handler that is not ours (the teardown check).
   const boundInputs: Array<{
     input: MIDIInputLike;
     previous: ((event: MIDIMessageEventLike) => void) | null;
   }> = [];
 
-  // The single handler shared across all bound inputs.
+  let stopped = false;
+
+  // The single handler shared across all bound inputs. Inert once stopped, so a
+  // late message delivered to a stale reference cannot reach a torn-down state.
   const handleMessage = (event: MIDIMessageEventLike): void => {
+    if (stopped) return;
     const result = processMessageEvent(
       event,
       state,
@@ -206,14 +214,16 @@ export function createWebMidiInput(options: WebMidiInputOptions): WebMidiInputCo
     input.onmidimessage = handleMessage;
   }
 
-  // Teardown: restore each input's prior handler (null when there was none).
-  let stopped = false;
-
+  // Teardown: restore each input's prior handler — but only where ours is still
+  // attached. If the caller (or anyone) replaced the handler after we bound,
+  // leave their handler in place rather than clobbering it with a stale capture.
   function stop(): void {
     if (stopped) return;
     stopped = true;
     for (const { input, previous } of boundInputs) {
-      input.onmidimessage = previous;
+      if (input.onmidimessage === handleMessage) {
+        input.onmidimessage = previous;
+      }
     }
   }
 
