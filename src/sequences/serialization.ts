@@ -50,13 +50,19 @@ function serializeNoteEvent(event: NoteEvent): SerializedNoteEvent {
 }
 
 function serializeChordEvent(event: ChordEvent): SerializedChordEvent {
-  const base: SerializedChordEvent = {
+  let base: SerializedChordEvent = {
     type: 'chord',
     rootWithOctave: `${event.chord.root.note}${event.chord.root.octave}`,
     suffix: event.chord.suffix,
     start: event.start,
     duration: event.duration,
   };
+
+  // Root position (inversion 0) is the default — omit the field to keep the JSON
+  // minimal and mirror the optional-velocity pattern.
+  if (event.chord.inversionIndex > 0) {
+    base = { ...base, inversion: event.chord.inversionIndex };
+  }
 
   if (event.velocity !== undefined) {
     return { ...base, velocity: event.velocity };
@@ -109,7 +115,7 @@ function deserializeChordEvent(raw: SerializedChordEvent): ChordEvent {
   // rootWithOctave is produced by serializeEvent — always a valid NoteNameWithOctave.
   const root = Note.create(raw.rootWithOctave as NoteLike);
   // suffix is the canonical ChordSuffix string stored by the Chord class.
-  const chord = Chord.create(root, raw.suffix as ChordSuffix);
+  const chord = applyInversion(Chord.create(root, raw.suffix as ChordSuffix), raw.inversion);
   const base: ChordEvent = { type: 'chord', chord, start: raw.start, duration: raw.duration };
 
   if (raw.velocity !== undefined) {
@@ -117,4 +123,35 @@ function deserializeChordEvent(raw: SerializedChordEvent): ChordEvent {
   }
 
   return base;
+}
+
+/**
+ * Reapplies a serialized inversion index to a freshly-created root-position chord.
+ *
+ * @param chord The root-position chord.
+ * @param inversion The serialized inversion index, or `undefined` for root position.
+ * @returns The chord at the requested inversion.
+ * @throws {TypeError} When the inversion is not a non-negative integer.
+ * @throws {RangeError} When the inversion exceeds the chord's note count.
+ */
+function applyInversion(chord: Chord, inversion: number | undefined): Chord {
+  if (inversion === undefined || inversion === 0) {
+    return chord;
+  }
+
+  if (!Number.isInteger(inversion) || inversion < 0) {
+    throw new TypeError(
+      `Serialized chord inversion must be a non-negative integer, received ${inversion}.`,
+    );
+  }
+
+  // Chord.invert wraps modulo the note count; guard the upper bound explicitly so
+  // an out-of-range serialized index is rejected rather than silently wrapped.
+  if (inversion >= chord.notes.length) {
+    throw new RangeError(
+      `Serialized chord inversion ${inversion} exceeds the ${chord.notes.length}-note chord.`,
+    );
+  }
+
+  return chord.invert(inversion);
 }

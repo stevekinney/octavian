@@ -237,7 +237,8 @@ export class Sequence {
    *
    * @param serialized The serialized sequence.
    * @returns The recreated sequence.
-   * @throws {TypeError} When the serialized tempo is invalid.
+   * @throws {RangeError} When the serialized tempo is not a finite positive number.
+   * @throws {TypeError} When a serialized event has an unknown type.
    */
   public static fromJSON(serialized: SerializedSequence): Sequence {
     validateTempo(serialized.tempo);

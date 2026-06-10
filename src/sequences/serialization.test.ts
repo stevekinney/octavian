@@ -158,6 +158,67 @@ describe('Sequence.toJSON / fromJSON', () => {
     expect(restored.equals(original)).toBe(true);
   });
 
+  it('round-trips an inverted chord, preserving the inversion index', () => {
+    const firstInversion = Chord.create(Note.create('C4'), 'maj7').invert();
+    expect(firstInversion.inversionIndex).toBe(1);
+
+    const original = Sequence.create(
+      [{ type: 'chord', chord: firstInversion, start: q(0, 1), duration: WHOLE }],
+      { tempo: 120 },
+    );
+
+    const restored = Sequence.fromJSON(original.toJSON());
+
+    expect(restored.equals(original)).toBe(true);
+    expect((restored.events[0] as ChordEvent).chord.inversionIndex).toBe(1);
+  });
+
+  it('omits the inversion field for a root-position chord', () => {
+    const seq = Sequence.create([chordEvent('C4', 'maj7', q(0, 1), WHOLE)], { tempo: 120 });
+    const serialized = seq.toJSON().events[0] as { inversion?: number };
+
+    expect(serialized.inversion).toBeUndefined();
+  });
+
+  it('throws RangeError for an out-of-range serialized chord inversion', () => {
+    expect(() =>
+      Sequence.fromJSON({
+        tempo: 120,
+        meter: null,
+        events: [
+          {
+            type: 'chord',
+            rootWithOctave: 'C4',
+            suffix: 'major',
+            // A major triad has 3 notes; inversion 9 is out of range.
+            inversion: 9,
+            start: q(0, 1),
+            duration: WHOLE,
+          },
+        ],
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it('throws TypeError for a non-integer serialized chord inversion', () => {
+    expect(() =>
+      Sequence.fromJSON({
+        tempo: 120,
+        meter: null,
+        events: [
+          {
+            type: 'chord',
+            rootWithOctave: 'C4',
+            suffix: 'major',
+            inversion: 1.5,
+            start: q(0, 1),
+            duration: WHOLE,
+          },
+        ],
+      }),
+    ).toThrow(TypeError);
+  });
+
   it('serializes meter as null when absent', () => {
     const seq = Sequence.create([], { tempo: 120 });
     expect(seq.toJSON().meter).toBeNull();

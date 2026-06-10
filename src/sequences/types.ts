@@ -143,6 +143,8 @@ export type SerializedChordEvent = {
   readonly rootWithOctave: string;
   /** Canonical chord suffix (the resolved catalog key, e.g. `"majorSeventh"`, not the `"maj7"` alias). */
   readonly suffix: string;
+  /** Inversion index. Absent means root position (inversion 0). */
+  readonly inversion?: number;
   readonly start: Rational;
   readonly duration: Rational;
   readonly velocity?: number;
