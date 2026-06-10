@@ -116,3 +116,21 @@ export function assertPerfTimingSmokeChecks(perfTiming) {
     throw new Error('octavian/perf-timing: estimateTempoFromOnsets broken');
   }
 }
+
+// Browser-only ADAPTER subpath. EXISTENCE-ONLY: the renderer needs a real
+// AudioContext (absent under Bun), so we only assert the factory exists and
+// that bare-importing the module did not throw on a browser global.
+export function assertWebAudioSmokeChecks(webAudio) {
+  if (typeof webAudio.createWebAudioRenderer !== 'function') {
+    throw new Error('octavian/web-audio: createWebAudioRenderer missing');
+  }
+}
+
+// Browser-only ADAPTER subpath. EXISTENCE-ONLY: the controller needs a real
+// MIDIAccess (absent under Bun), so we only assert the factory exists and
+// that bare-importing the module did not throw on a browser global.
+export function assertWebMidiSmokeChecks(webMidi) {
+  if (typeof webMidi.createWebMidiInput !== 'function') {
+    throw new Error('octavian/web-midi: createWebMidiInput missing');
+  }
+}

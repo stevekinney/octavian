@@ -14,6 +14,8 @@ export default defineConfig({
     'src/midi/index.ts',
     'src/midi-file/index.ts',
     'src/performance-timing/index.ts',
+    'src/web-audio/index.ts',
+    'src/web-midi/index.ts',
   ],
   outDir: 'dist/browser',
   format: 'esm',
