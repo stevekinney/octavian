@@ -250,6 +250,38 @@ describe('parseMidiFile — track event parsing', () => {
     expect(() => parseMidiFile(truncated)).toThrow(RangeError);
   });
 
+  it('throws RangeError when a meta event length byte lies outside the track (FF 2F with a trailing file byte)', () => {
+    // Track declares 3 bytes: delta(00) FF 2F — the length byte is missing from
+    // the track. A trailing file byte (00) sits just past the track end; the
+    // parser must NOT borrow it to satisfy the end-of-track length VLQ.
+    // prettier-ignore
+    const truncated = new Uint8Array([
+      0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06, // MThd
+      0x00, 0x00, 0x00, 0x01, 0x01, 0xe0,              // format=0, tracks=1, division=480
+      0x4d, 0x54, 0x72, 0x6b,                          // MTrk
+      0x00, 0x00, 0x00, 0x03,                          // track length = 3
+      0x00, 0xff, 0x2f,                                // delta + FF 2F, length byte missing
+      0x00,                                            // trailing file byte, outside the track
+    ]);
+    expect(() => parseMidiFile(truncated)).toThrow(RangeError);
+  });
+
+  it('throws RangeError when a multi-byte meta length VLQ extends past the track boundary', () => {
+    // Track declares 4 bytes: delta(00) FF 01(type) 81(VLQ continuation byte).
+    // The length VLQ starts inside the track but its second byte falls on the
+    // trailing file byte (00), outside the track — the parser must reject it.
+    // prettier-ignore
+    const truncated = new Uint8Array([
+      0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06, // MThd
+      0x00, 0x00, 0x00, 0x01, 0x01, 0xe0,              // format=0, tracks=1, division=480
+      0x4d, 0x54, 0x72, 0x6b,                          // MTrk
+      0x00, 0x00, 0x00, 0x04,                          // track length = 4
+      0x00, 0xff, 0x01, 0x81,                          // delta + FF 01 + VLQ start (needs a 2nd byte)
+      0x00,                                            // trailing file byte, outside the track
+    ]);
+    expect(() => parseMidiFile(truncated)).toThrow(RangeError);
+  });
+
   it('throws RangeError on truncated tempo meta', () => {
     // prettier-ignore
     const trackData = [
@@ -549,5 +581,17 @@ describe('sequenceToMidiFile — option validation', () => {
   it('throws RangeError when tempo yields microseconds exceeding 0xffffff (very slow BPM)', () => {
     const slowSeq = Sequence.create([], { tempo: 0.001 });
     expect(() => sequenceToMidiFile(slowSeq)).toThrow(RangeError);
+  });
+
+  it('throws RangeError for a non-finite tempo (NaN) supplied via a subclass', () => {
+    // Sequence.create validates tempo, but the constructor is protected, so a
+    // subclass can inject a non-finite tempo. NaN slips through the SMF range
+    // check (NaN comparisons are always false) and must be rejected explicitly.
+    class NaNTempoSequence extends Sequence {
+      constructor() {
+        super([], NaN, null);
+      }
+    }
+    expect(() => sequenceToMidiFile(new NaNTempoSequence())).toThrow(RangeError);
   });
 });

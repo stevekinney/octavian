@@ -56,6 +56,36 @@ type ParseMetaResult = {
   readonly event: MidiTrackEvent;
 };
 
+/**
+ * Decodes a meta event's length VLQ, ensuring the length field itself stays
+ * within the track. A meta event whose length byte is missing (the track ends
+ * right after `FF <type>`), or whose multi-byte VLQ runs past the track end,
+ * must be rejected rather than borrowing bytes from the next chunk.
+ *
+ * @returns The decoded `metaLength` and the cursor positioned at the payload.
+ * @throws {RangeError} When the length field lies outside the track.
+ */
+function decodeMetaLength(
+  data: Uint8Array,
+  cursor: number,
+  end: number,
+): { readonly metaLength: number; readonly cursor: number } {
+  if (cursor >= end) {
+    throw new RangeError(`Truncated meta event length at offset ${cursor}.`);
+  }
+
+  const { value: metaLength, bytesRead } = decodeVlq(data, cursor);
+  const next = cursor + bytesRead;
+
+  if (next > end) {
+    throw new RangeError(
+      `Meta event length field at offset ${cursor} exceeds track boundary ${end}.`,
+    );
+  }
+
+  return { metaLength, cursor: next };
+}
+
 function parseMetaEvent(
   data: Uint8Array,
   pos: number,
@@ -69,10 +99,7 @@ function parseMetaEvent(
 
   // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
   const metaType = data[pos]!;
-  let cursor = pos + 1;
-
-  const { value: metaLength, bytesRead: mlBytes } = decodeVlq(data, cursor);
-  cursor += mlBytes;
+  const { metaLength, cursor } = decodeMetaLength(data, pos + 1, end);
 
   if (metaType === 0x2f) {
     // End of track — metaLength must be 0 per SMF spec.

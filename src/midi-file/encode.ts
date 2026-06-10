@@ -51,7 +51,14 @@ function rationalToTicks(numerator: number, denominator: number, division: numbe
 // ---------------------------------------------------------------------------
 
 function validateTempoForEncoding(bpm: number): number {
-  // bpm is sourced from sequence.tempo which Sequence.create validates as finite-positive.
+  // bpm normally comes from sequence.tempo, but Sequence's constructor is
+  // protected — a subclass could supply a non-finite tempo, and `NaN` slips
+  // through the range check below (NaN comparisons are always false). Reject it
+  // explicitly so we never emit nonsense (00 00 00) tempo bytes.
+  if (!Number.isFinite(bpm) || bpm <= 0) {
+    throw new RangeError(`Tempo must be a finite positive number, received ${bpm}.`);
+  }
+
   // Guard the SMF encoding range: microseconds per quarter must fit in a 24-bit field.
   const us = Math.round(60_000_000 / bpm);
   if (us < 1 || us > 0xffffff) {
