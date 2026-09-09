@@ -18,10 +18,7 @@ export type IntervalQuality = 'perfect' | 'major' | 'minor' | 'augmented' | 'dim
  * needing bass-relative analysis should layer their own check on top.
  */
 export type IntervalConsonance =
-  | 'perfect-consonance'
-  | 'imperfect-consonance'
-  | 'mild-dissonance'
-  | 'sharp-dissonance';
+  'perfect-consonance' | 'imperfect-consonance' | 'mild-dissonance' | 'sharp-dissonance';
 
 /**
  * The four foundational fields every interval entry carries.
@@ -335,7 +332,7 @@ export type IntervalSymbol = (typeof INTERVALS)[Interval]['symbol'];
  * @param interval The interval name or alias to resolve.
  * @returns The canonical interval name.
  */
-// oxlint-disable-next-line eslint(complexity)
+// oxlint-disable-next-line complexity
 export function resolveInterval(interval: Interval): CanonicalInterval {
   switch (interval) {
     case 'unison':

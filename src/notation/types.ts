@@ -52,13 +52,7 @@ export type StaffPosition = {
  * correct spelling for this note).
  */
 export type AccidentalDisplay =
-  | 'sharp'
-  | 'flat'
-  | 'natural'
-  | 'double-sharp'
-  | 'double-flat'
-  | 'triple-sharp'
-  | 'triple-flat';
+  'sharp' | 'flat' | 'natural' | 'double-sharp' | 'double-flat' | 'triple-sharp' | 'triple-flat';
 
 // ---------------------------------------------------------------------------
 // NotationEvent

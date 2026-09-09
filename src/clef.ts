@@ -6,14 +6,7 @@
  * `baritone` is an F-clef variant; `percussion` has no defined pitch reference.
  */
 export type Clef =
-  | 'treble'
-  | 'bass'
-  | 'alto'
-  | 'tenor'
-  | 'soprano'
-  | 'mezzo-soprano'
-  | 'baritone'
-  | 'percussion';
+  'treble' | 'bass' | 'alto' | 'tenor' | 'soprano' | 'mezzo-soprano' | 'baritone' | 'percussion';
 
 /**
  * The frozen set of standard clef values.

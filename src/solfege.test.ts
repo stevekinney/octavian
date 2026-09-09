@@ -207,7 +207,6 @@ describe('parseSolfege — movableDo with context', () => {
   });
 
   it('do/me in A minor key resolve against A major reference', () => {
-    const aMinor = Key.create('A', 'minor');
     expect('note' in parseSolfege('do', 'movableDo', aMinor) === true).toBe(true);
     // me = b3 over A → C major's third (C#) lowered once → C natural.
     const me = parseSolfege('me', 'movableDo', aMinor);

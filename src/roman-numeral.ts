@@ -172,19 +172,19 @@ export class RomanNumeral {
     if (!VALID_QUALITIES.has(value.quality)) {
       throw new TypeError(
         `SerializedRomanNumeral.quality must be one of ${[...VALID_QUALITIES].join(', ')}; ` +
-          `got "${String(value.quality)}".`,
+          `got "${value.quality}".`,
       );
     }
     if (!VALID_INVERSIONS.has(value.inversion)) {
       throw new TypeError(
         `SerializedRomanNumeral.inversion must be one of ${[...VALID_INVERSIONS].join(', ')}; ` +
-          `got "${String(value.inversion)}".`,
+          `got "${value.inversion}".`,
       );
     }
     if (value.alteration !== undefined && !VALID_ALTERATIONS.has(value.alteration)) {
       throw new TypeError(
         `SerializedRomanNumeral.alteration must be undefined, 'flat', or 'sharp'; ` +
-          `got "${String(value.alteration)}".`,
+          `got "${value.alteration}".`,
       );
     }
     let applied: RomanNumeral | undefined;

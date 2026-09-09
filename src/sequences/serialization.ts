@@ -101,6 +101,7 @@ export function deserializeEvent(raw: SerializedMusicEvent): MusicEvent {
 function deserializeNoteEvent(raw: SerializedNoteEvent): NoteEvent {
   // noteWithOctave is a string matching `${NoteName}${Octave}` produced by
   // serializeEvent — the runtime value is always a valid NoteNameWithOctave.
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
   const note = Note.create(raw.noteWithOctave as NoteLike);
   const base: NoteEvent = { type: 'note', note, start: raw.start, duration: raw.duration };
 
@@ -113,8 +114,10 @@ function deserializeNoteEvent(raw: SerializedNoteEvent): NoteEvent {
 
 function deserializeChordEvent(raw: SerializedChordEvent): ChordEvent {
   // rootWithOctave is produced by serializeEvent — always a valid NoteNameWithOctave.
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
   const root = Note.create(raw.rootWithOctave as NoteLike);
   // suffix is the canonical ChordSuffix string stored by the Chord class.
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
   const chord = applyInversion(Chord.create(root, raw.suffix as ChordSuffix), raw.inversion);
   const base: ChordEvent = { type: 'chord', chord, start: raw.start, duration: raw.duration };
 

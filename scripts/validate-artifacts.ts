@@ -207,6 +207,7 @@ const smoke = spawnSync(nodeBinary, ['scripts/smoke-artifact.mjs'], {
   env: nodeBinaryEnv,
   stdio: 'pipe',
 });
+// oxlint-disable-next-line typescript-eslint/no-unnecessary-type-assertion
 const smokeError = smoke.error as NodeJS.ErrnoException | undefined;
 if (smokeError?.code === 'ENOENT') {
   failures.push(`'node' not found on PATH; cannot run artifact smoke test.`);

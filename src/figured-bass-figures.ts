@@ -51,7 +51,7 @@ export type FiguredBassInversionIndex = 0 | 1 | 2 | 3;
 // compile-time-only constraint; freezing makes the immutability
 // stick at runtime.
 const TRIAD_FIGURES_BY_INVERSION: Readonly<Record<0 | 1 | 2, FiguredBass>> = Object.freeze({
-  0: Object.freeze([]) as FiguredBass, // 5/3 is implicit; the conventional notation is to omit it.
+  0: Object.freeze([]), // 5/3 is implicit; the conventional notation is to omit it.
   1: Object.freeze([Object.freeze({ digit: 6 } as const)]),
   2: Object.freeze([Object.freeze({ digit: 6 } as const), Object.freeze({ digit: 4 } as const)]),
 });

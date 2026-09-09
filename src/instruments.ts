@@ -6,13 +6,7 @@ import type { Clef } from './clef.js';
  * The instrument family classification for grouping and display.
  */
 export type InstrumentFamily =
-  | 'voice'
-  | 'keyboard'
-  | 'string'
-  | 'woodwind'
-  | 'brass'
-  | 'percussion'
-  | 'other';
+  'voice' | 'keyboard' | 'string' | 'woodwind' | 'brass' | 'percussion' | 'other';
 
 /**
  * The complete definition of an instrument in the catalog.

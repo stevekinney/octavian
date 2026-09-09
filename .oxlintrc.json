@@ -8,6 +8,7 @@
   "rules": {
     "no-with": "error",
     "no-labels": "error",
+    "no-underscore-dangle": "off",
     "max-lines": ["error", { "max": 500, "skipBlankLines": true, "skipComments": true }],
     "complexity": ["error", { "max": 10 }],
     "no-console": "off",
@@ -54,6 +55,9 @@
         "typescript/no-unsafe-return": "off",
         "typescript/no-floating-promises": "off",
         "typescript/no-non-null-assertion": "off",
+        "typescript/no-unnecessary-type-assertion": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-unnecessary-boolean-literal-compare": "off",
         "typescript/unbound-method": "off",
         "typescript/require-await": "off",
         "typescript/no-magic-numbers": "off",

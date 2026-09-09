@@ -158,8 +158,7 @@ describe('keySignatureFromAccidentals', () => {
   });
 
   it('excludes theoretical keys', () => {
-    const eightSharps = () => keySignatureFromAccidentals(8, 'sharps');
-    expect(eightSharps).toThrow(RangeError);
+    expect(() => keySignatureFromAccidentals(8, 'sharps')).toThrow(RangeError);
   });
 
   it('throws RangeError when count is negative or not an integer', () => {

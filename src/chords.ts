@@ -182,13 +182,7 @@ export function createSlashChordName(value: string): SlashChordName {
  * A high-level chord quality classification.
  */
 export type ChordQuality =
-  | 'major'
-  | 'minor'
-  | 'diminished'
-  | 'augmented'
-  | 'dominant'
-  | 'suspended'
-  | 'altered';
+  'major' | 'minor' | 'diminished' | 'augmented' | 'dominant' | 'suspended' | 'altered';
 
 /**
  * The supported chord degrees that can be queried directly.

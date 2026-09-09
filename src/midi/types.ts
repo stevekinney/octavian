@@ -97,11 +97,7 @@ export type PitchBendMessage = {
  * Discriminate on the `type` field.
  */
 export type MidiMessage =
-  | NoteOnMessage
-  | NoteOffMessage
-  | ControlChangeMessage
-  | ProgramChangeMessage
-  | PitchBendMessage;
+  NoteOnMessage | NoteOffMessage | ControlChangeMessage | ProgramChangeMessage | PitchBendMessage;
 
 // ---------------------------------------------------------------------------
 // Sustain CC constant

@@ -189,11 +189,11 @@ export class Melody {
       typeof serialized !== 'object' ||
       serialized === null ||
       !('notes' in serialized) ||
-      !Array.isArray((serialized as { notes: unknown }).notes)
+      !Array.isArray(serialized.notes)
     ) {
       throw new TypeError('Serialized melody does not match expected shape.');
     }
-    const raw = (serialized as { notes: unknown[] }).notes;
+    const raw = serialized.notes;
     const notes = raw.map((entry, index) => {
       if (
         typeof entry !== 'object' ||
@@ -203,6 +203,7 @@ export class Melody {
       ) {
         throw new TypeError(`Serialized melody does not match expected shape at notes[${index}].`);
       }
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
       return Note.create(entry as NoteLike);
     });
     return createMelody(notes);
@@ -353,7 +354,7 @@ export class Melody {
    * @returns An iterator over the notes.
    */
   public [Symbol.iterator](): IterableIterator<Note> {
-    return (this.#notes as Note[])[Symbol.iterator]();
+    return this.#notes[Symbol.iterator]();
   }
 }
 

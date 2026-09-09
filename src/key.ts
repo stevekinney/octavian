@@ -326,7 +326,7 @@ export class Key {
     return resolveStandardKey(
       transposedTonic,
       this.#mode,
-      `${this.toString()}.transpose("${String(interval)}")`,
+      `${this.toString()}.transpose("${interval}")`,
     );
   }
 
