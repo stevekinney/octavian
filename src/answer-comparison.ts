@@ -477,8 +477,7 @@ export function compareMusicAnswer(
   if (target instanceof Note) return dispatchNote(target, answer);
   if (isScaleDegreeAnalysis(target)) return dispatchScaleDegree(target, answer);
   if (typeof target === 'string' && typeof answer === 'string') {
-    // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-    return compareIntervals(target as Interval, answer as Interval);
+    return compareIntervals(target, answer);
   }
   throw new TypeError(`compareMusicAnswer: unsupported target type: ${describeValue(target)}.`);
 }

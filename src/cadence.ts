@@ -21,12 +21,7 @@ import {
  * effort for a perfect authentic cadence.
  */
 export type CadenceType =
-  | 'authentic-perfect'
-  | 'authentic-imperfect'
-  | 'half'
-  | 'plagal'
-  | 'deceptive'
-  | 'phrygian';
+  'authentic-perfect' | 'authentic-imperfect' | 'half' | 'plagal' | 'deceptive' | 'phrygian';
 
 /**
  * Explicit voice-leading context for a chord in cadence analysis.
@@ -193,6 +188,7 @@ function degreeForChordRoot(key: Key, chord: Chord): RomanNumeralDegree | null {
   return null;
 }
 
+// oxlint-disable-next-line consistent-return
 function romanQualityForChordQuality(quality: ChordQuality): RomanNumeralQuality | null {
   switch (quality) {
     case 'major':

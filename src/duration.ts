@@ -26,14 +26,7 @@ import {
  * | `'sixtyFourth'`  | 1/64  |
  */
 export type DurationValue =
-  | 'double'
-  | 'whole'
-  | 'half'
-  | 'quarter'
-  | 'eighth'
-  | 'sixteenth'
-  | 'thirtySecond'
-  | 'sixtyFourth';
+  'double' | 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth' | 'thirtySecond' | 'sixtyFourth';
 
 /**
  * Describes a tuplet ratio: `actual` notes in the time of `normal` notes.
@@ -113,6 +106,7 @@ const DURATION_VALUES: readonly DurationValue[] = [
 
 /** @internal */
 function isDurationValue(value: unknown): value is DurationValue {
+  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
   return typeof value === 'string' && DURATION_VALUES.includes(value as DurationValue);
 }
 

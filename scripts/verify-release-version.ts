@@ -4,7 +4,7 @@ import path from 'node:path';
 function extractVersion(value: unknown): string | undefined {
   if (value === null || typeof value !== 'object') return undefined;
   if (!('version' in value)) return undefined;
-  const { version } = value as { version: unknown };
+  const { version } = value;
   return typeof version === 'string' ? version : undefined;
 }
 

@@ -246,6 +246,13 @@ describe('RomanNumeral.fromJSON validation', () => {
     );
   });
 
+  it('rejects a Symbol quality with the intended validation message (not a message-construction crash)', () => {
+    const bad = { degree: 1, quality: Symbol('bogus'), inversion: '5/3' };
+    expect(() => RomanNumeral.fromJSON(bad as unknown as SerializedRomanNumeral)).toThrow(
+      /SerializedRomanNumeral\.quality must be one of/,
+    );
+  });
+
   it('rejects an unknown inversion', () => {
     const bad = { degree: 1, quality: 'major', inversion: '8/3' };
     expect(() => RomanNumeral.fromJSON(bad as unknown as SerializedRomanNumeral)).toThrow(

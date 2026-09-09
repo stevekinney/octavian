@@ -288,6 +288,7 @@ function frequencyForJust(midi: MidiKey, tuning: Tuning, tonicNote: Note): Frequ
  * @throws {RangeError} When the computed frequency is not a positive finite
  *   number.
  */
+// oxlint-disable-next-line consistent-return
 export function frequencyFor(note: NoteLike, options: FrequencyForOptions = {}): Frequency {
   const {
     referenceTuning = STANDARD_TUNING,

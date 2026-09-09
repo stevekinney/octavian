@@ -332,7 +332,7 @@ export class Sequence {
       ...event,
       startSeconds: fractionToSeconds(event.start),
       durationSeconds: fractionToSeconds(event.duration),
-    })) as readonly TimedMusicEvent[];
+    }));
   }
 
   /**

@@ -253,6 +253,7 @@ function inversionForChord(chord: Chord, isSeventh: boolean): RomanNumeralInvers
   return table[index] ?? table[0]!;
 }
 
+// oxlint-disable-next-line consistent-return
 function inversionIndexForNumeral(inversion: RomanNumeralInversion): 0 | 1 | 2 | 3 {
   switch (inversion) {
     case '5/3':

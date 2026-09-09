@@ -159,7 +159,7 @@ function formatSingleFigure(figure: FiguredBassFigure): string {
   // Defensive: the type system constrains `accidental` to the three
   // values above. If a future variant is added, this branch flags it
   // rather than silently rendering as natural.
-  throw new TypeError(`Unknown figured-bass accidental ${String(figure.accidental as never)}.`);
+  throw new TypeError(`Unknown figured-bass accidental ${String(figure.accidental)}.`);
 }
 
 /**
@@ -314,6 +314,7 @@ function bassOctaveOffset(requested: Note, found: Note): number {
   return Math.round((requestedMidi - foundMidi) / 12);
 }
 
+// oxlint-disable-next-line consistent-return
 function inversionIndexFor(inversion: FiguredBassInversion): 0 | 1 | 2 | 3 {
   switch (inversion) {
     case '5/3':
@@ -330,6 +331,7 @@ function inversionIndexFor(inversion: FiguredBassInversion): 0 | 1 | 2 | 3 {
   }
 }
 
+// oxlint-disable-next-line consistent-return
 function ordinalForInversion(inversion: FiguredBassInversion): string {
   switch (inversion) {
     case '5/3':

@@ -49,6 +49,7 @@ function keySignatureAccidentalFor(letter: string, keySignature: KeySignatureInf
  * `note-spellings`), so the switch covers every possible value at compile
  * time — no `default` branch is needed or present. // exhaustive
  */
+// oxlint-disable-next-line consistent-return
 function accidentalSuffixToDisplay(suffix: Accidental): AccidentalDisplay {
   switch (suffix) {
     case '#':

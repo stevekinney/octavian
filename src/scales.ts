@@ -4,13 +4,7 @@ import type { Interval } from './intervals.js';
  * The supported named modes of the diatonic scale family.
  */
 export type ModeName =
-  | 'ionian'
-  | 'dorian'
-  | 'phrygian'
-  | 'lydian'
-  | 'mixolydian'
-  | 'aeolian'
-  | 'locrian';
+  'ionian' | 'dorian' | 'phrygian' | 'lydian' | 'mixolydian' | 'aeolian' | 'locrian';
 
 /**
  * The seven traditional scale degrees.
