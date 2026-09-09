@@ -169,22 +169,29 @@ export class RomanNumeral {
         `SerializedRomanNumeral.degree must be 1..7; got ${String(value.degree)}.`,
       );
     }
+    // String(...) rather than direct interpolation in the three messages
+    // below: a Symbol runtime value (possible since this reads untyped
+    // JSON) throws on template-literal interpolation, which would mask
+    // the intended TypeError.
     if (!VALID_QUALITIES.has(value.quality)) {
       throw new TypeError(
         `SerializedRomanNumeral.quality must be one of ${[...VALID_QUALITIES].join(', ')}; ` +
-          `got "${value.quality}".`,
+          // oxlint-disable-next-line typescript-eslint/no-unnecessary-type-conversion
+          `got "${String(value.quality)}".`,
       );
     }
     if (!VALID_INVERSIONS.has(value.inversion)) {
       throw new TypeError(
         `SerializedRomanNumeral.inversion must be one of ${[...VALID_INVERSIONS].join(', ')}; ` +
-          `got "${value.inversion}".`,
+          // oxlint-disable-next-line typescript-eslint/no-unnecessary-type-conversion
+          `got "${String(value.inversion)}".`,
       );
     }
     if (value.alteration !== undefined && !VALID_ALTERATIONS.has(value.alteration)) {
       throw new TypeError(
         `SerializedRomanNumeral.alteration must be undefined, 'flat', or 'sharp'; ` +
-          `got "${value.alteration}".`,
+          // oxlint-disable-next-line typescript-eslint/no-unnecessary-type-conversion
+          `got "${String(value.alteration)}".`,
       );
     }
     let applied: RomanNumeral | undefined;

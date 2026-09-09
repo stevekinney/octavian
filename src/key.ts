@@ -326,7 +326,11 @@ export class Key {
     return resolveStandardKey(
       transposedTonic,
       this.#mode,
-      `${this.toString()}.transpose("${interval}")`,
+      // String(...) rather than direct interpolation: a Symbol runtime
+      // value throws on template-literal interpolation, which would mask
+      // the error this describes.
+      // oxlint-disable-next-line typescript-eslint/no-unnecessary-type-conversion
+      `${this.toString()}.transpose("${String(interval)}")`,
     );
   }
 
