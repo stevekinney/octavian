@@ -32,6 +32,9 @@ const identified: readonly IdentifiedChord[] = identifyChords(['C4', 64, Note.fr
 const guitar: IterableIterator<GuitarFingering> = guitarFingeringsFor('C');
 const piano: IterableIterator<PianoVoicing> = pianoVoicingsFor('C/E');
 identifyGuitarChords([null, 3, 2, 0, 1, 0]);
+const noteTuning = { strings: [Note.create('C'), Note.create('E').toJSON(), 'G4'] };
+identifyGuitarChords([0, 0, 0], { tuning: noteTuning });
+guitarFingeringsFor('C', { tuning: noteTuning });
 identifyPianoChords([60, 64, 67]);
 export { identified, guitar, piano };
 

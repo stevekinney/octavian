@@ -48,10 +48,18 @@ describe('noteAtFret', () => {
     expect(noteAtFret(STANDARD_BASS_TUNING, 3, 0).toString()).toBe('G2');
   });
 
-  it('works with a custom tuning', () => {
-    const dropD: StringInstrumentTuning = { strings: ['D2', 'A2', 'D3', 'G3', 'B3', 'E4'] };
-    expect(noteAtFret(dropD, 0, 0).toString()).toBe('D2');
-    expect(noteAtFret(dropD, 0, 2).toString()).toBe('E2');
+  it('accepts every documented custom tuning entry shape', () => {
+    const mixed: StringInstrumentTuning = {
+      strings: [Note.create('C3'), Note.create('G3').toJSON(), { note: 'D', octave: 4 }, 'A'],
+    };
+
+    expect(mixed.strings.map((_string, index) => noteAtFret(mixed, index, 0).toString())).toEqual([
+      'C3',
+      'G3',
+      'D4',
+      'A4',
+    ]);
+    expect(() => noteAtFret({ strings: ['bad'] }, 0, 0)).toThrow(TypeError);
   });
 
   it('throws RangeError for negative fret', () => {
@@ -84,7 +92,9 @@ describe('noteAtFret', () => {
 
 describe('STANDARD_GUITAR_TUNING', () => {
   it('has 6 strings in strictly ascending pitch order', () => {
-    const notes = STANDARD_GUITAR_TUNING.strings.map((s) => Note.create(s));
+    const notes = STANDARD_GUITAR_TUNING.strings.map((_string, stringIndex) =>
+      noteAtFret(STANDARD_GUITAR_TUNING, stringIndex, 0),
+    );
     expect(notes).toHaveLength(6);
     for (let i = 1; i < notes.length; i += 1) {
       // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
@@ -93,14 +103,18 @@ describe('STANDARD_GUITAR_TUNING', () => {
   });
 
   it('open strings are E2 A2 D3 G3 B3 E4', () => {
-    const strings = STANDARD_GUITAR_TUNING.strings.map((s) => Note.create(s).toString());
+    const strings = STANDARD_GUITAR_TUNING.strings.map((_string, stringIndex) =>
+      noteAtFret(STANDARD_GUITAR_TUNING, stringIndex, 0).toString(),
+    );
     expect(strings).toEqual(['E2', 'A2', 'D3', 'G3', 'B3', 'E4']);
   });
 });
 
 describe('STANDARD_BASS_TUNING', () => {
   it('has 4 strings in strictly ascending pitch order', () => {
-    const notes = STANDARD_BASS_TUNING.strings.map((s) => Note.create(s));
+    const notes = STANDARD_BASS_TUNING.strings.map((_string, stringIndex) =>
+      noteAtFret(STANDARD_BASS_TUNING, stringIndex, 0),
+    );
     expect(notes).toHaveLength(4);
     for (let i = 1; i < notes.length; i += 1) {
       // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
@@ -109,7 +123,9 @@ describe('STANDARD_BASS_TUNING', () => {
   });
 
   it('open strings are E1 A1 D2 G2', () => {
-    const strings = STANDARD_BASS_TUNING.strings.map((s) => Note.create(s).toString());
+    const strings = STANDARD_BASS_TUNING.strings.map((_string, stringIndex) =>
+      noteAtFret(STANDARD_BASS_TUNING, stringIndex, 0).toString(),
+    );
     expect(strings).toEqual(['E1', 'A1', 'D2', 'G2']);
   });
 });
@@ -407,9 +423,15 @@ describe('edge cases', () => {
 
 describe('string ordering (left-to-right = low-to-high)', () => {
   it('strings[0] is the lowest-pitched string', () => {
-    const lowestNote = Note.create(STANDARD_GUITAR_TUNING.strings[0]);
-    for (const stringEntry of STANDARD_GUITAR_TUNING.strings) {
-      expect(Number(lowestNote.midi)).toBeLessThanOrEqual(Number(Note.create(stringEntry).midi));
+    const lowestNote = noteAtFret(STANDARD_GUITAR_TUNING, 0, 0);
+    for (
+      let stringIndex = 0;
+      stringIndex < STANDARD_GUITAR_TUNING.strings.length;
+      stringIndex += 1
+    ) {
+      expect(Number(lowestNote.midi)).toBeLessThanOrEqual(
+        Number(noteAtFret(STANDARD_GUITAR_TUNING, stringIndex, 0).midi),
+      );
     }
   });
 
@@ -432,7 +454,7 @@ describe('property tests', () => {
   it('noteAtFret at fret 0 equals the open string note', () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 5 }), (stringIndex) => {
-        const open = Note.create(STANDARD_GUITAR_TUNING.strings[stringIndex]);
+        const open = noteAtFret(STANDARD_GUITAR_TUNING, stringIndex, 0);
         expect(noteAtFret(STANDARD_GUITAR_TUNING, stringIndex, 0).midi).toBe(open.midi);
       }),
       { numRuns: 50 },
@@ -445,7 +467,7 @@ describe('property tests', () => {
         fc.integer({ min: 0, max: 5 }),
         fc.integer({ min: 0, max: 20 }),
         (stringIndex, fret) => {
-          const openMidi = Number(Note.create(STANDARD_GUITAR_TUNING.strings[stringIndex]).midi);
+          const openMidi = Number(noteAtFret(STANDARD_GUITAR_TUNING, stringIndex, 0).midi);
           if (openMidi + fret > 127) return;
           expect(Number(noteAtFret(STANDARD_GUITAR_TUNING, stringIndex, fret).midi)).toBe(
             openMidi + fret,

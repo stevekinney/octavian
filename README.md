@@ -104,6 +104,10 @@ is lowest pitch, then keys and hand split. These are deterministic search orders
 rankings. Avoid collecting an unrestricted search into an array. Playability follows the documented
 conservative model and remains dependent on the player's reach and technique.
 
+Recognition also retains supported double- and triple-accidental spellings explicitly supplied in
+the input, while preferring conventional names. Custom tunings accept the same inputs as
+`Note.create`, including `Note` objects and serialized notes.
+
 ## Types
 
 All public types are importable directly from `'octavian'`:

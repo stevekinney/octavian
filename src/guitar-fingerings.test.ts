@@ -4,6 +4,7 @@ import {
   type GuitarFingering,
   type GuitarFingeringOptions,
 } from './guitar-fingerings.js';
+import { Note } from './note.js';
 
 function takeFingerings(
   chord: string,
@@ -102,6 +103,23 @@ describe('guitarFingeringsFor', () => {
       }),
     ];
     expect(results.every((result) => result.frets.length === 4)).toBe(true);
+  });
+
+  it('accepts documented Note-like tuning entries', () => {
+    const results = [
+      ...guitarFingeringsFor('C', {
+        tuning: {
+          strings: [Note.create('C3'), Note.create('E3').toJSON(), { note: 'G', octave: 3 }, 'C'],
+        },
+        maxFret: 0,
+        omissions: 'none',
+      }),
+    ];
+
+    expect(results.map((result) => result.frets)).toContainEqual([0, 0, 0, 0]);
+    expect(
+      results.find((result) => result.frets.every((fret) => fret === 0))?.notes.map(String),
+    ).toEqual(['C3', 'E3', 'G3', 'C4']);
   });
 
   it('enforces finger reach and barre settings', () => {
