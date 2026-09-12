@@ -33,6 +33,14 @@ describe('interval catalog', () => {
 });
 
 describe('chord catalog', () => {
+  it('includes power and suspended dominant seventh entries', () => {
+    expect(CHORDS.power.symbol).toBe('5');
+    expect(resolveChordSuffix('7sus')).toBe('dominantSeventhSuspendedFourth');
+    expect(resolveChordSuffix('dominantSeventhSuspendedSecond')).toBe(
+      'dominantSeventhSuspendedSecond',
+    );
+  });
+
   const chordKeys = Object.keys(CHORDS).filter(isChordSuffix);
 
   it.each(chordKeys)('chord "%s" resolves to a key that exists in CHORDS', (key) => {

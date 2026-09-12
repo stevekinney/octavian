@@ -23,6 +23,41 @@ export function assertSmokeChecks(octavian) {
   if (typeof octavian.INTERVALS.majorThird?.semitones !== 'number') {
     throw new Error('INTERVALS catalog broken');
   }
+  assertInstrumentChordChecks(octavian);
+}
+
+function assertInstrumentChordChecks(octavian) {
+  if (octavian.identifyChords([60, 64, 67])[0]?.name !== 'C') {
+    throw new Error('Chord identification broken');
+  }
+  if (octavian.identifyGuitarChords([null, 3, 2, 0, 1, 0])[0]?.name !== 'C') {
+    throw new Error('Guitar chord identification broken');
+  }
+  if (octavian.identifyPianoChords([64, 67, 72])[0]?.name !== 'C/E') {
+    throw new Error('Piano chord identification broken');
+  }
+  assertInstrumentGeneratorChecks(octavian);
+}
+
+function assertInstrumentGeneratorChecks(octavian) {
+  const guitar = octavian.guitarFingeringsFor('C', { maxFret: 3 });
+  const guitarResult = guitar.next();
+  if (guitarResult.done || !guitarResult.value.notes.length) {
+    throw new Error('Guitar fingering generation broken');
+  }
+  guitar.return();
+  const piano = octavian.pianoVoicingsFor('C', { range: octavian.keyboardRange(60, 67) });
+  const pianoResult = piano.next();
+  if (pianoResult.done || !pianoResult.value.notes.length) {
+    throw new Error('Piano voicing generation broken');
+  }
+  piano.return();
+  if (
+    octavian.Chord.parse('C5').quality !== 'power' ||
+    octavian.Chord.parse('C7sus').name !== 'C7sus4'
+  ) {
+    throw new Error('Instrument chord catalog broken');
+  }
 }
 
 // Subpath-export smoke checks. Each subpath (e.g. octavian/sequences) is a

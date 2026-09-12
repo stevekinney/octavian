@@ -1,4 +1,9 @@
 [
+  "identifyChords",
+  "identifyGuitarChords",
+  "identifyPianoChords",
+  "guitarFingeringsFor",
+  "pianoVoicingsFor",
   "ACCIDENTAL_OFFSETS",
   "ACCIDENTALS",
   "addRationals",

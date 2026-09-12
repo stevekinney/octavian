@@ -61,6 +61,26 @@ const alteredDominantSeventhCases = [
 ] as const;
 
 describe('Chord', () => {
+  it('supports power and suspended dominant seventh chord catalog entries', () => {
+    expect(Chord.parse('C7sus').name).toBe('C7sus4');
+    expect(Chord.parse('C7sus/Bb').name).toBe('C7sus4/Bb');
+    expect(Chord.create('C4', '5').symbol).toBe('5');
+    expect(Chord.create('C4', '5').notes.map((note) => note.toString())).toEqual(['C4', 'G4']);
+
+    for (const suffix of [
+      'dominantSeventhSuspendedSecond',
+      'dominantSeventhSuspendedFourth',
+    ] as const) {
+      const chord = Chord.create('C4', suffix);
+      expect(chord.notes.map((note) => note.toString())).toEqual(
+        suffix === 'dominantSeventhSuspendedSecond'
+          ? ['C4', 'D4', 'G4', 'Bb4']
+          : ['C4', 'F4', 'G4', 'Bb4'],
+      );
+    }
+    expect(Chord.create('C4', '7sus').suffix).toBe('dominantSeventhSuspendedFourth');
+  });
+
   it('creates chords from symbols, suffixes, and serialized input', () => {
     const chord = Chord.create('C4', 'maj7');
     expect(chord.name).toBe('Cmaj7');

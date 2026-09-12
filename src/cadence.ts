@@ -202,6 +202,7 @@ function romanQualityForChordQuality(quality: ChordQuality): RomanNumeralQuality
       return 'augmented';
     case 'suspended':
     case 'altered':
+    case 'power':
       return null;
   }
 }
@@ -217,11 +218,8 @@ function sopranoForVoicing(chord: Chord, voicing: CadenceVoicing | undefined): N
   }
   const notes = isNoteLikeArray(voicing) ? voicing : voicing.notes;
   const normalized = chord.voicing(notes);
-  const soprano = normalized.notes.at(-1);
-  if (soprano === undefined) {
-    throw new RangeError('Cadence voicing must contain at least one note.');
-  }
-  return soprano;
+  // Chord.voicing rejects empty input, so a validated voicing always has a soprano.
+  return normalized.notes.at(-1)!;
 }
 
 function isNoteLikeArray(voicing: CadenceVoicing): voicing is readonly NoteLike[] {

@@ -33,6 +33,11 @@ describe('index exports', () => {
 // ---------------------------------------------------------------------------
 
 const EXPECTED_EXPORTS = [
+  'identifyChords',
+  'identifyGuitarChords',
+  'identifyPianoChords',
+  'guitarFingeringsFor',
+  'pianoVoicingsFor',
   'ACCIDENTAL_OFFSETS',
   'ACCIDENTALS',
   'addRationals',

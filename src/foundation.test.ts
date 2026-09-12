@@ -139,7 +139,8 @@ describe('foundation helpers', () => {
     expect(chordQualityForSuffix('suspendedFourth')).toBe('suspended');
     expect(CHORDS.sixNine.symbol).toBe('6/9');
     expect(isChordSuffix('minorTriad')).toBe(true);
-    expect(isChordSuffix('powerChord')).toBe(false);
+    expect(isChordSuffix('powerChord')).toBe(true);
+    expect(isChordSuffix('unsupportedChord')).toBe(false);
     expect(isChordSymbol('m7b5')).toBe(true);
     expect(isChordSymbol('sus9')).toBe(false);
 
