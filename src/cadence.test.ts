@@ -75,6 +75,9 @@ describe('identifyCadence — Chord input', () => {
 
   it('throws when an explicit voicing does not contain the chord pitch classes', () => {
     expect(() =>
+      cMajor.identifyCadence(Chord.parse('G'), { chord: Chord.parse('C'), voicing: [] }),
+    ).toThrow(RangeError);
+    expect(() =>
       cMajor.identifyCadence(Chord.create('G4', 'major'), {
         chord: Chord.create('C4', 'major'),
         voicing: ['C4', 'D4', 'E4'],
@@ -83,6 +86,7 @@ describe('identifyCadence — Chord input', () => {
   });
 
   it('returns null for non-cadential chord qualities and roots', () => {
+    expect(cMajor.identifyCadence(Chord.parse('G5'), Chord.parse('C5'))).toBeNull();
     expect(
       cMajor.identifyCadence(Chord.create('Db4', 'major'), Chord.create('C4', 'major')),
     ).toBeNull();

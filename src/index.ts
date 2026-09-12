@@ -388,6 +388,21 @@ export type {
 } from './voice-leading.js';
 
 export { compareChords } from './answer-comparison-chord.js';
+export {
+  identifyChords,
+  identifyGuitarChords,
+  identifyPianoChords,
+} from './chord-identification.js';
+export type {
+  IdentifiedChord,
+  ChordIdentificationOptions,
+  GuitarChordIdentificationOptions,
+} from './chord-identification.js';
+export type { PlayedNote, ChordOmissions } from './chord-tones.js';
+export { guitarFingeringsFor } from './guitar-fingerings.js';
+export type { GuitarFingering, GuitarFingeringOptions, GuitarBarre } from './guitar-fingerings.js';
+export { pianoVoicingsFor } from './piano-voicings.js';
+export type { PianoVoicing, PianoVoicingOptions, PianoVoicingHands } from './piano-voicings.js';
 export type { ChordComparison } from './answer-comparison-chord.js';
 
 export {

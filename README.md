@@ -40,6 +40,70 @@ console.log(cMajorSeven.notes.map(String)); // ["C4", "E4", "G4", "B4"]
 console.log(cMajor.mode('dorian').toString()); // "D dorian"
 ```
 
+## Recognizing chords and finding playable shapes
+
+Pass played pitches to `identifyChords` or `identifyPianoChords`. Both accept note strings with
+octaves, `Note` objects, and MIDI numbers. Guitar input follows the tuning's string order: `null` is
+muted, `0` is open, and a positive integer is a fret.
+
+```ts
+import {
+  identifyChords,
+  identifyGuitarChords,
+  identifyPianoChords,
+  guitarFingeringsFor,
+  pianoVoicingsFor,
+  keyboardRange,
+} from 'octavian';
+
+identifyGuitarChords([null, 3, 2, 0, 1, 0])[0]?.name; // "C"
+identifyPianoChords([64, 67, 72])[0]?.name; // "C/E"
+identifyChords(['C3', 'E3', 'G3', 'A3'], { key: 'A minor' })[0]?.name; // "Am7/C"
+
+const tuning = { strings: ['D2', 'A2', 'D3', 'G3', 'B3', 'E4'] };
+for (const fingering of guitarFingeringsFor('D', { tuning, maxFret: 24 })) {
+  console.log(fingering.frets, fingering.fingers, fingering.barres);
+  break; // Stop whenever you have enough results.
+}
+
+for (const voicing of pianoVoicingsFor('Cmaj7', {
+  range: keyboardRange(48, 84),
+  hands: 'both',
+})) {
+  console.log(voicing.leftHand, voicing.rightHand);
+  break;
+}
+```
+
+Recognition returns immutable candidates with `name`, `root`, canonical `suffix`, actual `bass` and
+`notes`, `omittedIntervals`, `match`, and catalog `aliases`. Exact matches precede practical
+omissions. Key context, root-position bass, chord size, spelling, and name break ties. Alternative
+interpretations and enharmonic names remain available. Empty or unmatched input returns `[]`;
+malformed input throws.
+
+Practical omissions are enabled by default: the perfect fifth may be absent except in power and
+suspended chords; eleventh and thirteenth chords may omit the ninth, and thirteenth chords may omit
+the unaltered eleventh. Other tones remain required. Set `omissions: 'none'` for complete chords.
+The catalog includes power chords (`C5`) and suspended sevenths (`C7sus2`, `C7sus4`, or `C7sus`).
+Rootless and non-chord-tone slash interpretations are excluded.
+
+Guitar generation defaults to standard tuning, frets `0..24`, four available fingers, barres
+enabled, and a maximum stopped-fret difference of three. Configure `tuning`, `minFret`, `maxFret`,
+`availableFingers`, `allowBarres`, and `maxFretSpan`. Open strings consume no fingers. Barre
+endpoints sound at the barre fret; intervening strings may be stopped higher, but cannot be open,
+muted, or stopped lower. Results include one preferred finger assignment per shape.
+
+Piano generation defaults to 88 keys, five notes per hand, and twelve semitones of reach per hand.
+Configure `range`, `hands`, `maxNotesPerHand`, and `maxHandSpan`. Hands never cross; `'both'`
+includes one-hand voicings too. Results contain keys grouped by hand without numbered fingers. Both
+generators allow inversions unless the supplied chord specifies a slash bass.
+
+Generators validate and snapshot inputs when called, then lazily enumerate every result within their
+constraints without truncation. Guitar order is lowest stopped fret, then fret pattern; piano order
+is lowest pitch, then keys and hand split. These are deterministic search orders, not difficulty
+rankings. Avoid collecting an unrestricted search into an array. Playability follows the documented
+conservative model and remains dependent on the player's reach and technique.
+
 ## Types
 
 All public types are importable directly from `'octavian'`:
