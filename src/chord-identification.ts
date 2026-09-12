@@ -58,7 +58,8 @@ function candidateFor(
   bass: Note,
   omissions: ChordOmissions,
 ): IdentifiedChord | null {
-  const chord = Chord.create(root, suffix);
+  const chord = representableChord(root, suffix);
+  if (chord === null) return null;
   const missing = omittedIntervalsFor(
     chordRequirements(chord, omissions),
     notes.map((note) => note.chromaticIndex),
@@ -76,6 +77,16 @@ function candidateFor(
     match: missing.length === 0 ? 'exact' : 'practical',
     aliases: aliasesFor(suffix),
   });
+}
+
+function representableChord(root: NoteName, suffix: CanonicalChordSuffix): Chord | null {
+  try {
+    return Chord.create(root, suffix);
+  } catch (error) {
+    // A supported root can require unsupported fourth accidentals in some chord types.
+    if (!(error instanceof RangeError)) throw error;
+    return null;
+  }
 }
 
 function spellingRank(name: NoteName, key: Key | undefined): readonly number[] {
@@ -127,7 +138,10 @@ export function identifyChords(
   const notes = normalizePlayedNotes(values);
   const bass = notes[0];
   if (!bass) return Object.freeze([]);
-  const roots = ROOT_NAMES.filter((root) =>
+  const suppliedRoots = values.flatMap((value) =>
+    normalizePlayedNotes([value]).map((note) => note.note),
+  );
+  const roots = [...new Set([...ROOT_NAMES, ...suppliedRoots])].filter((root) =>
     notes.some((note) => note.chromaticIndex === Note.create(root).chromaticIndex),
   );
   const candidates = new Map<string, IdentifiedChord>();
@@ -161,7 +175,7 @@ export function identifyGuitarChords(
   if (tuning.strings.length === 0 || tuning.strings.length !== frets.length)
     throw new RangeError('Expected one fret or mute per string in a nonempty tuning.');
   // Validate even muted strings, which otherwise would never reach noteAtFret.
-  normalizePlayedNotes(tuning.strings);
+  tuning.strings.forEach((_value, stringIndex) => noteAtFret(tuning, stringIndex, 0));
   const notes = frets.flatMap((fret, stringIndex) =>
     fret === null ? [] : [noteAtFret(tuning, stringIndex, fret)],
   );

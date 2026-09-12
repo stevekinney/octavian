@@ -1,7 +1,10 @@
 import { createChromaticIndex, type ChromaticIndex } from './branded-types.js';
 import { Chord } from './chord.js';
+import { isNoteName, isNoteNameWithOctave } from './music-utilities.js';
 import { Note, type NoteLike } from './note.js';
 import { Scale } from './scale.js';
+
+type TuningStringValue = string | Exclude<NoteLike, string>;
 
 /**
  * A stringed-instrument tuning, defined by its open-string pitches.
@@ -12,18 +15,16 @@ import { Scale } from './scale.js';
  * tunings (e.g. a high-G ukulele `['G4', 'C4', 'E4', 'A4']`) are supported, and
  * `stringIndex` simply refers to position in this array regardless of pitch.
  *
- * Each element must be a value accepted by {@link Note.create}: a note name with
- * octave such as `'E2'`, a {@link Note} instance, or a serialized note. The field
- * is typed `readonly string[]` rather than `readonly NoteLike[]` because
- * `NoteLike`'s `` `${NoteName}${Octave}` `` member uses a *branded* `Octave`
- * type, so a plain string literal like `'E2'` is not assignable to `NoteLike` at
- * compile time. `string` lets callers write `['E2', 'A2', …]` directly; invalid
- * entries are rejected at runtime by `Note.create`.
+ * Each element must be a value accepted by {@link Note.create}: a note name such
+ * as `'E'`, a note name with octave such as `'E2'`, a {@link Note} instance, or
+ * a serialized note. Plain `string` entries are accepted so callers can write
+ * `['E2', 'A2', …]` directly; invalid strings are rejected at runtime by
+ * `Note.create`.
  *
  * The optional `name` field is a human-readable label for the tuning (e.g. `'Standard'`).
  */
 export type StringInstrumentTuning = {
-  readonly strings: readonly string[];
+  readonly strings: readonly TuningStringValue[];
   readonly name?: string;
 };
 
@@ -108,6 +109,12 @@ function validateFretRange(minFret: number, maxFret: number): void {
   }
 }
 
+function noteFromTuningValue(value: TuningStringValue): Note {
+  if (typeof value !== 'string') return Note.create(value);
+  if (isNoteNameWithOctave(value) || isNoteName(value)) return Note.create(value);
+  throw new TypeError(`Unsupported note-like value: ${value}.`);
+}
+
 // ---------------------------------------------------------------------------
 // Core position builder
 // ---------------------------------------------------------------------------
@@ -124,10 +131,8 @@ function collectPositions(
   const positions: FretPosition[] = [];
 
   for (let stringIndex = 0; stringIndex < tuning.strings.length; stringIndex += 1) {
-    // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
     const openString = tuning.strings[stringIndex]!;
-    // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-    const openNote = Note.create(openString as NoteLike);
+    const openNote = noteFromTuningValue(openString);
     const openMidi = Number(openNote.midi);
 
     for (let fret = minFret; fret <= maxFret; fret += 1) {
@@ -168,10 +173,8 @@ export function noteAtFret(
   validateStringIndex(tuning, stringIndex);
   validateFret(fret);
 
-  // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
   const openString = tuning.strings[stringIndex]!;
-  // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-  const openNote = Note.create(openString as NoteLike);
+  const openNote = noteFromTuningValue(openString);
 
   if (Number(openNote.midi) + fret > 127) {
     throw new RangeError(

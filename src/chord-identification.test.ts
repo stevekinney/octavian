@@ -37,6 +37,29 @@ describe('chord identification', () => {
     expect(candidates[0]?.notes.map((note) => Number(note.midi))).toEqual([61, 65, 68, 73]);
     expect(identifyChords([Note.fromMidi(60), 'E4', 'G4'])[0]?.name).toBe('C');
   });
+  it('retains explicitly supplied double and triple accidental root spellings', () => {
+    expect(
+      identifyChords(['F##3', 'G3', 'A##3', 'C##4'], { omissions: 'none' }).some(
+        (candidate) => candidate.name === 'F##',
+      ),
+    ).toBe(true);
+    for (const [root, notes] of [
+      ['F##', ['F##3', 'A##3', 'C##4']],
+      ['F###', ['F###3', 'A###3', 'C###4']],
+      ['Gbbb', ['Gbbb3', 'Bbbb3', 'Dbbb4']],
+    ] as const) {
+      const candidates = identifyChords(notes, { omissions: 'none' });
+      expect(
+        candidates.some((candidate) => candidate.name === root && candidate.match === 'exact'),
+      ).toBe(true);
+      expect(candidates[0]?.root.length).toBeLessThan(root.length);
+    }
+  });
+  it('accepts documented Note and serialized-note tuning inputs', () => {
+    const tuning = { strings: [Note.create('C3'), Note.create('E3').toJSON(), 'G3'] };
+    expect(identifyGuitarChords([0, 0, 0], { tuning })[0]?.name).toBe('C');
+    expect(identifyGuitarChords([0, 0, null], { tuning })[0]?.name).toBe('C');
+  });
   it('uses the shared omission policy and freezes results', () => {
     const candidates = identifyChords([60, 64]);
     expect(candidates[0]?.omittedIntervals).toEqual(['perfectFifth']);

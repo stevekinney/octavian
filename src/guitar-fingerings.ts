@@ -1,9 +1,8 @@
 import { Chord } from './chord.js';
 import { chordRequirements, omittedIntervalsFor, type ChordOmissions } from './chord-tones.js';
 import { assignGuitarFingers } from './guitar-fingering-assignment.js';
-import { STANDARD_GUITAR_TUNING, type StringInstrumentTuning } from './fretboard.js';
+import { STANDARD_GUITAR_TUNING, noteAtFret, type StringInstrumentTuning } from './fretboard.js';
 import type { Interval } from './intervals.js';
-import { parseNoteNameWithOctave } from './music-utilities.js';
 import { Note } from './note.js';
 
 /** Options controlling guitar fingering generation. */
@@ -90,7 +89,9 @@ function validateTuning(tuning: StringInstrumentTuning): readonly Note[] {
     throw new TypeError('Expected tuning.strings to be a non-empty array.');
   }
 
-  return Object.freeze(tuning.strings.map((value) => Note.create(parseNoteNameWithOctave(value))));
+  return Object.freeze(
+    tuning.strings.map((_value, stringIndex) => noteAtFret(tuning, stringIndex, 0)),
+  );
 }
 
 function validateRange(minFret: number, maxFret: number): void {
