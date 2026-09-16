@@ -48,6 +48,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: "1.4.2" }
       - run: bun install --frozen-lockfile
+      - run: bun x playwright install --with-deps chromium
       - run: bun run test:ci
       - name: Upload coverage
         uses: actions/upload-artifact@v4
