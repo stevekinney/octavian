@@ -3,8 +3,9 @@ import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 type RuntimeDependencyField = 'dependencies' | 'peerDependencies' | 'optionalDependencies';
+type DependencyField = RuntimeDependencyField | 'devDependencies';
 
-type PackageJson = Partial<Record<RuntimeDependencyField, Record<string, string>>>;
+type PackageJson = Partial<Record<DependencyField, Record<string, string>>>;
 
 function isPackageJson(value: unknown): value is PackageJson {
   return typeof value === 'object' && value !== null;
@@ -95,6 +96,25 @@ function assertEmptyRuntimeDependencies(): void {
   }
 }
 
+function assertNpmCompatibleDependencySpecifiers(): void {
+  const dependencyFields: DependencyField[] = [
+    'dependencies',
+    'devDependencies',
+    'peerDependencies',
+    'optionalDependencies',
+  ];
+
+  for (const field of dependencyFields) {
+    for (const [dependency, specifier] of Object.entries(packageJson[field] ?? {})) {
+      if (specifier.startsWith('catalog:') || specifier.startsWith('workspace:')) {
+        failures.push(
+          `${field}.${dependency} uses ${specifier}, which npm publish does not rewrite.`,
+        );
+      }
+    }
+  }
+}
+
 /**
  * Recursively collects all files under a directory whose name ends with the
  * given extension.
@@ -138,6 +158,7 @@ for (const jsFile of browserJsFiles) {
 }
 
 assertEmptyRuntimeDependencies();
+assertNpmCompatibleDependencySpecifiers();
 
 // Check all dist/**/*.d.ts for bare-specifier violations.
 const dtsFiles = await collectFiles(distDir, '.d.ts');

@@ -9,19 +9,19 @@ repository.
 
 ```bash
 bun run dev               # Start development with watch mode
-bun run build             # Build for production (outputs to dist/)
-bun ./dist/browser/index.js  # Run the browser-safe ESM build
-node ./dist/browser/index.js # Run the browser-safe ESM build
+bun run build             # Build all workspaces with Turborepo
+bun packages/octavian/dist/browser/index.js  # Run the browser-safe ESM build
+node packages/octavian/dist/browser/index.js # Run the browser-safe ESM build
 ```
 
 ### Testing
 
 ```bash
-bun test                  # Run all tests
-bun test src/utils        # Run tests in specific directory
-bun test logger           # Run tests matching pattern
-bun test --watch          # Watch mode
-bun test --coverage       # Generate coverage report
+bun run test              # Run all workspace tests with Turborepo
+bun run --cwd packages/octavian test src/utils  # Run tests in a specific directory
+bun run --cwd packages/octavian test logger     # Run tests matching a pattern
+bun run --cwd packages/octavian test --watch    # Watch mode
+bun run --cwd packages/octavian test:ci         # Generate coverage
 ```
 
 ### Code Quality
@@ -29,7 +29,7 @@ bun test --coverage       # Generate coverage report
 ```bash
 bun run lint             # Check linting errors
 bun run lint:fix         # Auto-fix linting errors
-bun run typecheck        # TypeScript type checking (src + scripts)
+bun run typecheck        # TypeScript type checking across the workspace
 bun run typecheck:test   # TypeScript type checking (test files)
 bun run format           # Format all files with Prettier
 bun run format:check     # Check formatting without changes
@@ -40,9 +40,16 @@ bun run validate         # Full gate: format:check + lint + typecheck + typechec
 ### Utilities
 
 ```bash
-bun run clean            # Clean build artifacts (dist/, coverage/, caches)
+bun run clean            # Clean workspace build artifacts and caches
 bun run package:check    # Run publint + @arethetypeswrong/cli on packed tarball
 ```
+
+## Workspace Layout
+
+The repository root is a private Bun workspace orchestrated by Turborepo. The publishable `octavian`
+package lives in `packages/octavian`; repository hooks remain in `scripts/hooks`. Run shared quality
+gates from the repository root. Run package-relative scripts and direct Bun test commands from
+`packages/octavian`.
 
 ## Architecture Overview
 
@@ -59,9 +66,9 @@ bun run package:check    # Run publint + @arethetypeswrong/cli on packed tarball
    authoritative data catalogs. Every alias resolves to a canonical key via `resolveInterval`,
    `resolveChordSuffix`, and `resolveScaleType`.
 
-4. **Runtime-neutral published code**: `src/` must not use Bun-only runtime APIs (`Bun.file`,
-   `Bun.env`, `Bun.serve`, etc.). Those APIs are fine in `scripts/` and test files, but must not
-   appear in published library output.
+4. **Runtime-neutral published code**: `packages/octavian/src/` must not use Bun-only runtime APIs
+   (`Bun.file`, `Bun.env`, `Bun.serve`, etc.). Those APIs are fine in `packages/octavian/scripts/`
+   and test files, but must not appear in published library output.
 
 ### Key Notes
 
@@ -70,18 +77,19 @@ bun run package:check    # Run publint + @arethetypeswrong/cli on packed tarball
 - **ESM + TypeScript**: Source files are TypeScript modules; build output targets a browser-safe ESM
   bundle.
 - **Import paths**: Use standard TS/ESM imports; no `@/*` path alias (it leaks into `.d.ts` files).
-- **Library output**: Single browser-safe ESM bundle in `dist/browser/` for all runtimes (Node 22+,
-  Bun, browser bundlers). The `exports` map routes consumers automatically.
+- **Library output**: Single browser-safe ESM bundle in `packages/octavian/dist/browser/` for all
+  runtimes (Node 22+, Bun, browser bundlers). The `exports` map routes consumers automatically.
 
 ### Library Packaging
 
 The build produces:
 
-- `dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external deps (zero
-  runtime dependencies)
-- `dist/index.d.ts` — TypeScript declarations (shared, generated with `isolatedDeclarations: true`)
+- `packages/octavian/dist/browser/index.js` — ESM bundle, `Bun.build target: 'browser'`, no external
+  deps (zero runtime dependencies)
+- `packages/octavian/dist/index.d.ts` — TypeScript declarations (shared, generated with
+  `isolatedDeclarations: true`)
 
-The `exports` map in `package.json`:
+The `exports` map in `packages/octavian/package.json`:
 
 ```json
 {
@@ -117,29 +125,30 @@ They use `chalk` for color and Bun's `$` and `Bun.write` for shell/IO.
 
 ### Types
 
-There is no shared `src/types.ts`. Domain-specific types live near their modules (e.g.,
-`SerializedNote` in `note.ts`, `SerializedChord` in `chord.ts`).
+There is no shared `packages/octavian/src/types.ts`. Domain-specific types live near their modules
+(e.g., `SerializedNote` in `note.ts`, `SerializedChord` in `chord.ts`).
 
 ## Development Patterns
 
 ### Adding New Features
 
 1. **Catalog entries**: New intervals, chord suffixes, or scale types go into the corresponding
-   catalog file (`src/intervals.ts`, `src/chords.ts`, `src/scales.ts`). Add a canonical entry first,
-   then any aliases.
+   catalog file (`packages/octavian/src/intervals.ts`, `packages/octavian/src/chords.ts`,
+   `packages/octavian/src/scales.ts`). Add a canonical entry first, then any aliases.
 2. **Types**: Domain-specific types live near their modules.
 
 ### Testing Approach
 
 - Tests use Bun's built-in test runner with `describe`, `it`, `expect`.
 - Test files are colocated with sources using the `.test.ts` suffix.
-- `test/setup.ts` is preloaded by `bunfig.toml` — it resets mocks and system time in `afterEach`.
-  All tests get this automatically.
+- `packages/octavian/test/setup.ts` is preloaded by the package's `bunfig.toml`—it resets mocks and
+  system time in `afterEach`. All tests get this automatically.
 - Oxlint rules are relaxed for test files. You can use `any`, non-null assertions, and other
   patterns normally flagged.
-- A separate `tsconfig.test.json` provides relaxed TypeScript settings for tests (checked by
-  `bun run typecheck:test`).
-- Coverage threshold is 100% for `src/`. Run `bun test --coverage` to see the report.
+- A separate `packages/octavian/tsconfig.test.json` provides relaxed TypeScript settings for tests
+  (checked by `bun run typecheck:test`).
+- Coverage threshold is 100% for package `src/`. Run `bun run --cwd packages/octavian test:ci` to
+  see the report.
 
 ### Import Organization
 
@@ -162,8 +171,8 @@ No path alias (`@/*`) — use relative imports everywhere.
 
 ### Prefer Bun Built-ins Over Node
 
-When possible, use Bun's native APIs in `scripts/` and tests. Do not use them in `src/` — published
-code must be Node-compatible.
+When possible, use Bun's native APIs in scripts and tests. Do not use them in
+`packages/octavian/src/`—published code must be Node-compatible.
 
 | Task          | Use (Bun)                                | Avoid (Node)                     |
 | ------------- | ---------------------------------------- | -------------------------------- |
@@ -181,8 +190,9 @@ clarity (e.g., `import { join } from 'node:path'`).
 
 ### Configuration Notes
 
-- **bunfig.toml**: Configures the `.md` text loader, forces Bun runtime for scripts, and sets up
-  `bun test` with preload, coverage, and 100% thresholds.
+- **bunfig.toml**: The root file configures workspace installation and execution.
+  `packages/octavian/bunfig.toml` configures the `.md` text loader and sets up `bun test` with
+  preload, coverage, and 100% thresholds.
 - **TypeScript**: Uses Bun types; Node type libs are not included by default.
 - **Oxlint**: Rust-based linter with built-in TypeScript, promise, unicorn, and import plugins.
   Type-aware rules enabled via `--type-aware --tsconfig ./tsconfig.json`. Test files have relaxed

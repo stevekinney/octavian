@@ -24,9 +24,20 @@ const changed = changedList.split('\n').filter(Boolean);
 const has = (f: string) => changed.includes(f);
 const any = (files: string[]) => files.some((f) => has(f));
 
-const configFiles = ['tsconfig.json', '.oxlintrc.json', '.prettierrc.json', 'bunfig.toml'];
+const configFiles = [
+  'tsconfig.json',
+  'bunfig.toml',
+  'turbo.json',
+  'packages/octavian/tsconfig.json',
+  'packages/octavian/tsconfig.build.json',
+  'packages/octavian/tsconfig.test.json',
+  'packages/octavian/bunfig.toml',
+  'packages/octavian/tsdown.config.ts',
+];
 
-const needsInstall = any(['package.json', 'bun.lock']);
+const needsInstall = changed.some(
+  (file) => file === 'bun.lock' || file === 'package.json' || file.endsWith('/package.json'),
+);
 const needsClean = any(configFiles);
 
 const important: string[] = [];

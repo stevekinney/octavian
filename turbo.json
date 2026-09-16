@@ -1,0 +1,47 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["tsconfig.json", "scripts/**"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    },
+    "lint:fix": {
+      "cache": false
+    },
+    "package:check": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "smoke:tarball": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "test": {
+      "outputs": []
+    },
+    "test:ci": {
+      "outputs": ["coverage/**"]
+    },
+    "typecheck": {
+      "outputs": []
+    },
+    "typecheck:test": {
+      "outputs": []
+    },
+    "validate:artifacts": {
+      "dependsOn": ["build"],
+      "outputs": []
+    }
+  }
+}
