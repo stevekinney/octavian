@@ -28,7 +28,12 @@ const libraryPackageChanged = await fileChangedBetween(
   prevHead,
   newHead,
 );
-const packageChanged = rootPackageChanged || libraryPackageChanged;
+const applicationPackageChanged = await fileChangedBetween(
+  'apps/vibratone/package.json',
+  prevHead,
+  newHead,
+);
+const packageChanged = rootPackageChanged || libraryPackageChanged || applicationPackageChanged;
 const lockChanged = await fileChangedBetween('bun.lock', prevHead, newHead);
 
 if (packageChanged) info('package.json has changed');
@@ -40,7 +45,7 @@ if (lockChanged) {
     await $`bun install`;
     success('Dependencies installed');
     const stat =
-      await $`git diff --stat ${prevHead}..${newHead} -- package.json packages/octavian/package.json bun.lock`.text();
+      await $`git diff --stat ${prevHead}..${newHead} -- package.json apps/vibratone/package.json packages/octavian/package.json bun.lock`.text();
     await Bun.write(Bun.stdout, stat);
   } catch {
     warning('Failed to install dependencies — run bun install manually');
@@ -54,6 +59,9 @@ const configFiles = [
   'tsconfig.json',
   'bunfig.toml',
   'turbo.json',
+  'apps/vibratone/svelte.config.js',
+  'apps/vibratone/tsconfig.json',
+  'apps/vibratone/vite.config.ts',
   'packages/octavian/tsconfig.json',
   'packages/octavian/tsconfig.build.json',
   'packages/octavian/tsconfig.test.json',

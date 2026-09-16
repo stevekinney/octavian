@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": [".svelte-kit/**", "build/**", "dist/**"]
     },
     "clean": {
       "cache": false
@@ -33,6 +33,9 @@
     "test:ci": {
       "outputs": ["coverage/**"]
     },
+    "test:e2e": {
+      "cache": false
+    },
     "typecheck": {
       "outputs": []
     },
@@ -41,6 +44,9 @@
     },
     "validate:artifacts": {
       "dependsOn": ["build"],
+      "outputs": []
+    },
+    "verify:workspace-resolution": {
       "outputs": []
     }
   }

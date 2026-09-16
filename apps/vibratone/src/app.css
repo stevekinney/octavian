@@ -1,0 +1,26 @@
+/* App-level globals layered on top of Cinder's tokens and foundation. */
+
+:root {
+	color-scheme: light dark;
+}
+
+body {
+	margin: 0;
+	background: var(--cinder-bg);
+	color: var(--cinder-text);
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif;
+	font-size: var(--cinder-text-base);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+* {
+	box-sizing: border-box;
+}

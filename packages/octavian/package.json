@@ -30,54 +30,63 @@
   "type": "module",
   "exports": {
     ".": {
+      "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "browser": "./dist/browser/index.js",
       "import": "./dist/browser/index.js",
       "default": "./dist/browser/index.js"
     },
     "./sequences": {
+      "source": "./src/sequences/index.ts",
       "types": "./dist/sequences/index.d.ts",
       "browser": "./dist/browser/sequences/index.js",
       "import": "./dist/browser/sequences/index.js",
       "default": "./dist/browser/sequences/index.js"
     },
     "./notation": {
+      "source": "./src/notation/index.ts",
       "types": "./dist/notation/index.d.ts",
       "browser": "./dist/browser/notation/index.js",
       "import": "./dist/browser/notation/index.js",
       "default": "./dist/browser/notation/index.js"
     },
     "./pitch": {
+      "source": "./src/pitch/index.ts",
       "types": "./dist/pitch/index.d.ts",
       "browser": "./dist/browser/pitch/index.js",
       "import": "./dist/browser/pitch/index.js",
       "default": "./dist/browser/pitch/index.js"
     },
     "./midi": {
+      "source": "./src/midi/index.ts",
       "types": "./dist/midi/index.d.ts",
       "browser": "./dist/browser/midi/index.js",
       "import": "./dist/browser/midi/index.js",
       "default": "./dist/browser/midi/index.js"
     },
     "./midi-file": {
+      "source": "./src/midi-file/index.ts",
       "types": "./dist/midi-file/index.d.ts",
       "browser": "./dist/browser/midi-file/index.js",
       "import": "./dist/browser/midi-file/index.js",
       "default": "./dist/browser/midi-file/index.js"
     },
     "./perf-timing": {
+      "source": "./src/performance-timing/index.ts",
       "types": "./dist/performance-timing/index.d.ts",
       "browser": "./dist/browser/performance-timing/index.js",
       "import": "./dist/browser/performance-timing/index.js",
       "default": "./dist/browser/performance-timing/index.js"
     },
     "./web-audio": {
+      "source": "./src/web-audio/index.ts",
       "types": "./dist/web-audio/index.d.ts",
       "browser": "./dist/browser/web-audio/index.js",
       "import": "./dist/browser/web-audio/index.js",
       "default": "./dist/browser/web-audio/index.js"
     },
     "./web-midi": {
+      "source": "./src/web-midi/index.ts",
       "types": "./dist/web-midi/index.d.ts",
       "browser": "./dist/browser/web-midi/index.js",
       "import": "./dist/browser/web-midi/index.js",
@@ -88,6 +97,7 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "src",
     "README.md",
     "LICENSE"
   ],

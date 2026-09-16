@@ -2,6 +2,7 @@
 dist/
 build/
 coverage/
+test-results/
 .next/
 out/
 

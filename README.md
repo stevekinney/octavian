@@ -1,7 +1,8 @@
 # Octavian
 
-This repository is a Bun workspace orchestrated by Turborepo. The published `octavian` music theory
-library lives in [`packages/octavian`](./packages/octavian).
+This repository is a Bun workspace orchestrated by Turborepo. It contains the published `octavian`
+music theory library in [`packages/octavian`](./packages/octavian) and the private Vibratone
+application in [`apps/vibratone`](./apps/vibratone).
 
 ## Development
 
@@ -18,6 +19,11 @@ Turbo can target the library directly when iterating:
 bunx turbo run test --filter=octavian
 bunx turbo run build package:check --filter=octavian
 ```
+
+Vibratone depends on `octavian` through `workspace:*`. Its Vite and TypeScript configuration opt in
+to Octavian's `source` export condition, so local development and builds read the library's
+TypeScript source directly. Regular npm consumers do not enable that condition and continue to
+receive the compiled JavaScript and declaration files from `dist`.
 
 The complete package API and usage documentation is in
 [`packages/octavian/README.md`](./packages/octavian/README.md).

@@ -1,11 +1,12 @@
 {
   "name": "octavian-monorepo",
   "private": true,
-  "description": "Workspace for the Octavian music theory library.",
+  "description": "Workspace for the Octavian music theory library and Vibratone application.",
   "license": "MIT",
   "author": "Steve Kinney <hello@stevekinney.net>",
   "type": "module",
   "workspaces": [
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
@@ -23,11 +24,13 @@
     "smoke:tarball": "turbo run smoke:tarball",
     "test": "turbo run test",
     "test:ci": "turbo run test:ci",
+    "test:e2e": "turbo run test:e2e",
     "typecheck": "bun run typecheck:root && turbo run typecheck",
     "typecheck:root": "tsc --noEmit --project tsconfig.json",
     "typecheck:test": "turbo run typecheck:test",
-    "validate": "bun run format:check && bun run lint && bun run typecheck && bun run typecheck:test && bun run test && bun run build && bun run package:check && bun run validate:artifacts && bun run smoke:tarball",
+    "validate": "bun run format:check && bun run lint && bun run typecheck && bun run typecheck:test && bun run verify:workspace-resolution && bun run test && bun run build && bun run package:check && bun run validate:artifacts && bun run smoke:tarball",
     "validate:artifacts": "turbo run validate:artifacts",
+    "verify:workspace-resolution": "turbo run verify:workspace-resolution",
     "verify:release-version": "bun run --cwd packages/octavian verify:release-version"
   },
   "devDependencies": {
@@ -37,6 +40,7 @@
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "prettier": "catalog:",
+    "prettier-plugin-svelte": "catalog:",
     "sort-package-json": "catalog:",
     "turbo": "catalog:",
     "typescript": "catalog:"
@@ -53,6 +57,7 @@
     "oxlint": "^1.83.0",
     "oxlint-tsgolint": "^7.0.2001",
     "prettier": "^3.9.6",
+    "prettier-plugin-svelte": "^4.1.1",
     "sort-package-json": "^4.0.0",
     "turbo": "^2.10.13",
     "typescript": "^7.0.2"
