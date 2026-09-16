@@ -22,7 +22,18 @@ if (prevHead === '0000000000000000000000000000000000000000') process.exit(0);
 
 header('Post-checkout hook');
 
-const packageChanged = await fileChangedBetween('package.json', prevHead, newHead);
+const rootPackageChanged = await fileChangedBetween('package.json', prevHead, newHead);
+const libraryPackageChanged = await fileChangedBetween(
+  'packages/octavian/package.json',
+  prevHead,
+  newHead,
+);
+const applicationPackageChanged = await fileChangedBetween(
+  'apps/vibratone/package.json',
+  prevHead,
+  newHead,
+);
+const packageChanged = rootPackageChanged || libraryPackageChanged || applicationPackageChanged;
 const lockChanged = await fileChangedBetween('bun.lock', prevHead, newHead);
 
 if (packageChanged) info('package.json has changed');
@@ -33,7 +44,8 @@ if (lockChanged) {
   try {
     await $`bun install`;
     success('Dependencies installed');
-    const stat = await $`git diff --stat ${prevHead}..${newHead} -- package.json bun.lock`.text();
+    const stat =
+      await $`git diff --stat ${prevHead}..${newHead} -- package.json apps/vibratone/package.json packages/octavian/package.json bun.lock`.text();
     await Bun.write(Bun.stdout, stat);
   } catch {
     warning('Failed to install dependencies — run bun install manually');
@@ -43,7 +55,19 @@ if (lockChanged) {
   info("You may need to run 'bun install' to update dependencies");
 }
 
-const configFiles = ['tsconfig.json', '.oxlintrc.json', '.prettierrc.json', 'bunfig.toml'];
+const configFiles = [
+  'tsconfig.json',
+  'bunfig.toml',
+  'turbo.json',
+  'apps/vibratone/svelte.config.js',
+  'apps/vibratone/tsconfig.json',
+  'apps/vibratone/vite.config.ts',
+  'packages/octavian/tsconfig.json',
+  'packages/octavian/tsconfig.build.json',
+  'packages/octavian/tsconfig.test.json',
+  'packages/octavian/bunfig.toml',
+  'packages/octavian/tsdown.config.ts',
+];
 let configChanged = false;
 for (const f of configFiles) {
   if (await fileChangedBetween(f, prevHead, newHead)) {

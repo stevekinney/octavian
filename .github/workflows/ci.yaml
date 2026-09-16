@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - run: bun install --frozen-lockfile
       - run: bun run format:check
 
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - run: bun install --frozen-lockfile
       - run: bun run lint
 
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run typecheck:test
@@ -46,30 +46,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - run: bun install --frozen-lockfile
+      - run: bun x playwright install --with-deps chromium
       - run: bun run test:ci
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage
-          path: coverage/lcov.info
+          path: packages/octavian/coverage/lcov.info
           if-no-files-found: ignore
+
+  vibratone-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: "1.4.2" }
+      - run: bun install --frozen-lockfile
+      - run: bun x playwright install --with-deps chromium
+      - run: bun run test:e2e
 
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - run: bun install --frozen-lockfile
       - run: bun run build
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: packages/octavian/dist/
 
   package-check:
     runs-on: ubuntu-latest
@@ -77,7 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - uses: actions/setup-node@v5
         with: { node-version: '22' }
       - run: bun install --frozen-lockfile
@@ -85,7 +96,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: packages/octavian/dist/
       - run: bun run package:check
 
   smoke-node:
@@ -97,7 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
@@ -105,21 +116,22 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: packages/octavian/dist/
       - run: bun install --frozen-lockfile
       - name: Pack tarball
+        working-directory: packages/octavian
         run: npm pack --ignore-scripts --pack-destination tests/fixtures/consumer/
       - name: Install fixture consumer deps
-        working-directory: tests/fixtures/consumer
+        working-directory: packages/octavian/tests/fixtures/consumer
         run: npm install $(ls octavian-*.tgz) && npm install
       - name: Typecheck node16
-        working-directory: tests/fixtures/consumer
+        working-directory: packages/octavian/tests/fixtures/consumer
         run: npx tsc -p tsconfig.node16.json
       - name: Typecheck bundler
-        working-directory: tests/fixtures/consumer
+        working-directory: packages/octavian/tests/fixtures/consumer
         run: npx tsc -p tsconfig.bundler.json
       - name: Runtime smoke
-        working-directory: tests/fixtures/consumer
+        working-directory: packages/octavian/tests/fixtures/consumer
         run: node consumer.mjs
 
   smoke-bun:
@@ -128,18 +140,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with: { bun-version: "1.3.2" }
+        with: { bun-version: "1.4.2" }
       - name: Download dist
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: packages/octavian/dist/
       - run: bun install --frozen-lockfile
       - name: Pack tarball
+        working-directory: packages/octavian
         run: npm pack --ignore-scripts --pack-destination tests/fixtures/consumer/
       - name: Install fixture consumer deps (Bun)
-        working-directory: tests/fixtures/consumer
+        working-directory: packages/octavian/tests/fixtures/consumer
         run: bun install && bun add $(ls octavian-*.tgz)
       - name: Runtime smoke (Bun)
-        working-directory: tests/fixtures/consumer
+        working-directory: packages/octavian/tests/fixtures/consumer
         run: bun consumer.mjs

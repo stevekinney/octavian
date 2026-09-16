@@ -1,0 +1,53 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["tsconfig.json", "scripts/**"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".svelte-kit/**", "build/**", "dist/**"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    },
+    "lint:fix": {
+      "cache": false
+    },
+    "package:check": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "smoke:tarball": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "test": {
+      "outputs": []
+    },
+    "test:ci": {
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "cache": false
+    },
+    "typecheck": {
+      "outputs": []
+    },
+    "typecheck:test": {
+      "outputs": []
+    },
+    "validate:artifacts": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "verify:workspace-resolution": {
+      "outputs": []
+    }
+  }
+}

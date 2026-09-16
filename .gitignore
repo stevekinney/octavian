@@ -78,6 +78,7 @@ dist/
 
 # Bun cache
 .bun-install-cache/
+.turbo/
 
 # Mac system files
 .DS_Store

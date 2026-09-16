@@ -1,0 +1,140 @@
+{
+  "name": "octavian",
+  "version": "3.2.0",
+  "description": "Type-safe music theory utilities for notes, intervals, chords, and scales.",
+  "keywords": [
+    "music-theory",
+    "notes",
+    "chords",
+    "scales",
+    "intervals",
+    "midi",
+    "typescript",
+    "music",
+    "audio",
+    "browser",
+    "web-audio",
+    "web-audio-api"
+  ],
+  "homepage": "https://github.com/stevekinney/octavian#readme",
+  "bugs": {
+    "url": "https://github.com/stevekinney/octavian/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stevekinney/octavian.git"
+  },
+  "license": "MIT",
+  "author": "Steve Kinney <hello@stevekinney.net>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/browser/index.js",
+      "import": "./dist/browser/index.js",
+      "default": "./dist/browser/index.js"
+    },
+    "./sequences": {
+      "source": "./src/sequences/index.ts",
+      "types": "./dist/sequences/index.d.ts",
+      "browser": "./dist/browser/sequences/index.js",
+      "import": "./dist/browser/sequences/index.js",
+      "default": "./dist/browser/sequences/index.js"
+    },
+    "./notation": {
+      "source": "./src/notation/index.ts",
+      "types": "./dist/notation/index.d.ts",
+      "browser": "./dist/browser/notation/index.js",
+      "import": "./dist/browser/notation/index.js",
+      "default": "./dist/browser/notation/index.js"
+    },
+    "./pitch": {
+      "source": "./src/pitch/index.ts",
+      "types": "./dist/pitch/index.d.ts",
+      "browser": "./dist/browser/pitch/index.js",
+      "import": "./dist/browser/pitch/index.js",
+      "default": "./dist/browser/pitch/index.js"
+    },
+    "./midi": {
+      "source": "./src/midi/index.ts",
+      "types": "./dist/midi/index.d.ts",
+      "browser": "./dist/browser/midi/index.js",
+      "import": "./dist/browser/midi/index.js",
+      "default": "./dist/browser/midi/index.js"
+    },
+    "./midi-file": {
+      "source": "./src/midi-file/index.ts",
+      "types": "./dist/midi-file/index.d.ts",
+      "browser": "./dist/browser/midi-file/index.js",
+      "import": "./dist/browser/midi-file/index.js",
+      "default": "./dist/browser/midi-file/index.js"
+    },
+    "./perf-timing": {
+      "source": "./src/performance-timing/index.ts",
+      "types": "./dist/performance-timing/index.d.ts",
+      "browser": "./dist/browser/performance-timing/index.js",
+      "import": "./dist/browser/performance-timing/index.js",
+      "default": "./dist/browser/performance-timing/index.js"
+    },
+    "./web-audio": {
+      "source": "./src/web-audio/index.ts",
+      "types": "./dist/web-audio/index.d.ts",
+      "browser": "./dist/browser/web-audio/index.js",
+      "import": "./dist/browser/web-audio/index.js",
+      "default": "./dist/browser/web-audio/index.js"
+    },
+    "./web-midi": {
+      "source": "./src/web-midi/index.ts",
+      "types": "./dist/web-midi/index.d.ts",
+      "browser": "./dist/browser/web-midi/index.js",
+      "import": "./dist/browser/web-midi/index.js",
+      "default": "./dist/browser/web-midi/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "check": "bun run format:check && bun run lint && bun run typecheck",
+    "clean": "rm -rf dist coverage tsconfig.tsbuildinfo",
+    "dev": "bun --watch run src/index.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,json,md}\"",
+    "lint": "oxlint --type-aware --tsconfig ./tsconfig.json",
+    "lint:fix": "oxlint --fix --type-aware --tsconfig ./tsconfig.json",
+    "prepack": "bun run build",
+    "package:check": "publint && env npm_config_ignore_scripts=true attw --pack --profile esm-only",
+    "prepublishOnly": "bun run validate",
+    "smoke:tarball": "bun scripts/smoke-tarball.mjs",
+    "test": "bun test --parallel",
+    "test:ci": "bun test --coverage --parallel",
+    "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc --noEmit --project tsconfig.test.json",
+    "validate": "bun run scripts/validate.ts",
+    "validate:artifacts": "bun run scripts/validate-artifacts.ts",
+    "verify:release-version": "bun run scripts/verify-release-version.ts"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/bun": "^1.4.2",
+    "fast-check": "^4.9.0",
+    "oxlint": "^1.83.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "prettier": "^3.9.6",
+    "publint": "^0.3.24",
+    "tsdown": "^0.23.0",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.4.2",
+    "node": ">=22.14.0"
+  }
+}

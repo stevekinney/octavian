@@ -5,13 +5,17 @@ pre-commit:
       run: bun run prettier --write {staged_files}
       glob: "**/*.{ts,tsx,js,jsx,mjs,json,md,css}"
       stage_fixed: true
-    - name: lint-fix
+    - name: lint-fix-octavian
       run: bun run oxlint --fix {staged_files}
-      glob: "**/*.{ts,tsx,js,jsx}"
+      glob: "{scripts,packages/octavian}/**/*.{ts,tsx,js,jsx}"
+      stage_fixed: true
+    - name: lint-fix-vibratone
+      run: bun apps/vibratone/node_modules/eslint/bin/eslint.js --config apps/vibratone/eslint.config.js --fix {staged_files}
+      glob: "apps/vibratone/**/*.{ts,tsx,js,jsx,svelte}"
       stage_fixed: true
     - name: package-lock-check
       run: bun scripts/hooks/package-lock-check.ts
-      glob: "{package.json,bun.lock}"
+      glob: "{package.json,apps/*/package.json,packages/*/package.json,bun.lock}"
     - name: typecheck
       run: bun run typecheck
 
